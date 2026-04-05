@@ -17,7 +17,8 @@ import time
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Load .env
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -36,6 +37,11 @@ from src.llm.speech import generate_speech, extract_speech_input
 
 app = FastAPI(title="LoRa Deep Reasoning Engine")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Serve the web UI
+WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+if os.path.isdir(WEB_DIR):
+    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 # Trace collector — captures every event with timestamps
 trace_events = []
@@ -69,6 +75,10 @@ def parse_problem(text):
 
 @app.get("/")
 async def root():
+    """Serve the web UI."""
+    index_path = os.path.join(WEB_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return {"status": "LoRa v2", "domains": 5, "concepts": 63}
 
 
@@ -203,7 +213,7 @@ async def trace(request: Request):
 
 
 if __name__ == "__main__":
-    print("\n  LoRa Deep Reasoning Engine — API Server")
+    print("\n  LoRa Deep Reasoning Engine")
     print("  http://localhost:8100")
-    print("  POST /api/trace with {question: '...'}\n")
+    print("  Open in your browser to use the UI\n")
     uvicorn.run(app, host="0.0.0.0", port=8100, log_level="warning")
