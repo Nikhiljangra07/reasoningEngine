@@ -742,6 +742,8 @@ body {
 <script>
 const API = window.location.origin;
 let lastQuestion = '';
+let lastPhase1Speech = '';
+let lastPhase1Trajectories = '';
 let isProcessing = false;
 
 const DC = {
@@ -816,6 +818,14 @@ function animateStages() {
 }
 
 function addLoraMsg(data) {
+  // Store Phase 1 findings for Phase 2 context
+  if (data.speech) lastPhase1Speech = data.speech;
+  if (data.trajectories) {
+    lastPhase1Trajectories = data.trajectories.map(t =>
+      `${t.name}: ${t.desc} (${Math.round((t.confidence||0)*100)}%)`
+    ).join('\n');
+  }
+
   const div = document.createElement('div');
   div.className = 'msg-lora';
 
@@ -1025,7 +1035,11 @@ async function digDeeper(btn) {
     const res = await fetch(`${API}/api/trace`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: lastQuestion, max_iterations: 6 }),
+      body: JSON.stringify({
+        question: lastQuestion,
+        max_iterations: 6,
+        phase1_summary: lastPhase1Speech + '\n\nTRAJECTORIES:\n' + lastPhase1Trajectories,
+      }),
     });
 
     if (!res.ok) {

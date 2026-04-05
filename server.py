@@ -89,6 +89,8 @@ async def trace(request: Request):
     body = await request.json()
     question = body.get("question", "")
     max_iterations = min(int(body.get("max_iterations", 2)), 12)
+    is_phase_one = max_iterations <= 2
+    phase1_summary = body.get("phase1_summary", "")
     if not question:
         return JSONResponse({"error": "No question"}, 400)
 
@@ -137,12 +139,27 @@ async def trace(request: Request):
     client.call = instrumented_call
 
     problem = parse_problem(question)
+
+    # Phase 2: inject Phase 1 findings as context so the engine goes DEEPER not sideways
+    if phase1_summary:
+        problem.context = (
+            "PHASE 2 — DEEPER ANALYSIS. The user has already seen Phase 1 findings below. "
+            "Do NOT repeat the same analysis. Go deeper. Challenge Phase 1's conclusions. "
+            "Find what Phase 1 missed. Surface second-order effects and hidden variables "
+            "that only emerge with more iterations.\n\n"
+            f"PHASE 1 FINDINGS (already delivered to user):\n{phase1_summary}"
+        )
+
     emit("stage", {"stage": 1, "name": "Chemistry Reads"})
 
     engine_result = await run_async_formation(problem, client, max_iterations=max_iterations)
 
-    # Speech
-    speech_input = extract_speech_input(engine_result, question, is_phase_one=True, estimated_additional_credits=15.0)
+    # Speech — Phase 2 gets full analysis mode (500 words, no dig deeper)
+    speech_input = extract_speech_input(
+        engine_result, question,
+        is_phase_one=is_phase_one,
+        estimated_additional_credits=15.0 if is_phase_one else 0,
+    )
     emit("stage", {"stage": 7, "name": "Speech Module"})
     speech_result = await generate_speech(client, speech_input)
 
