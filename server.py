@@ -88,6 +88,7 @@ async def trace(request: Request):
     global trace_events, trace_start
     body = await request.json()
     question = body.get("question", "")
+    max_iterations = min(int(body.get("max_iterations", 2)), 12)
     if not question:
         return JSONResponse({"error": "No question"}, 400)
 
@@ -138,7 +139,7 @@ async def trace(request: Request):
     problem = parse_problem(question)
     emit("stage", {"stage": 1, "name": "Chemistry Reads"})
 
-    engine_result = await run_async_formation(problem, client, max_iterations=2)
+    engine_result = await run_async_formation(problem, client, max_iterations=max_iterations)
 
     # Speech
     speech_input = extract_speech_input(engine_result, question, is_phase_one=True, estimated_additional_credits=15.0)

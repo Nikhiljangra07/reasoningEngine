@@ -327,9 +327,27 @@ body {
 
 .dig-deeper-text {
   font-size: 0.85rem;
-  color: var(--accent);
-  font-style: italic;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
 }
+
+.btn-dig {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 0.55rem 1.5rem;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.btn-dig:hover { background: var(--accent-glow); transform: translateY(-1px); }
+.btn-dig:active { transform: translateY(0); }
+.btn-dig:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* Stats Bar */
 .stats-bar {
@@ -869,6 +887,7 @@ body {
       <div class="speech-text" id="speechText"></div>
       <div class="dig-deeper" id="digDeeper" style="display:none">
         <div class="dig-deeper-text" id="digDeeperText"></div>
+        <button class="btn-dig" id="btnDig" onclick="digDeeper()">Dig Deeper</button>
       </div>
     </div>
 
@@ -941,6 +960,7 @@ body {
 
 <script>
 const API = window.location.origin;
+let lastQuestion = '';
 
 const DOMAIN_COLORS = {
   physics: '#c9944a',
@@ -966,6 +986,8 @@ async function submitQuestion() {
   const input = document.getElementById('questionInput');
   const question = input.value.trim();
   if (!question) return;
+
+  lastQuestion = question;
 
   const btn = document.getElementById('btnThink');
   btn.disabled = true;
@@ -1300,6 +1322,58 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+async function digDeeper() {
+  if (!lastQuestion) return;
+
+  const btn = document.getElementById('btnDig');
+  btn.disabled = true;
+  btn.textContent = 'Digging deeper...';
+
+  document.getElementById('errorCard').classList.remove('active');
+  document.getElementById('processing').classList.add('active');
+
+  // Reset stages
+  document.querySelectorAll('.stage-node').forEach(n => {
+    n.classList.remove('active', 'done');
+  });
+  animateStages();
+
+  try {
+    const res = await fetch(`${API}/api/trace`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: lastQuestion, max_iterations: 6 }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `Server error ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    document.querySelectorAll('.stage-node').forEach(n => {
+      n.classList.remove('active');
+      n.classList.add('done');
+    });
+
+    setTimeout(() => {
+      document.getElementById('processing').classList.remove('active');
+      renderResults(data);
+      // Hide dig deeper after Phase 2
+      document.getElementById('digDeeper').style.display = 'none';
+    }, 500);
+
+  } catch (err) {
+    document.getElementById('processing').classList.remove('active');
+    document.getElementById('errorMessage').textContent = err.message;
+    document.getElementById('errorCard').classList.add('active');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Dig Deeper';
+  }
 }
 
 // Allow Ctrl+Enter to submit
