@@ -282,6 +282,14 @@ body {
 
 .results.active { display: block; }
 
+/* Input collapsed state */
+.input-section.collapsed .input-box textarea {
+  min-height: 40px;
+  height: 40px;
+}
+
+.input-section.collapsed .input-hint { display: none; }
+
 /* Speech Hero */
 .speech-card {
   background: var(--bg-card);
@@ -290,7 +298,6 @@ body {
   padding: 2rem;
   margin-bottom: 1.5rem;
   position: relative;
-  overflow: hidden;
 }
 
 .speech-card::before {
@@ -995,6 +1002,7 @@ async function submitQuestion() {
 
   document.getElementById('errorCard').classList.remove('active');
   document.getElementById('results').classList.remove('active');
+  document.querySelector('.input-section').classList.remove('collapsed');
   document.getElementById('processing').classList.add('active');
 
   // Reset stages
@@ -1111,7 +1119,8 @@ function renderResults(data) {
   renderFunnel(data.funnel || []);
 
   document.getElementById('results').classList.add('active');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelector('.input-section').classList.add('collapsed');
+  document.getElementById('speechCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderTrajectories(trajectories) {
