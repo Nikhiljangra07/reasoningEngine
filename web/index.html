@@ -4,434 +4,444 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LoRa Deep Reasoning Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #08080e;
-  --bg-card: #0f1018;
-  --bg-card-hover: #141520;
-  --border: #1e1f2e;
-  --border-active: #2a2c42;
-  --text: #d4d4e0;
-  --text-dim: #6b6d80;
-  --text-bright: #f0f0f8;
-  --accent: #7c6aef;
-  --accent-glow: rgba(124, 106, 239, 0.15);
-
-  /* Wu Xing Element Colors */
-  --earth: #c9944a;    /* Physics */
-  --metal: #8a9bb0;    /* Mathematics */
-  --water: #4a8cc9;    /* Psychology */
-  --wood: #5ab870;     /* Philosophy */
-  --fire: #d45454;     /* Chemistry */
-
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --bg: #0a0b08;
+  --bg-card: hsl(45 15% 10%);
+  --bg-user: hsl(45 8% 13%);
+  --bg-lora: hsl(45 10% 10%);
+  --bg-deep: #0c1210;
+  --border: hsl(45 8% 16%);
+  --border-deep: rgba(16, 185, 129, 0.15);
+  --text: #d4d4d0;
+  --text-dim: #6b6d65;
+  --text-bright: #f0f0ec;
+  --primary: hsl(163 92% 25%);
+  --primary-glow: rgba(15, 155, 122, 0.12);
+  --fire: #d45454;
+  --earth: #c9944a;
+  --metal: #8a9bb0;
+  --water: #4a8cc9;
+  --wood: #5ab870;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', monospace;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  line-height: 1.6;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* ── Scrollbar ────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
+/* ── Scrollbar ──────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
 
-/* ── Layout ───────────────────────────────────────────────── */
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+/* ── Top Bar ────────────────────────── */
+.topbar {
+  height: 48px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  padding: 0 1rem;
+  background: var(--bg);
 }
 
-/* ── Header ───────────────────────────────────────────────── */
-.header {
-  text-align: center;
-  padding: 2.5rem 0 2rem;
+.topbar-brand {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  letter-spacing: 0.06em;
 }
 
-.logo {
-  font-size: 1rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+.topbar-brand span { color: var(--primary); }
+
+.topbar-elements {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.el-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.topbar-stat {
+  font-size: 0.65rem;
   color: var(--text-dim);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+  font-family: var(--mono);
 }
 
-.title {
-  font-size: 2rem;
+/* ── Chat Area ──────────────────────── */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+}
+
+.chat-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Welcome ────────────────────────── */
+.welcome {
+  text-align: center;
+  padding: 4rem 1rem 2rem;
+}
+
+.welcome h1 {
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-bright);
   letter-spacing: -0.02em;
 }
 
-.title span { color: var(--accent); }
+.welcome h1 span { color: var(--primary); }
 
-.subtitle {
+.welcome p {
   margin-top: 0.5rem;
   color: var(--text-dim);
   font-size: 0.85rem;
-  font-weight: 400;
+  line-height: 1.6;
 }
 
-.elements-bar {
+.welcome-elements {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
 
-.element-tag {
+.welcome-el {
+  font-size: 0.68rem;
+  color: var(--text-dim);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
+  gap: 0.3rem;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.element-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+/* ── Messages ───────────────────────── */
+
+/* User message — right aligned */
+.msg-user {
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeUp 0.3s ease;
 }
 
-/* ── Input ────────────────────────────────────────────────── */
-.input-section {
-  margin: 2rem 0;
-}
-
-.input-box {
-  background: var(--bg-card);
+.msg-user-bubble {
+  max-width: 85%;
+  background: var(--bg-user);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
-  transition: border-color 0.3s;
-}
-
-.input-box:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.input-box textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--text-bright);
-  font-family: var(--font);
-  font-size: 0.95rem;
-  resize: none;
-  outline: none;
-  line-height: 1.7;
-  min-height: 80px;
-}
-
-.input-box textarea::placeholder {
-  color: var(--text-dim);
-}
-
-.input-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
-}
-
-.input-hint {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-}
-
-.btn-think {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 0.6rem 1.75rem;
-  border-radius: 8px;
-  font-family: var(--font);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.02em;
-}
-
-.btn-think:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-think:active { transform: translateY(0); }
-.btn-think:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-/* ── Processing ───────────────────────────────────────────── */
-.processing {
-  display: none;
-  margin: 2rem 0;
-}
-
-.processing.active { display: block; }
-
-.stages-pipeline {
-  display: flex;
-  gap: 0;
-  overflow-x: auto;
-  padding: 1rem 0;
-}
-
-.stage-node {
-  flex: 1;
-  min-width: 120px;
-  text-align: center;
-  position: relative;
-  padding: 0 0.5rem;
-}
-
-.stage-node::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: -2px;
-  width: calc(100% - 40px);
-  height: 2px;
-  background: var(--border);
-  z-index: 0;
-  left: calc(50% + 20px);
-}
-
-.stage-node:last-child::after { display: none; }
-
-.stage-node.active::after { background: var(--accent); }
-
-.stage-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 0.5rem;
+  border-radius: 12px 12px 2px 12px;
+  padding: 0.85rem 1.1rem;
   font-size: 0.9rem;
-  position: relative;
-  z-index: 1;
-  transition: all 0.4s;
+  line-height: 1.7;
+  color: var(--text-bright);
 }
 
-.stage-node.active .stage-icon {
-  border-color: var(--accent);
-  background: var(--accent-glow);
-  box-shadow: 0 0 16px var(--accent-glow);
+/* LoRa message — left aligned */
+.msg-lora {
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeUp 0.3s ease;
 }
 
-.stage-node.done .stage-icon {
-  border-color: var(--wood);
-  background: rgba(90, 184, 112, 0.1);
-  color: var(--wood);
-}
-
-.stage-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.stage-node.active .stage-label { color: var(--text); }
-
-.thinking-text {
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: var(--text-dim);
-}
-
-.thinking-text .dot-pulse::after {
-  content: '';
-  animation: dots 1.5s steps(4) infinite;
-}
-
-@keyframes dots {
-  0% { content: ''; }
-  25% { content: '.'; }
-  50% { content: '..'; }
-  75% { content: '...'; }
-}
-
-/* ── Results ──────────────────────────────────────────────── */
-.results {
-  display: none;
-  margin-top: 2rem;
-}
-
-.results.active { display: block; }
-
-/* Input collapsed state */
-.input-section.collapsed .input-box textarea {
-  min-height: 40px;
-  height: 40px;
-}
-
-.input-section.collapsed .input-hint { display: none; }
-
-/* Speech Hero */
-.speech-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
+.msg-lora-bubble {
+  max-width: 92%;
+  width: 100%;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-deep);
+  border-radius: 12px 12px 12px 2px;
+  padding: 1.25rem 1.4rem;
   position: relative;
 }
 
-.speech-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--wood), var(--fire), var(--earth), var(--metal), var(--water));
-}
-
-.speech-label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--accent);
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.speech-text {
-  font-size: 1.05rem;
+/* Speech text */
+.lora-speech {
+  font-size: 0.95rem;
   line-height: 1.85;
   color: var(--text-bright);
-  white-space: pre-wrap;
 }
 
-.dig-deeper {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+.lora-speech p { margin-bottom: 1rem; }
+.lora-speech p:last-child { margin-bottom: 0; }
+
+/* Metadata bar under speech */
+.lora-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--border);
 }
 
-.dig-deeper-text {
-  font-size: 0.85rem;
+.meta-chip {
+  font-size: 0.65rem;
+  font-family: var(--mono);
   color: var(--text-dim);
-  margin-bottom: 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.25rem 0.6rem;
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.meta-val { color: var(--text); font-weight: 600; }
+
+/* Dig deeper button */
+.dig-section {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .btn-dig {
   background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  padding: 0.55rem 1.5rem;
-  border-radius: 8px;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 0.45rem 1.25rem;
+  border-radius: 7px;
   font-family: var(--font);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  letter-spacing: 0.02em;
 }
 
-.btn-dig:hover { background: var(--accent-glow); transform: translateY(-1px); }
-.btn-dig:active { transform: translateY(0); }
-.btn-dig:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-dig:hover { background: var(--primary-glow); }
+.btn-dig:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Stats Bar */
-.stats-bar {
+.dig-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ── Expandable Details ─────────────── */
+.details-toggle {
+  margin-top: 0.85rem;
+  font-size: 0.75rem;
+  color: var(--primary);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.details-toggle:hover { text-decoration: underline; }
+
+.details-body {
+  display: none;
+  margin-top: 0.85rem;
+}
+
+.details-body.open { display: block; }
+
+/* Trajectory cards */
+.traj-list {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
 }
 
-.stat-chip {
-  background: var(--bg-card);
+.traj-item {
+  background: rgba(255,255,255,0.02);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.6rem 1rem;
-  font-size: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.traj-head {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.stat-value {
-  color: var(--text-bright);
-  font-weight: 600;
-  font-family: var(--mono);
-}
-
-.stat-label { color: var(--text-dim); }
-
-/* Trajectories */
-.trajectories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.trajectory-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.25rem;
-  transition: border-color 0.2s;
-}
-
-.trajectory-card:hover { border-color: var(--border-active); }
-
-.traj-rank {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  margin-bottom: 0.3rem;
 }
 
 .traj-name {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-bright);
-  margin-bottom: 0.4rem;
   word-break: break-word;
 }
 
+.traj-conf {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
 .traj-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
   line-height: 1.5;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
-.traj-conf {
+.traj-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.traj-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.traj-tags {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.traj-tag {
+  font-size: 0.6rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.traj-tag.hidden { background: rgba(212,84,84,0.12); color: var(--fire); }
+.traj-tag.visible { background: rgba(138,155,176,0.1); color: var(--metal); }
+
+/* Domain section */
+.domain-section {
+  margin-top: 0.75rem;
+}
+
+.domain-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.domain-header {
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.domain-header:hover { background: rgba(255,255,255,0.02); }
+
+.domain-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.domain-meta {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+.domain-arrow {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  margin-left: 0.5rem;
+}
+
+.domain-block.open .domain-arrow { transform: rotate(180deg); }
+
+.domain-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.domain-block.open .domain-body { max-height: 3000px; }
+
+.domain-content {
+  padding: 0 0.85rem 0.85rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.var-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0.15rem 0;
 }
 
-.conf-bar-bg {
+.var-dir { font-weight: 700; font-size: 0.7rem; min-width: 12px; text-align: center; }
+.var-dir.positive { color: var(--wood); }
+.var-dir.negative { color: var(--fire); }
+.var-dir.neutral { color: var(--metal); }
+.var-name { font-family: var(--mono); font-size: 0.68rem; color: var(--text); }
+.var-conf { margin-left: auto; font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); }
+.var-hidden-tag { font-size: 0.55rem; background: rgba(212,84,84,0.12); color: var(--fire); padding: 0.08rem 0.3rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
+
+/* Ke cycle */
+.ke-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.ke-row:last-child { border-bottom: none; }
+
+.ke-label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.ke-bar {
   flex: 1;
   height: 4px;
   background: var(--border);
@@ -439,585 +449,544 @@ body {
   overflow: hidden;
 }
 
-.conf-bar {
+.ke-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.6s ease;
-}
-
-.conf-text {
-  font-size: 0.7rem;
-  font-family: var(--mono);
-  font-weight: 500;
-  color: var(--text-dim);
-  min-width: 36px;
-  text-align: right;
-}
-
-.traj-badge {
-  display: inline-block;
-  font-size: 0.6rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  background: rgba(212, 84, 84, 0.12);
-  color: var(--fire);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.5rem;
-}
-
-.traj-badge.not-hidden {
-  background: rgba(138, 155, 176, 0.12);
-  color: var(--metal);
-}
-
-/* Section headers */
-.section-header {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-/* Expandable Panels */
-.panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 0.75rem;
-  overflow: hidden;
-}
-
-.panel-header {
-  padding: 0.9rem 1.25rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.panel-header:hover { background: var(--bg-card-hover); }
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.panel-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.panel-meta {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  font-family: var(--mono);
-}
-
-.panel-arrow {
-  color: var(--text-dim);
-  transition: transform 0.3s;
-  font-size: 0.7rem;
-}
-
-.panel.open .panel-arrow { transform: rotate(180deg); }
-
-.panel-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.35s ease;
-}
-
-.panel.open .panel-body { max-height: 2000px; }
-
-.panel-content {
-  padding: 0 1.25rem 1.25rem;
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: var(--text-dim);
-}
-
-/* Perspective list */
-.perspective {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.perspective:last-child { border-bottom: none; }
-
-.persp-framework {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-}
-
-.persp-vars {
-  margin-top: 0.4rem;
-}
-
-.persp-var {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  font-size: 0.75rem;
-}
-
-.var-dir {
-  font-size: 0.65rem;
-  font-weight: 600;
-  min-width: 14px;
-  text-align: center;
-}
-
-.var-dir.positive { color: var(--wood); }
-.var-dir.negative { color: var(--fire); }
-.var-dir.neutral { color: var(--metal); }
-
-.var-name {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--text);
-}
-
-.var-conf {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  font-family: var(--mono);
-  margin-left: auto;
-}
-
-.var-hidden {
-  font-size: 0.55rem;
-  background: rgba(212, 84, 84, 0.12);
-  color: var(--fire);
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* Ke Results */
-.ke-pair {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.ke-pair:last-child { border-bottom: none; }
-
-.ke-arrow {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  font-family: var(--mono);
-  white-space: nowrap;
-  min-width: 180px;
-}
-
-.ke-scrutiny-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.ke-scrutiny-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
 }
 
 .ke-score {
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  min-width: 36px;
+  min-width: 32px;
   text-align: right;
 }
 
-.ke-flags {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  margin-top: 0.25rem;
-  padding-left: 180px;
-}
-
 /* Convergence */
-.conv-timeline {
+.conv-row {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   overflow-x: auto;
-  padding: 0.5rem 0;
+  padding: 0.4rem 0;
 }
 
-.conv-iter {
-  min-width: 120px;
-  background: var(--bg);
+.conv-box {
+  min-width: 90px;
+  background: rgba(255,255,255,0.02);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.75rem;
+  border-radius: 6px;
+  padding: 0.6rem;
   text-align: center;
 }
 
-.conv-iter-num {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.conv-gibbs {
-  font-family: var(--mono);
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.conv-gibbs.converged { color: var(--wood); }
-.conv-gibbs.not-converged { color: var(--fire); }
-
-.conv-detail {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  margin-top: 0.4rem;
-  line-height: 1.4;
-}
-
-/* Funnel */
-.funnel-row {
-  display: flex;
-  gap: 2rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border);
-  align-items: center;
-}
-
-.funnel-row:last-child { border-bottom: none; }
-
-.funnel-label {
-  font-size: 0.65rem;
+.conv-label {
+  font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
   font-weight: 600;
-  min-width: 80px;
+  margin-bottom: 0.3rem;
 }
 
-.funnel-bar-group {
+.conv-val {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.conv-val.yes { color: var(--wood); }
+.conv-val.no { color: var(--fire); }
+
+.conv-sub {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+  line-height: 1.3;
+}
+
+/* Funnel */
+.funnel-pass {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+}
+
+.funnel-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  min-width: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.funnel-bars {
   flex: 1;
   display: flex;
-  gap: 0.5rem;
+  gap: 3px;
   align-items: center;
 }
 
-.funnel-segment {
-  height: 20px;
-  border-radius: 4px;
+.funnel-seg {
+  height: 16px;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-family: var(--mono);
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
-  min-width: 30px;
-  transition: width 0.5s ease;
+  color: rgba(255,255,255,0.7);
+  min-width: 28px;
 }
 
-.funnel-segment.kept { background: var(--wood); }
-.funnel-segment.work { background: var(--earth); }
-.funnel-segment.stable { background: var(--water); }
-.funnel-segment.cached { background: var(--border-active); color: var(--text-dim); }
+.funnel-seg.kept { background: var(--wood); }
+.funnel-seg.work { background: var(--earth); }
+.funnel-seg.stable { background: var(--water); }
+.funnel-seg.cached { background: rgba(255,255,255,0.06); color: var(--text-dim); }
 
-/* Raw analysis preview */
-.raw-preview {
-  background: var(--bg);
+/* Raw preview */
+.raw-box {
+  background: rgba(0,0,0,0.3);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.75rem;
-  margin-top: 0.75rem;
+  border-radius: 5px;
+  padding: 0.6rem;
+  margin-top: 0.5rem;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
-  line-height: 1.6;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 200px;
+  max-height: 160px;
   overflow-y: auto;
 }
 
-/* Error */
-.error-card {
-  background: rgba(212, 84, 84, 0.08);
-  border: 1px solid rgba(212, 84, 84, 0.25);
-  border-radius: 10px;
-  padding: 1.25rem;
-  margin: 1.5rem 0;
-  display: none;
-}
-
-.error-card.active { display: block; }
-
-.error-title {
+/* Section label inside details */
+.detail-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
   font-weight: 600;
-  color: var(--fire);
-  font-size: 0.85rem;
-  margin-bottom: 0.4rem;
+  margin: 0.85rem 0 0.4rem;
 }
 
-.error-message {
+.detail-label:first-child { margin-top: 0; }
+
+/* ── Thinking Indicator ─────────────── */
+.msg-thinking {
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeUp 0.3s ease;
+}
+
+.thinking-bubble {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-deep);
+  border-radius: 12px 12px 12px 2px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.thinking-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: dotPulse 1.4s infinite;
+}
+
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+.thinking-label {
   font-size: 0.8rem;
   color: var(--text-dim);
 }
 
-/* Footer */
-.footer {
-  text-align: center;
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-  color: var(--text-dim);
+.thinking-stage {
   font-size: 0.7rem;
+  color: var(--primary);
+  font-weight: 500;
+  margin-left: 0.5rem;
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .app { padding: 1rem; }
-  .title { font-size: 1.5rem; }
-  .elements-bar { gap: 0.75rem; flex-wrap: wrap; }
-  .stages-pipeline { flex-wrap: wrap; }
-  .stage-node::after { display: none; }
-  .trajectories-grid { grid-template-columns: 1fr; }
-  .stats-bar { gap: 0.5rem; }
-  .stat-chip { flex: 1; min-width: 100px; }
-  .ke-arrow { min-width: 100px; font-size: 0.65rem; }
-  .ke-flags { padding-left: 0; }
+/* ── Input Bar ──────────────────────── */
+.input-bar {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 0.85rem 1rem;
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.input-wrap textarea {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  color: var(--text-bright);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: 44px;
+  max-height: 160px;
+  transition: border-color 0.2s;
+}
+
+.input-wrap textarea:focus {
+  border-color: var(--primary);
+}
+
+.input-wrap textarea::placeholder { color: var(--text-dim); }
+
+.btn-send {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+  font-size: 1.1rem;
+}
+
+.btn-send:hover { opacity: 0.85; }
+.btn-send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Animations ─────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Responsive ─────────────────────── */
+@media (max-width: 600px) {
+  .topbar-elements { display: none; }
+  .topbar-stat { display: none; }
+  .msg-user-bubble { max-width: 92%; }
+  .ke-label { min-width: 90px; font-size: 0.6rem; }
 }
 </style>
 </head>
 <body>
 
-<div class="app">
-
-  <!-- Header -->
-  <header class="header">
-    <div class="logo">LoRa</div>
-    <h1 class="title">Deep <span>Reasoning</span> Engine</h1>
-    <p class="subtitle">5 domains &middot; 63 concepts &middot; Wu Xing dual-cycle architecture</p>
-    <div class="elements-bar">
-      <div class="element-tag"><div class="element-dot" style="background:var(--earth)"></div> Physics</div>
-      <div class="element-tag"><div class="element-dot" style="background:var(--metal)"></div> Mathematics</div>
-      <div class="element-tag"><div class="element-dot" style="background:var(--water)"></div> Psychology</div>
-      <div class="element-tag"><div class="element-dot" style="background:var(--wood)"></div> Philosophy</div>
-      <div class="element-tag"><div class="element-dot" style="background:var(--fire)"></div> Chemistry</div>
-    </div>
-  </header>
-
-  <!-- Input -->
-  <section class="input-section">
-    <div class="input-box">
-      <textarea id="questionInput" rows="3" placeholder="What's on your mind? Describe your situation, decision, or problem..."></textarea>
-      <div class="input-footer">
-        <span class="input-hint">LoRa reasons about human problems — career, relationships, business, life decisions.</span>
-        <button class="btn-think" id="btnThink" onclick="submitQuestion()">Think</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Error -->
-  <div class="error-card" id="errorCard">
-    <div class="error-title">Something went wrong</div>
-    <div class="error-message" id="errorMessage"></div>
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-brand">LoRa <span>Deep Reasoning</span></div>
+  <div class="topbar-elements">
+    <span class="el-dot" style="background:var(--earth)"></span>
+    <span class="el-dot" style="background:var(--metal)"></span>
+    <span class="el-dot" style="background:var(--water)"></span>
+    <span class="el-dot" style="background:var(--wood)"></span>
+    <span class="el-dot" style="background:var(--fire)"></span>
   </div>
+  <div class="topbar-stat" id="topbarStat">5 domains &middot; 63 concepts</div>
+</div>
 
-  <!-- Processing -->
-  <section class="processing" id="processing">
-    <div class="stages-pipeline" id="stagesPipeline">
-      <div class="stage-node" data-stage="1">
-        <div class="stage-icon">&#x1F525;</div>
-        <div class="stage-label">Chemistry<br>Reads</div>
-      </div>
-      <div class="stage-node" data-stage="2">
-        <div class="stage-icon">&#x1F30C;</div>
-        <div class="stage-label">Manifold<br>Opens</div>
-      </div>
-      <div class="stage-node" data-stage="3">
-        <div class="stage-icon">&#x262F;</div>
-        <div class="stage-label">Dual<br>Cycles</div>
-      </div>
-      <div class="stage-node" data-stage="4">
-        <div class="stage-icon">&#x1F4CA;</div>
-        <div class="stage-label">Bayesian<br>Backbone</div>
-      </div>
-      <div class="stage-node" data-stage="5">
-        <div class="stage-icon">&#x1F3AF;</div>
-        <div class="stage-label">Convergence<br>Check</div>
-      </div>
-      <div class="stage-node" data-stage="6">
-        <div class="stage-icon">&#x1F6E1;</div>
-        <div class="stage-label">Fragility<br>Gate</div>
-      </div>
-      <div class="stage-node" data-stage="7">
-        <div class="stage-icon">&#x1F5E3;</div>
-        <div class="stage-label">Speech<br>Module</div>
+<!-- Chat Area -->
+<div class="chat-area" id="chatArea">
+  <div class="chat-container" id="chatContainer">
+    <div class="welcome" id="welcome">
+      <h1>LoRa <span>Deep Reasoning</span></h1>
+      <p>5 domains &middot; 63 concepts &middot; Wu Xing dual-cycle architecture<br>
+      Describe your situation. LoRa will reason about it.</p>
+      <div class="welcome-elements">
+        <span class="welcome-el"><span class="el-dot" style="background:var(--earth)"></span> Physics</span>
+        <span class="welcome-el"><span class="el-dot" style="background:var(--metal)"></span> Mathematics</span>
+        <span class="welcome-el"><span class="el-dot" style="background:var(--water)"></span> Psychology</span>
+        <span class="welcome-el"><span class="el-dot" style="background:var(--wood)"></span> Philosophy</span>
+        <span class="welcome-el"><span class="el-dot" style="background:var(--fire)"></span> Chemistry</span>
       </div>
     </div>
-    <div class="thinking-text">
-      LoRa is reasoning<span class="dot-pulse"></span>
-    </div>
-  </section>
+  </div>
+</div>
 
-  <!-- Results -->
-  <section class="results" id="results">
-
-    <!-- Speech -->
-    <div class="speech-card" id="speechCard">
-      <div class="speech-label">LoRa's Response</div>
-      <div class="speech-text" id="speechText"></div>
-      <div class="dig-deeper" id="digDeeper" style="display:none">
-        <div class="dig-deeper-text" id="digDeeperText"></div>
-        <button class="btn-dig" id="btnDig" onclick="digDeeper()">Dig Deeper</button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-bar" id="statsBar"></div>
-
-    <!-- Trajectories -->
-    <div class="section-header">Trajectories Found</div>
-    <div class="trajectories-grid" id="trajGrid"></div>
-
-    <!-- Domain Panels -->
-    <div class="section-header">Domain Analysis</div>
-    <div id="domainPanels"></div>
-
-    <!-- Ke Cycle -->
-    <div class="section-header">Ke Cycle (Controlling Challenges)</div>
-    <div class="panel" id="kePanel">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <div class="panel-title">
-          <div class="panel-dot" style="background:var(--accent)"></div>
-          Wu Xing Ke Pairs
-        </div>
-        <div class="panel-meta" id="keMeta"></div>
-        <div class="panel-arrow">&#x25BC;</div>
-      </div>
-      <div class="panel-body">
-        <div class="panel-content" id="keContent"></div>
-      </div>
-    </div>
-
-    <!-- Convergence -->
-    <div class="section-header">Convergence History</div>
-    <div class="panel" id="convPanel">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <div class="panel-title">
-          <div class="panel-dot" style="background:var(--wood)"></div>
-          Gibbs Free Energy
-        </div>
-        <div class="panel-meta" id="convMeta"></div>
-        <div class="panel-arrow">&#x25BC;</div>
-      </div>
-      <div class="panel-body">
-        <div class="panel-content" id="convContent"></div>
-      </div>
-    </div>
-
-    <!-- Funnel -->
-    <div class="section-header">Funnel Filtering</div>
-    <div class="panel" id="funnelPanel">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <div class="panel-title">
-          <div class="panel-dot" style="background:var(--earth)"></div>
-          Variable Funnel
-        </div>
-        <div class="panel-meta" id="funnelMeta"></div>
-        <div class="panel-arrow">&#x25BC;</div>
-      </div>
-      <div class="panel-body">
-        <div class="panel-content" id="funnelContent"></div>
-      </div>
-    </div>
-
-  </section>
-
-  <footer class="footer">
-    LoRa Deep Reasoning Engine &middot; Wu Xing Architecture &middot; 5 Domains &middot; 63 Concepts
-  </footer>
-
+<!-- Input Bar -->
+<div class="input-bar">
+  <div class="input-wrap">
+    <textarea id="input" rows="1" placeholder="What's on your mind?" oninput="autoResize(this)"></textarea>
+    <button class="btn-send" id="btnSend" onclick="send()">&#x2191;</button>
+  </div>
 </div>
 
 <script>
 const API = window.location.origin;
 let lastQuestion = '';
+let isProcessing = false;
 
-const DOMAIN_COLORS = {
-  physics: '#c9944a',
-  mathematics: '#8a9bb0',
-  psychology: '#4a8cc9',
-  philosophy: '#5ab870',
-  chemistry: '#d45454',
+const DC = {
+  physics: { color: '#c9944a', label: 'Physics (Earth)' },
+  mathematics: { color: '#8a9bb0', label: 'Mathematics (Metal)' },
+  psychology: { color: '#4a8cc9', label: 'Psychology (Water)' },
+  philosophy: { color: '#5ab870', label: 'Philosophy (Wood)' },
+  chemistry: { color: '#d45454', label: 'Chemistry (Fire)' },
 };
 
-const DOMAIN_LABELS = {
-  physics: 'Physics (Earth)',
-  mathematics: 'Mathematics (Metal)',
-  psychology: 'Psychology (Water)',
-  philosophy: 'Philosophy (Wood)',
-  chemistry: 'Chemistry (Fire)',
-};
-
-function togglePanel(header) {
-  header.closest('.panel').classList.toggle('open');
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
 }
 
-async function submitQuestion() {
-  const input = document.getElementById('questionInput');
-  const question = input.value.trim();
-  if (!question) return;
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
 
-  lastQuestion = question;
+function scrollBottom() {
+  const area = document.getElementById('chatArea');
+  requestAnimationFrame(() => area.scrollTop = area.scrollHeight);
+}
 
-  const btn = document.getElementById('btnThink');
-  btn.disabled = true;
-  btn.textContent = 'Thinking...';
+function addUserMsg(text) {
+  document.getElementById('welcome')?.remove();
+  const div = document.createElement('div');
+  div.className = 'msg-user';
+  div.innerHTML = `<div class="msg-user-bubble">${esc(text)}</div>`;
+  document.getElementById('chatContainer').appendChild(div);
+  scrollBottom();
+}
 
-  document.getElementById('errorCard').classList.remove('active');
-  document.getElementById('results').classList.remove('active');
-  document.querySelector('.input-section').classList.remove('collapsed');
-  document.getElementById('processing').classList.add('active');
-
-  // Reset stages
-  document.querySelectorAll('.stage-node').forEach(n => {
-    n.classList.remove('active', 'done');
-  });
-
-  // Animate stages progressively
+function addThinking() {
+  const div = document.createElement('div');
+  div.className = 'msg-thinking';
+  div.id = 'thinkingMsg';
+  div.innerHTML = `
+    <div class="thinking-bubble">
+      <div class="thinking-dots"><span></span><span></span><span></span></div>
+      <span class="thinking-label">LoRa is reasoning</span>
+      <span class="thinking-stage" id="thinkingStage"></span>
+    </div>
+  `;
+  document.getElementById('chatContainer').appendChild(div);
+  scrollBottom();
   animateStages();
+}
+
+function removeThinking() {
+  document.getElementById('thinkingMsg')?.remove();
+  if (window._stageInterval) clearInterval(window._stageInterval);
+}
+
+function animateStages() {
+  const stages = [
+    'Chemistry reads...', 'Manifold opening...', 'Dual cycles...',
+    'Bayesian update...', 'Convergence check...', 'Fragility gate...',
+    'Speech module...'
+  ];
+  let i = 0;
+  const el = document.getElementById('thinkingStage');
+  if (!el) return;
+  el.textContent = stages[0];
+  window._stageInterval = setInterval(() => {
+    i = (i + 1) % stages.length;
+    if (el) el.textContent = stages[i];
+    scrollBottom();
+  }, 2500);
+}
+
+function addLoraMsg(data) {
+  const div = document.createElement('div');
+  div.className = 'msg-lora';
+
+  const s = data.stats || {};
+  const speechHtml = formatSpeech(data.speech || 'No response generated.');
+
+  let html = `<div class="msg-lora-bubble">
+    <div class="lora-speech">${speechHtml}</div>
+
+    <!-- Meta -->
+    <div class="lora-meta">
+      <div class="meta-chip"><span class="meta-val">${s.calls || 0}</span> calls</div>
+      <div class="meta-chip"><span class="meta-val">${((s.tokens || 0) / 1000).toFixed(1)}k</span> tokens</div>
+      <div class="meta-chip"><span class="meta-val">$${(s.cost || 0).toFixed(2)}</span></div>
+      <div class="meta-chip"><span class="meta-val">${s.iterations || 0}</span> iters</div>
+      <div class="meta-chip"><span class="meta-val">${s.converged ? 'Yes' : 'No'}</span> conv</div>
+      <div class="meta-chip"><span class="meta-val">${((data.total_time_ms || 0) / 1000).toFixed(1)}s</span></div>
+      <div class="meta-chip">${esc(data.delivery_mode || '—')} mode</div>
+    </div>`;
+
+  // Dig deeper
+  if (data.dig_deeper) {
+    html += `<div class="dig-section">
+      <button class="btn-dig" onclick="digDeeper(this)">Dig Deeper</button>
+      <span class="dig-hint">${esc(data.dig_deeper)}</span>
+    </div>`;
+  }
+
+  // Details toggle
+  html += `<div class="details-toggle" onclick="toggleDetails(this)">&#x25B6; Show engine details</div>`;
+  html += `<div class="details-body">`;
+
+  // Trajectories
+  const trajs = data.trajectories || [];
+  if (trajs.length) {
+    html += `<div class="detail-label">Trajectories (${trajs.length})</div><div class="traj-list">`;
+    for (const t of trajs) {
+      const conf = Math.round((t.confidence || 0) * 100);
+      const color = conf >= 80 ? 'var(--wood)' : conf >= 50 ? 'var(--earth)' : 'var(--fire)';
+      html += `<div class="traj-item">
+        <div class="traj-head">
+          <span class="traj-name">${esc(t.name)}</span>
+          <span class="traj-conf" style="color:${color}">${conf}%</span>
+        </div>
+        <div class="traj-desc">${esc(t.desc || '')}</div>
+        <div class="traj-bar"><div class="traj-bar-fill" style="width:${conf}%;background:${color}"></div></div>
+        <div class="traj-tags">
+          ${t.hidden ? '<span class="traj-tag hidden">Hidden</span>' : '<span class="traj-tag visible">Visible</span>'}
+          ${t.bias ? `<span class="traj-tag visible">${esc(t.bias)}</span>` : ''}
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Domains
+  const domains = data.domains || {};
+  const domOrder = ['physics','mathematics','psychology','philosophy','chemistry'];
+  const hasDomains = domOrder.some(d => domains[d]);
+  if (hasDomains) {
+    html += `<div class="detail-label">Domain Analysis</div><div class="domain-section">`;
+    for (const dom of domOrder) {
+      const d = domains[dom];
+      if (!d) continue;
+      const info = DC[dom];
+      const pCount = (d.perspectives||[]).length;
+      const rCount = (d.root_causes||[]).length;
+
+      let bodyHtml = '';
+      for (const p of (d.perspectives||[])) {
+        bodyHtml += `<div style="margin-bottom:0.5rem"><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:${info.color};font-weight:600;margin-bottom:0.2rem">${esc(p.framework)}</div>`;
+        for (const v of (p.variables||[])) {
+          const dc = v.dir||'neutral';
+          const sym = dc==='positive'?'+':dc==='negative'?'-':'~';
+          bodyHtml += `<div class="var-row"><span class="var-dir ${dc}">${sym}</span><span class="var-name">${esc(v.name)}</span>${v.hidden?'<span class="var-hidden-tag">hidden</span>':''}<span class="var-conf">${Math.round((v.conf||0)*100)}%</span></div>`;
+        }
+        bodyHtml += `</div>`;
+      }
+      if (rCount) {
+        bodyHtml += `<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-weight:600;margin:0.5rem 0 0.25rem">Root Causes</div>`;
+        for (const rc of d.root_causes) {
+          bodyHtml += `<div style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03)"><span style="font-size:0.75rem;font-weight:600;color:var(--fire)">${esc(rc.name)}</span> <span style="font-family:var(--mono);font-size:0.65rem;color:var(--text-dim)">${Math.round((rc.confidence||0)*100)}%</span>${rc.hidden?'<span class="var-hidden-tag" style="margin-left:0.3rem">hidden</span>':''}<div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.15rem">${esc(rc.desc)}</div></div>`;
+        }
+      }
+      if (d.raw_preview) bodyHtml += `<div class="raw-box">${esc(d.raw_preview)}</div>`;
+
+      html += `<div class="domain-block"><div class="domain-header" onclick="this.parentElement.classList.toggle('open')"><span><span class="domain-dot" style="background:${info.color}"></span>${info.label}</span><span><span class="domain-meta">${pCount}p &middot; ${rCount}r</span><span class="domain-arrow">&#x25BC;</span></span></div><div class="domain-body"><div class="domain-content">${bodyHtml}</div></div></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Ke cycle
+  const ke = data.ke || [];
+  if (ke.length) {
+    html += `<div class="detail-label">Ke Cycle (${ke.length} pairs)</div>`;
+    for (const k of ke) {
+      const sc = k.scrutiny || 0;
+      const pct = Math.round(sc * 100);
+      const col = sc > 0.5 ? 'var(--fire)' : sc > 0.3 ? 'var(--earth)' : 'var(--wood)';
+      html += `<div class="ke-row"><span class="ke-label">${esc(k.challenger)} &rarr; ${esc(k.target)}</span><div class="ke-bar"><div class="ke-fill" style="width:${pct}%;background:${col}"></div></div><span class="ke-score" style="color:${col}">${sc.toFixed(2)}</span></div>`;
+    }
+  }
+
+  // Convergence
+  const conv = data.convergence || [];
+  if (conv.length) {
+    html += `<div class="detail-label">Convergence</div><div class="conv-row">`;
+    for (const c of conv) {
+      const g = (c.gibbs||0).toFixed(3);
+      const cls = c.converged ? 'yes' : 'no';
+      html += `<div class="conv-box"><div class="conv-label">Iter ${c.iter||'?'}</div><div class="conv-val ${cls}">${g}</div><div class="conv-sub">&Delta;${(c.posterior_delta||0).toFixed(3)} | Ke ${(c.ke_scrutiny||0).toFixed(2)}</div></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Funnel
+  const funnel = data.funnel || [];
+  if (funnel.length) {
+    const maxT = Math.max(...funnel.map(f=>(f.kept||0)+(f.cached||0)+(f.needs_work||0)+(f.stable||0)),1);
+    html += `<div class="detail-label">Funnel</div>`;
+    for (let i=0; i<funnel.length; i++) {
+      const f = funnel[i];
+      const sc = 200;
+      html += `<div class="funnel-pass"><span class="funnel-label">Pass ${i+1}</span><div class="funnel-bars">`;
+      if (f.kept) html += `<div class="funnel-seg kept" style="width:${Math.max((f.kept/maxT)*sc,28)}px">${f.kept}</div>`;
+      if (f.needs_work) html += `<div class="funnel-seg work" style="width:${Math.max((f.needs_work/maxT)*sc,28)}px">${f.needs_work}</div>`;
+      if (f.stable) html += `<div class="funnel-seg stable" style="width:${Math.max((f.stable/maxT)*sc,28)}px">${f.stable}</div>`;
+      if (f.cached) html += `<div class="funnel-seg cached" style="width:${Math.max((f.cached/maxT)*sc,28)}px">${f.cached}</div>`;
+      html += `</div></div>`;
+    }
+  }
+
+  html += `</div></div>`; // close details-body + bubble
+
+  div.innerHTML = html;
+  document.getElementById('chatContainer').appendChild(div);
+  scrollBottom();
+}
+
+function formatSpeech(text) {
+  // Convert paragraphs
+  return text.split(/\n\n+/).map(p => `<p>${esc(p.trim())}</p>`).join('');
+}
+
+function toggleDetails(el) {
+  const body = el.nextElementSibling;
+  const isOpen = body.classList.toggle('open');
+  el.innerHTML = isOpen ? '&#x25BC; Hide engine details' : '&#x25B6; Show engine details';
+  scrollBottom();
+}
+
+async function send() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text || isProcessing) return;
+
+  lastQuestion = text;
+  input.value = '';
+  autoResize(input);
+
+  addUserMsg(text);
+  addThinking();
+
+  isProcessing = true;
+  document.getElementById('btnSend').disabled = true;
 
   try {
     const res = await fetch(`${API}/api/trace`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question: text }),
     });
 
     if (!res.ok) {
@@ -1026,328 +995,31 @@ async function submitQuestion() {
     }
 
     const data = await res.json();
-
-    // Mark all stages done
-    document.querySelectorAll('.stage-node').forEach(n => {
-      n.classList.remove('active');
-      n.classList.add('done');
-    });
-
-    setTimeout(() => {
-      document.getElementById('processing').classList.remove('active');
-      renderResults(data);
-    }, 500);
+    removeThinking();
+    addLoraMsg(data);
 
   } catch (err) {
-    document.getElementById('processing').classList.remove('active');
-    document.getElementById('errorMessage').textContent = err.message;
-    document.getElementById('errorCard').classList.add('active');
+    removeThinking();
+    const div = document.createElement('div');
+    div.className = 'msg-lora';
+    div.innerHTML = `<div class="msg-lora-bubble" style="border-color:rgba(212,84,84,0.25)"><div style="color:var(--fire);font-weight:600;font-size:0.85rem">Error</div><div style="color:var(--text-dim);font-size:0.8rem;margin-top:0.3rem">${esc(err.message)}</div></div>`;
+    document.getElementById('chatContainer').appendChild(div);
+    scrollBottom();
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Think';
+    isProcessing = false;
+    document.getElementById('btnSend').disabled = false;
+    document.getElementById('input').focus();
   }
 }
 
-function animateStages() {
-  const nodes = document.querySelectorAll('.stage-node');
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i > 0) nodes[i - 1].classList.remove('active');
-    if (i > 0) nodes[i - 1].classList.add('done');
-    if (i < nodes.length) {
-      nodes[i].classList.add('active');
-      i++;
-    } else {
-      // Loop back to cycling through 3-5 while waiting
-      clearInterval(interval);
-      let j = 2;
-      const loopInterval = setInterval(() => {
-        nodes.forEach((n, idx) => {
-          if (idx >= 2 && idx <= 4) n.classList.remove('active');
-        });
-        nodes[j].classList.add('active');
-        nodes[j].classList.remove('done');
-        j = j >= 4 ? 2 : j + 1;
-      }, 1200);
-      // Store so we can clear on result
-      window._stageLoop = loopInterval;
-    }
-  }, 800);
-  window._stageAnim = interval;
-}
+async function digDeeper(btn) {
+  if (!lastQuestion || isProcessing) return;
 
-function renderResults(data) {
-  if (window._stageLoop) clearInterval(window._stageLoop);
-  if (window._stageAnim) clearInterval(window._stageAnim);
-
-  // Speech
-  document.getElementById('speechText').textContent = data.speech || 'No response generated.';
-  if (data.dig_deeper) {
-    document.getElementById('digDeeper').style.display = 'block';
-    document.getElementById('digDeeperText').textContent = data.dig_deeper;
-  } else {
-    document.getElementById('digDeeper').style.display = 'none';
-  }
-
-  // Stats
-  const s = data.stats || {};
-  const f = data.formation || {};
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-chip"><span class="stat-value">${s.calls || 0}</span><span class="stat-label">LLM calls</span></div>
-    <div class="stat-chip"><span class="stat-value">${(s.tokens || 0).toLocaleString()}</span><span class="stat-label">tokens</span></div>
-    <div class="stat-chip"><span class="stat-value">$${(s.cost || 0).toFixed(2)}</span><span class="stat-label">cost</span></div>
-    <div class="stat-chip"><span class="stat-value">${s.iterations || 0}</span><span class="stat-label">iterations</span></div>
-    <div class="stat-chip"><span class="stat-value">${s.converged ? 'Yes' : 'No'}</span><span class="stat-label">converged</span></div>
-    <div class="stat-chip"><span class="stat-value">${data.delivery_mode || '—'}</span><span class="stat-label">delivery</span></div>
-    <div class="stat-chip"><span class="stat-value">${data.mode || '—'}</span><span class="stat-label">mode</span></div>
-    <div class="stat-chip"><span class="stat-value">${((data.total_time_ms || 0) / 1000).toFixed(1)}s</span><span class="stat-label">total time</span></div>
-  `;
-
-  // Trajectories
-  renderTrajectories(data.trajectories || []);
-
-  // Domain Panels
-  renderDomains(data.domains || {});
-
-  // Ke
-  renderKe(data.ke || []);
-
-  // Convergence
-  renderConvergence(data.convergence || []);
-
-  // Funnel
-  renderFunnel(data.funnel || []);
-
-  document.getElementById('results').classList.add('active');
-  document.querySelector('.input-section').classList.add('collapsed');
-  document.getElementById('speechCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function renderTrajectories(trajectories) {
-  const grid = document.getElementById('trajGrid');
-  if (!trajectories.length) {
-    grid.innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;padding:1rem;">No trajectories surfaced.</div>';
-    return;
-  }
-  grid.innerHTML = trajectories.map((t, i) => {
-    const conf = Math.round((t.confidence || 0) * 100);
-    const color = conf >= 80 ? 'var(--wood)' : conf >= 50 ? 'var(--earth)' : 'var(--fire)';
-    return `
-      <div class="trajectory-card">
-        <div class="traj-rank">Trajectory ${i + 1}</div>
-        <div class="traj-name">${esc(t.name || 'Unknown')}</div>
-        <div class="traj-desc">${esc(t.desc || '')}</div>
-        <div class="traj-conf">
-          <div class="conf-bar-bg"><div class="conf-bar" style="width:${conf}%;background:${color}"></div></div>
-          <div class="conf-text">${conf}%</div>
-        </div>
-        ${t.hidden ? '<div class="traj-badge">Hidden Variable</div>' : '<div class="traj-badge not-hidden">Visible</div>'}
-        ${t.bias ? `<div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.4rem">Bias: ${esc(t.bias)}</div>` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-function renderDomains(domains) {
-  const container = document.getElementById('domainPanels');
-  const domainOrder = ['physics', 'mathematics', 'psychology', 'philosophy', 'chemistry'];
-  let html = '';
-
-  for (const dom of domainOrder) {
-    const d = domains[dom];
-    if (!d) continue;
-
-    const color = DOMAIN_COLORS[dom];
-    const label = DOMAIN_LABELS[dom];
-    const perspCount = (d.perspectives || []).length;
-    const rootCount = (d.root_causes || []).length;
-
-    let bodyHtml = '';
-
-    // Perspectives
-    for (const p of (d.perspectives || [])) {
-      const fwColor = color;
-      bodyHtml += `<div class="perspective">
-        <div class="persp-framework" style="color:${fwColor}">${esc(p.framework || '')}</div>
-        <div class="persp-vars">`;
-      for (const v of (p.variables || [])) {
-        const dirClass = v.dir || 'neutral';
-        const dirSymbol = dirClass === 'positive' ? '+' : dirClass === 'negative' ? '-' : '~';
-        bodyHtml += `<div class="persp-var">
-          <span class="var-dir ${dirClass}">${dirSymbol}</span>
-          <span class="var-name">${esc(v.name || '')}</span>
-          ${v.hidden ? '<span class="var-hidden">hidden</span>' : ''}
-          <span class="var-conf">${Math.round((v.conf || 0) * 100)}%</span>
-        </div>`;
-      }
-      bodyHtml += `</div></div>`;
-    }
-
-    // Root causes
-    if ((d.root_causes || []).length > 0) {
-      bodyHtml += `<div style="margin-top:0.75rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-weight:600">Root Causes</div>`;
-      for (const rc of d.root_causes) {
-        bodyHtml += `<div class="perspective">
-          <div class="persp-framework" style="color:var(--fire)">
-            ${esc(rc.name || '')} &mdash; ${Math.round((rc.confidence || 0) * 100)}%
-            ${rc.hidden ? ' <span class="var-hidden">hidden</span>' : ''}
-          </div>
-          <div style="font-size:0.75rem;color:var(--text-dim)">${esc(rc.desc || '')}</div>
-          ${rc.bias ? `<div style="font-size:0.7rem;color:var(--earth);margin-top:0.2rem">Bias: ${esc(rc.bias)}</div>` : ''}
-        </div>`;
-      }
-    }
-
-    // Raw preview
-    if (d.raw_preview) {
-      bodyHtml += `<div class="raw-preview">${esc(d.raw_preview)}</div>`;
-    }
-
-    html += `
-      <div class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
-          <div class="panel-title">
-            <div class="panel-dot" style="background:${color}"></div>
-            ${label}
-          </div>
-          <div class="panel-meta">${perspCount} perspectives &middot; ${rootCount} roots</div>
-          <div class="panel-arrow">&#x25BC;</div>
-        </div>
-        <div class="panel-body">
-          <div class="panel-content">${bodyHtml}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
-
-function renderKe(keResults) {
-  const meta = document.getElementById('keMeta');
-  meta.textContent = `${keResults.length} pairs`;
-
-  const content = document.getElementById('keContent');
-  if (!keResults.length) {
-    content.innerHTML = '<div style="color:var(--text-dim)">No Ke challenges executed.</div>';
-    return;
-  }
-
-  let html = '';
-  for (const ke of keResults) {
-    const s = ke.scrutiny || 0;
-    const pct = Math.round(s * 100);
-    const color = s > 0.5 ? 'var(--fire)' : s > 0.3 ? 'var(--earth)' : 'var(--wood)';
-
-    html += `<div>
-      <div class="ke-pair">
-        <div class="ke-arrow">
-          <span style="color:${DOMAIN_COLORS[ke.challenger] || 'var(--text)'}">${esc(ke.challenger || '')}</span>
-          &rarr;
-          <span style="color:${DOMAIN_COLORS[ke.target] || 'var(--text)'}">${esc(ke.target || '')}</span>
-        </div>
-        <div class="ke-scrutiny-bar"><div class="ke-scrutiny-fill" style="width:${pct}%;background:${color}"></div></div>
-        <div class="ke-score" style="color:${color}">${s.toFixed(2)}</div>
-      </div>`;
-
-    const items = [...(ke.contradictions || []), ...(ke.flags || [])].slice(0, 3);
-    if (items.length) {
-      html += `<div class="ke-flags">${items.map(f => esc(typeof f === 'string' ? f : JSON.stringify(f))).join(' &middot; ')}</div>`;
-    }
-    html += '</div>';
-  }
-
-  content.innerHTML = html;
-}
-
-function renderConvergence(convergence) {
-  const meta = document.getElementById('convMeta');
-  const last = convergence[convergence.length - 1];
-  meta.textContent = last ? (last.converged ? 'Converged' : 'Not converged') : '—';
-
-  const content = document.getElementById('convContent');
-  if (!convergence.length) {
-    content.innerHTML = '<div style="color:var(--text-dim)">No convergence data.</div>';
-    return;
-  }
-
-  let html = '<div class="conv-timeline">';
-  for (const c of convergence) {
-    const g = (c.gibbs || 0).toFixed(3);
-    const cls = c.converged ? 'converged' : 'not-converged';
-    html += `<div class="conv-iter">
-      <div class="conv-iter-num">Iteration ${c.iter || '?'}</div>
-      <div class="conv-gibbs ${cls}">${g}</div>
-      <div class="conv-detail">
-        &Delta; posterior: ${(c.posterior_delta || 0).toFixed(3)}<br>
-        new vars: ${c.new_vars || 0}<br>
-        Ke avg: ${(c.ke_scrutiny || 0).toFixed(2)}
-      </div>
-    </div>`;
-  }
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-function renderFunnel(funnel) {
-  const meta = document.getElementById('funnelMeta');
-  const totalCached = funnel.reduce((sum, f) => sum + (f.cached || 0), 0);
-  meta.textContent = `${funnel.length} passes &middot; ${totalCached} cached`;
-
-  const content = document.getElementById('funnelContent');
-  if (!funnel.length) {
-    content.innerHTML = '<div style="color:var(--text-dim)">No funnel data.</div>';
-    return;
-  }
-
-  let html = '';
-  const maxTotal = Math.max(...funnel.map(f => (f.kept || 0) + (f.cached || 0) + (f.needs_work || 0) + (f.stable || 0)), 1);
-
-  for (let i = 0; i < funnel.length; i++) {
-    const f = funnel[i];
-    const total = (f.kept || 0) + (f.cached || 0);
-    const scale = 300;
-
-    const keptW = Math.max(((f.kept || 0) / maxTotal) * scale, 30);
-    const workW = Math.max(((f.needs_work || 0) / maxTotal) * scale, f.needs_work ? 30 : 0);
-    const stableW = Math.max(((f.stable || 0) / maxTotal) * scale, f.stable ? 30 : 0);
-    const cachedW = Math.max(((f.cached || 0) / maxTotal) * scale, f.cached ? 30 : 0);
-
-    html += `<div class="funnel-row">
-      <div class="funnel-label">Pass ${i + 1}</div>
-      <div class="funnel-bar-group">
-        <div class="funnel-segment kept" style="width:${keptW}px" title="Kept">${f.kept || 0} kept</div>
-        ${f.needs_work ? `<div class="funnel-segment work" style="width:${workW}px" title="Needs work">${f.needs_work} work</div>` : ''}
-        ${f.stable ? `<div class="funnel-segment stable" style="width:${stableW}px" title="Stable">${f.stable} stable</div>` : ''}
-        ${f.cached ? `<div class="funnel-segment cached" style="width:${cachedW}px" title="Cached">${f.cached} cached</div>` : ''}
-      </div>
-    </div>`;
-  }
-
-  content.innerHTML = html;
-}
-
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-async function digDeeper() {
-  if (!lastQuestion) return;
-
-  const btn = document.getElementById('btnDig');
   btn.disabled = true;
   btn.textContent = 'Digging deeper...';
 
-  document.getElementById('errorCard').classList.remove('active');
-  document.getElementById('processing').classList.add('active');
-
-  // Reset stages
-  document.querySelectorAll('.stage-node').forEach(n => {
-    n.classList.remove('active', 'done');
-  });
-  animateStages();
+  addThinking();
+  isProcessing = true;
 
   try {
     const res = await fetch(`${API}/api/trace`, {
@@ -1362,36 +1034,29 @@ async function digDeeper() {
     }
 
     const data = await res.json();
-
-    document.querySelectorAll('.stage-node').forEach(n => {
-      n.classList.remove('active');
-      n.classList.add('done');
-    });
-
-    setTimeout(() => {
-      document.getElementById('processing').classList.remove('active');
-      renderResults(data);
-      // Hide dig deeper after Phase 2
-      document.getElementById('digDeeper').style.display = 'none';
-    }, 500);
+    removeThinking();
+    addLoraMsg(data);
+    btn.closest('.dig-section').remove();
 
   } catch (err) {
-    document.getElementById('processing').classList.remove('active');
-    document.getElementById('errorMessage').textContent = err.message;
-    document.getElementById('errorCard').classList.add('active');
-  } finally {
+    removeThinking();
     btn.disabled = false;
     btn.textContent = 'Dig Deeper';
+    alert('Error: ' + err.message);
+  } finally {
+    isProcessing = false;
   }
 }
 
-// Allow Ctrl+Enter to submit
-document.getElementById('questionInput').addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    submitQuestion();
+// Enter to send, Shift+Enter for newline
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
   }
 });
-</script>
 
+document.getElementById('input').focus();
+</script>
 </body>
 </html>
