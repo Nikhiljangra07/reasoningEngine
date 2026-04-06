@@ -343,24 +343,42 @@ def test_credit_failure():
 # 8.6: Speech Module Test
 # ===========================================================================
 
+def _make_speech_input(**overrides):
+    """Helper to build a valid SpeechInput with sensible defaults."""
+    from src.llm.speech import SpeechInput
+    defaults = dict(
+        findings_summary="Core tension between career stability and personal growth.",
+        trajectories_text="Trajectory 1: hidden energy drain (80%). Trajectory 2: identity conflict (75%).",
+        variable_d="The problem persists because it serves identity preservation.",
+        contradictions_text="",
+        metacognition_score=0.5,
+        delivery_mode="building",
+        user_original_text="I feel stuck and don't know what to do.",
+        user_key_phrases=["I feel stuck"],
+        user_emotional_markers=["stuck"],
+        is_phase_one=False,
+        depth_available=False,
+        estimated_additional_credits=None,
+        degraded=False,
+        degradation_level=None,
+        degradation_message="",
+        has_chirality=False,
+        has_teleology=False,
+        has_compressed_pressure=False,
+        has_false_prior=False,
+        has_dissonance=False,
+        credit_summary="5.0 credits used",
+    )
+    defaults.update(overrides)
+    return SpeechInput(**defaults)
+
+
 @test("8.6a Speech module generates response in all 3 delivery modes")
 async def test_speech_modes():
-    from src.llm.speech import generate_speech, SpeechInput
+    from src.llm.speech import generate_speech
     client = make_client()
-
     for mode in ["direct", "building", "gentle"]:
-        inp = SpeechInput(
-            findings_summary="Core tension between career stability and personal growth.",
-            trajectories_text="Trajectory 1: hidden energy drain (80%). Trajectory 2: identity conflict (75%).",
-            variable_d="The problem persists because it serves identity preservation.",
-            confidence=0.75,
-            delivery_mode=mode,
-            is_phase_one=False,
-            depth_available=False,
-            degraded=False,
-            degradation_message="",
-            credit_summary="5.0 credits used",
-        )
+        inp = _make_speech_input(delivery_mode=mode)
         result = await generate_speech(client, inp)
         assert result.response_text != "", f"Empty response for mode={mode}"
         assert result.credit_summary == "5.0 credits used"
@@ -368,18 +386,12 @@ async def test_speech_modes():
 
 @test("8.6b Speech module includes dig-deeper for Phase 1")
 async def test_speech_dig_deeper():
-    from src.llm.speech import generate_speech, SpeechInput
+    from src.llm.speech import generate_speech
     client = make_client()
-    inp = SpeechInput(
-        findings_summary="Initial findings.",
-        trajectories_text="Trajectory 1: test (70%).",
-        variable_d=None,
-        confidence=0.7,
-        delivery_mode="building",
+    inp = _make_speech_input(
         is_phase_one=True,
         depth_available=True,
-        degraded=False,
-        degradation_message="",
+        estimated_additional_credits=15.0,
         credit_summary="3.0 credits",
     )
     result = await generate_speech(client, inp)

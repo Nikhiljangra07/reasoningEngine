@@ -975,7 +975,108 @@ All architectural decisions, build actions, and iterations — recorded in order
   - 22 Sonnet calls total. $0.28 cost. 73 seconds engine + speech.
 - **Verdict:** LoRa's first real voice. The speech module followed all 4 steps, used the user's actual language, avoided all prohibited terminology, matched building delivery mode, stayed under 150 words, and ended with an open question. The output reads like a conversation with someone who spent 30 minutes thinking about the user's problem — which is exactly the benchmark.
 
+### Decision 026 — Web UI: Chat Interface (2026-04-05)
+- **What:** Built a single-page chat UI served by `server.py` at `/`, replacing the earlier card-based layout that clipped responses.
+- **Files created:**
+  - `web/index.html` — full chat-based UI in one file (HTML + CSS + JS, ~750 lines, no build step)
+- **Key UI patterns (taken from presence-whispers production frontend):**
+  - User messages right-aligned, LoRa responses left-aligned
+  - Full speech text always visible (no overflow clipping, no card height limits)
+  - Animated thinking indicator with cycling stage names (Chemistry reads → Dual cycles → Convergence check → ...)
+  - Metadata chips inline under each response (calls, tokens, cost, iterations, time, delivery mode, mode)
+  - "Show engine details" toggle reveals: trajectories, all 5 domain panels, Ke cycle scores, convergence timeline, funnel filtering — collapsed by default so the response is the hero
+  - Per-domain colored panels with concept-labeled perspectives, root causes, and (after Decision 030) collapsed raw output
+  - Wu Xing element colors: Earth (Physics #c9944a), Metal (Math #8a9bb0), Water (Psychology #4a8cc9), Wood (Philosophy #5ab870), Fire (Chemistry #d45454)
+  - Dark theme matching LoRa's Wraith design language
+  - Enter to send, Shift+Enter for newline
+- **Server-side changes (`server.py`):** mounted `/static` for the web directory, root `/` returns the index.html FileResponse, kept `/api/trace` as the JSON API.
+- **Verification:** Browser test at http://localhost:8100 — full speech output visible, all engine details accessible, no clipping.
+
+### Decision 027 — Phase 2 Dig Deeper Fix (2026-04-05)
+- **What:** Fixed two related bugs in the Dig Deeper / Phase 2 flow.
+- **Bug 1:** Phase 2 was re-running the engine from scratch and producing nearly identical output to Phase 1. Cause: Phase 1 findings were never passed back as context for Phase 2.
+- **Bug 2:** "Dig Deeper" button kept appearing after Phase 2 — infinite loop of paying tokens for nearly-same answers. Cause: server hardcoded `is_phase_one=True` regardless of iteration count.
+- **Fix in `server.py`:**
+  - Added `phase1_summary` body parameter and `is_phase_one = max_iterations <= 2` derivation
+  - When `phase1_summary` is provided, the engine receives `problem.context` with explicit instruction: "PHASE 2 — DEEPER ANALYSIS. Do NOT repeat Phase 1. Challenge it. Find what was missed. Surface second-order effects."
+  - Speech module now correctly receives `is_phase_one=False` for Phase 2 → no dig-deeper prompt, full 500-word response mode
+- **Fix in `web/index.html`:** UI stores Phase 1 speech + trajectories and sends them as `phase1_summary` when the user clicks Dig Deeper.
+
+### Decision 028 — Engine Bug Fixes (Concept Coverage + Ke Differentiation) (2026-04-05)
+- **What:** Fixed 6 critical engine bugs uncovered during live testing. Most consequential commit since the original build.
+- **Root cause of Problems 2-6 (concept coverage):** The engine parser in `src/llm/engine.py:_parse_domain_response()` was hardcoding every finding's framework to the domain's PRIMARY framework via `_domain_to_framework()`. So even when Sonnet correctly returned `"type": "DISSONANCE"`, the parser overwrote it with `DUAL_PROCESS`. This made it look like Psychology only used Dual Process, Philosophy only used Ontology, Chemistry only Catalysis, Physics only First Principles, Math only Bayesian — when in reality the LLM was returning varied output, the parser was just collapsing it.
+- **Fix in `src/llm/engine.py`:**
+  - Added `_concept_to_framework()` lookup with 60+ aliases that maps the LLM's `concept` field (case-insensitive, with synonyms like "ontological"→ONTOLOGY, "dissonance"→COGNITIVE_DISSONANCE) to the actual `FrameworkID`
+  - Parser now reads `finding.concept` first, falls back to `finding.type`, falls back to domain primary only if both are missing
+  - Parser also reads `finding.is_hidden` directly instead of inferring from type
+- **Fix in `src/llm/prompts.py`:** Rewrote all 5 domain prompts to require an explicit `concept` field per finding and enforce minimum concept coverage:
+  - Physics: 4+ concepts across BOTH Phase 1 (root finding) and Phase 2 (bias penetration)
+  - Mathematics: 4+ layers, with `signal_noise`, `bayesian_inference`, `convergence` always required, and `game_theory` REQUIRED if multiple actors exist
+  - Psychology: ALL 5 concepts (dual_process, cognitive_dissonance, motivated_reasoning, dialectical_thinking, metacognition)
+  - Philosophy: ALL 5 concepts in sequence (ontology → epistemology → phenomenology → dialectics → teleology)
+  - Chemistry: ALL 3 analytical concepts (chirality, catalysis, resonance)
+- **Root cause of Problem 1 (Ke uniformity):** The Ke critic prompt let Sonnet freely pick a scrutiny score, and it defaulted to 0.70 every time across all 5 challenge pairs. The score wasn't derived from anything specific.
+- **Fix in `src/llm/prompts.py` (Ke critic):** Replaced free-form scoring with structured 5-dimension evaluation:
+  1. EVIDENCE_GAPS — claims without supporting evidence
+  2. UNEXAMINED_ASSUMPTIONS — assumptions treated as facts
+  3. MISSING_PERSPECTIVES — angles not considered
+  4. LOGICAL_COHERENCE — do conclusions follow from evidence
+  5. OVERCONFIDENCE — confidence justified by evidence depth
+  Each dimension gets 0.0-1.0 with justification. Final scrutiny is the AVERAGE of the 5.
+- **Fix in `src/llm/engine.py:_parse_ke_response()`:** Computes scrutiny as the average of dimension scores (more reliable than trusting the LLM's stated overall) and elevates dimension justifications into the flags list.
+- **Verification — single live test:**
+  - Ke pairs: 5 unique scores (0.768, 0.636, 0.712, 0.716, 0.758) — no two identical to two decimals
+  - Physics: 7 concepts (anomalous_motion, conservation_of_energy, entropy, entropy_leak, equilibrium, first_principles, potential_kinetic) — was 1 before
+  - Mathematics: 6 concepts (bayesian_inference, causal_loops, convergence, ergodicity_fragility, game_theory, signal_noise) — was 1 before
+  - Psychology: all 5 concepts — was 1 before
+  - Philosophy: all 5 concepts — was 1 before
+  - Chemistry: all 3 analytical concepts — was 1 before
+
+### Decision 029 — Cross-Domain Finding Deduplication (2026-04-05)
+- **What:** Added `_semantic_dedupe_root_causes()` in `src/llm/engine.py` to merge top-level findings that different domains describe in different words.
+- **Algorithm:** TF-IDF cosine similarity (reusing `src/llm/semantic.py`) on root cause descriptions + evidence. Threshold 0.6 (looser than the 0.7 bond threshold because these are user-facing). Greedy clustering: each cluster's highest-confidence root cause becomes the anchor; frameworks combine; evidence concatenates; cross-domain agreement boosts confidence by up to 0.15 (capped at 0.99).
+- **Why 0.6 threshold:** At 0.7 (the Valence bond threshold) too few findings get merged in practice. Top-level user-facing trajectories should be deduped more aggressively because the user shouldn't see "trust_performance_paradox" twice with different names from Physics and Psychology.
+- **Where it runs:** Inside `_build_trajectories()`, after exact-name dedup but before sorting and slicing top 4. Result: trajectory list is shorter and each entry represents a cross-domain consensus.
+
+### Decision 030 — Raw JSON Hidden in UI (2026-04-05)
+- **What:** Domain panels in the web UI no longer show raw LLM JSON output by default.
+- **Fix in `web/index.html`:** Added a "raw output" toggle that defaults to collapsed. Click to reveal the raw JSON for debugging. Keeps the UI clean for normal use without losing the developer escape hatch.
+
+### Decision 031 — Production Hardening (2026-04-05)
+- **What:** Audited the repo for deployment readiness and fixed all critical blockers. Made the engine production-ready.
+- **Audit findings:** 6 critical blockers, 10 major issues, 10 minor issues. Engine itself was sound — all problems were in the deployment shell.
+- **Files created:**
+  - `requirements.txt` — pinned to FastAPI 0.115+, uvicorn[standard] 0.30+, anthropic 0.40+, python-dotenv 1.0+
+  - `.env.example` — documents all environment variables (ANTHROPIC_API_KEY, PORT, HOST, CORS_ORIGINS, DEFAULT_MAX_ITERATIONS, MAX_PHASE2_ITERATIONS, MAX_PHASE1_SUMMARY_CHARS, MAX_QUESTION_CHARS) with placeholder values
+  - `README.md` — quick start, architecture overview, API docs, deployment instructions
+  - `Dockerfile` — Python 3.11-slim base, non-root user, layer caching for deps, healthcheck on `/health`, configurable PORT/HOST via env
+  - `.dockerignore` — excludes .git, .env, tests/, __pycache__, etc.
+- **Files modified:**
+  - `server.py` — full rewrite with production fixes (see below)
+  - `run.py` — replaced manual .env parser with `python-dotenv`
+  - `tests/test_integration.py` — fixed 8.6a and 8.6b which were calling `SpeechInput(confidence=...)` even though the dataclass has no `confidence` field. Added `_make_speech_input()` helper that builds a valid `SpeechInput` with all 21 required fields.
+  - `.gitignore` — added .DS_Store, *.log, venv/, .venv/, dist/, build/, *.egg-info/, .pytest_cache/, .vscode/, .idea/, .env.local
+- **Critical fixes in `server.py`:**
+  1. **Bare `except: pass` removed.** The findings parser silently swallowed all JSON parse errors. Replaced with `_parse_findings_from_response()` helper that catches specific exceptions and returns `[]` cleanly with logging.
+  2. **Race condition on `trace_events` global FIXED.** Module-level globals (`trace_events`, `trace_start`) were being reset on every request. Under concurrent traffic, request A's events could bleed into request B's response. Now: per-request local list + closure-based `emit()`. No globals. Concurrent requests are fully isolated.
+  3. **Endpoint-level error handling added.** The entire `/api/trace` body is wrapped in try/except. Engine failures return structured 500 with `request_id` for log correlation instead of crashing the request.
+  4. **Configurable port/host via env.** `PORT`, `HOST`, `CORS_ORIGINS` read from environment with sensible defaults. Was hardcoded `port=8100`.
+  5. **Input validation added.** Question size capped at `MAX_QUESTION_CHARS` (default 8000). `phase1_summary` capped at `MAX_PHASE1_SUMMARY_CHARS` (default 20000). `max_iterations` validated as int, clamped to [1, MAX_PHASE2_ITERATIONS*2]. Bad JSON body returns 400. Empty question returns 400.
+  6. **`/health` endpoint added.** Returns `{"status": "ok", "mode": "live|mock"}` for k8s/docker liveness probes.
+  7. **Structured logging added.** Replaced print statements with `logging` module. Each request gets a `request_id` (timestamp-based) that appears in start/done/error log lines for correlation. Log level configurable via `LOG_LEVEL` env var.
+  8. **CORS configurable.** `CORS_ORIGINS` env var (comma-separated) replaces hardcoded `["*"]`. Default still `*` for dev convenience but ready for production restriction.
+  9. **`python-dotenv` instead of manual parser.** Removed the duplicated naive .env parser from server.py and run.py. Now uses `load_dotenv()` which handles quoted values, escapes, and multiline values correctly.
+  10. **Type annotation fix.** `root()` had `-> FileResponse | JSONResponse` which crashed FastAPI's response model generator. Added `response_model=None` to disable auto-schema generation for this route.
+- **Test suite:** All 21 integration tests now pass (was 19/21 before the SpeechInput fix). End-to-end stress test: 10 problems, 10/10 converged, 8.3s total in mock mode.
+- **Live verification:**
+  - `/health` returns `{"status":"ok","mode":"live"}`
+  - Empty body POST → 400 `{"error":"Field 'question' is required"}`
+  - Malformed JSON POST → 400 `{"error":"Invalid JSON body"}`
+  - Real problem POST → 92s, 22 calls, $0.34, 5 unique Ke scores, 4 trajectories, full domain coverage
+- **Git history audit:** `git log --all --full-history -- .env` returned empty. The .env file was never committed. The API key has not been exposed in the repo.
+- **Status:** READY FOR DEPLOYMENT. All 6 critical blockers fixed. The Dockerfile builds a runnable container. The server can be deployed to any platform that supports Docker or Python 3.11+ with environment variables.
+
 ---
 
 *Created: April 1, 2026*
-*Status: ENGINE LIVE ON SONNET. Full pipeline operational: 5 domains (63 concepts) → Wu Xing dual cycles → funnel → convergence → speech module → narrated response. First live output produced. $0.28 per run. Next: tuning, iteration on speech prompt, production deployment.*
+*Status: PRODUCTION-READY. Engine live on Sonnet. Full pipeline: 5 domains (63 concepts) → Wu Xing dual cycles → funnel → convergence → speech module → narrated response. Web UI served at /. /health endpoint live. Dockerfile built. 21/21 integration tests passing. ~$0.30 per Phase 1 request, ~$0.90 per Phase 2 request. Next: deploy to a host, rotate API key on deploy, set CORS_ORIGINS for production frontend.*

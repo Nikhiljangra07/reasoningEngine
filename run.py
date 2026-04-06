@@ -13,15 +13,9 @@ import os
 import sys
 import time
 
-# Load .env
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(env_path):
-    with open(env_path) as f:
-        for line in f:
-            line = line.strip()
-            if line and "=" in line and not line.startswith("#"):
-                key, val = line.split("=", 1)
-                os.environ[key] = val
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from src.core.types import (
     Direction,
