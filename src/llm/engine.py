@@ -414,20 +414,27 @@ def _parse_domain_response(domain: Domain, response: LLMResponse) -> DomainOutpu
         findings = data.get("findings", [])
 
         for finding in findings:
+            # The LLM is required to specify which concept produced this finding.
+            # Map it to the actual FrameworkID — fall back to domain primary only if missing.
+            concept_str = finding.get("concept", "") or finding.get("type", "")
+            framework = _concept_to_framework(concept_str, domain)
+
             var = Variable(
                 name=finding.get("name", f"llm_{domain.value}_finding"),
                 description=finding.get("description", ""),
                 magnitude=float(finding.get("magnitude", 0.5)),
                 direction=Direction(finding.get("direction", "neutral")),
                 confidence=float(finding.get("confidence", 0.5)),
-                source_framework=_domain_to_framework(domain),
-                is_hidden=finding.get("type") in ("ROOT_CAUSE", "BIAS_DETECTION"),
+                source_framework=framework,
+                is_hidden=bool(finding.get("is_hidden", False)) or
+                          finding.get("label", "") in ("ROOT_CAUSE", "HIDDEN") or
+                          finding.get("type", "") in ("ROOT_CAUSE", "BIAS_DETECTION"),
                 is_user_stated=False,
                 evidence=finding.get("evidence", []),
             )
 
             perspectives.append(Perspective(
-                framework=_domain_to_framework(domain),
+                framework=framework,
                 domain=domain,
                 content=finding.get("description", ""),
                 variables_found=[var],
@@ -442,7 +449,7 @@ def _parse_domain_response(domain: Domain, response: LLMResponse) -> DomainOutpu
                     variable=var,
                     evidence_chain=var.evidence,
                     confidence=var.confidence,
-                    frameworks_that_agree=[_domain_to_framework(domain)],
+                    frameworks_that_agree=[framework],
                 ))
 
     except (json.JSONDecodeError, KeyError, TypeError, ValueError):
@@ -470,17 +477,55 @@ def _parse_domain_response(domain: Domain, response: LLMResponse) -> DomainOutpu
 def _parse_ke_response(
     challenger: Domain, target: Domain, response: LLMResponse
 ) -> ChallengeOutput:
-    """Parse a Ke critic LLM response into a ChallengeOutput."""
+    """Parse a Ke critic LLM response into a ChallengeOutput.
+
+    Computes scrutiny_score from the 5-dimension evaluation if individual
+    dimensions are present (more reliable than the LLM's stated score).
+    """
     try:
         data = json.loads(_strip_code_fences(response.content))
+
+        # Compute scrutiny from the 5 dimensions if available — more reliable
+        # than trusting the LLM's stated overall score.
+        dim_keys = [
+            "evidence_gaps", "unexamined_assumptions", "missing_perspectives",
+            "logical_coherence", "overconfidence",
+        ]
+        dim_scores: list[float] = []
+        for k in dim_keys:
+            v = data.get(k)
+            if isinstance(v, dict) and "score" in v:
+                try:
+                    dim_scores.append(float(v["score"]))
+                except (TypeError, ValueError):
+                    pass
+            elif isinstance(v, (int, float)):
+                dim_scores.append(float(v))
+
+        if len(dim_scores) >= 3:
+            # Use computed average — bypasses LLM defaulting to round numbers
+            scrutiny = round(sum(dim_scores) / len(dim_scores), 3)
+        else:
+            scrutiny = float(data.get("scrutiny_score", 0.3))
+
+        # Build flags from dimension justifications when present
+        flags = list(data.get("flags", []))
+        for k in dim_keys:
+            v = data.get(k)
+            if isinstance(v, dict):
+                score = v.get("score", 0)
+                just = v.get("justification", "")
+                if isinstance(score, (int, float)) and float(score) >= 0.5 and just:
+                    flags.append(f"{k}: {just}")
+
         return ChallengeOutput(
             challenger_domain=challenger,
             target_domain=target,
             contradictions=data.get("contradictions", []),
             unsupported_claims=data.get("unsupported_claims", []),
             confidence_adjustments=data.get("confidence_adjustments", {}),
-            scrutiny_score=float(data.get("scrutiny_score", 0.3)),
-            flags=data.get("flags", []),
+            scrutiny_score=max(0.0, min(1.0, scrutiny)),
+            flags=flags[:8],
         )
     except (json.JSONDecodeError, KeyError, TypeError, ValueError):
         return ChallengeOutput(
@@ -503,6 +548,99 @@ def _domain_to_framework(domain: Domain) -> FrameworkID:
     return mapping.get(domain, FrameworkID.BAYESIAN)
 
 
+# Concept name → FrameworkID lookup. Accepts the LLM's concept/type output
+# in any reasonable form (case-insensitive, with or without underscores).
+_CONCEPT_ALIASES: dict[str, FrameworkID] = {
+    # Physics
+    "first_principles": FrameworkID.FIRST_PRINCIPLES,
+    "conservation": FrameworkID.CONSERVATION_OF_ENERGY,
+    "conservation_of_energy": FrameworkID.CONSERVATION_OF_ENERGY,
+    "entropy": FrameworkID.ENTROPY,
+    "trajectory": FrameworkID.TRAJECTORY_MOMENTUM,
+    "trajectory_momentum": FrameworkID.TRAJECTORY_MOMENTUM,
+    "momentum": FrameworkID.TRAJECTORY_MOMENTUM,
+    "potential_kinetic": FrameworkID.POTENTIAL_KINETIC,
+    "potential_energy": FrameworkID.POTENTIAL_KINETIC,
+    "equilibrium": FrameworkID.EQUILIBRIUM,
+    "anomalous_motion": FrameworkID.ANOMALOUS_MOTION,
+    "anomaly": FrameworkID.ANOMALOUS_MOTION,
+    "socratic_squeeze": FrameworkID.SOCRATIC_SQUEEZE,
+    "socratic": FrameworkID.SOCRATIC_SQUEEZE,
+    "reference_frame": FrameworkID.REFERENCE_FRAME_SHIFT,
+    "reference_frame_shift": FrameworkID.REFERENCE_FRAME_SHIFT,
+    "entropy_leak": FrameworkID.ENTROPY_LEAK,
+    "reductio": FrameworkID.REDUCTIO,
+    "reductio_ad_absurdum": FrameworkID.REDUCTIO,
+    # Mathematics
+    "signal_noise": FrameworkID.SIGNAL_NOISE,
+    "signal_vs_noise": FrameworkID.SIGNAL_NOISE,
+    "category_theory": FrameworkID.CATEGORY_THEORY,
+    "category": FrameworkID.CATEGORY_THEORY,
+    "manifold": FrameworkID.MANIFOLD,
+    "dimensional_reduction": FrameworkID.DIMENSIONAL_REDUCTION,
+    "convergence": FrameworkID.CONVERGENCE,
+    "bayesian": FrameworkID.BAYESIAN,
+    "bayesian_inference": FrameworkID.BAYESIAN,
+    "game_theory": FrameworkID.GAME_THEORY,
+    "causal_loops": FrameworkID.CAUSAL_LOOPS,
+    "causal_loop": FrameworkID.CAUSAL_LOOPS,
+    "fragility": FrameworkID.FRAGILITY,
+    "ergodicity": FrameworkID.FRAGILITY,
+    "ergodicity_fragility": FrameworkID.FRAGILITY,
+    # Psychology
+    "dual_process": FrameworkID.DUAL_PROCESS,
+    "system_1_2": FrameworkID.DUAL_PROCESS,
+    "cognitive_dissonance": FrameworkID.COGNITIVE_DISSONANCE,
+    "dissonance": FrameworkID.COGNITIVE_DISSONANCE,
+    "motivated_reasoning": FrameworkID.MOTIVATED_REASONING,
+    "dialectical_thinking": FrameworkID.DIALECTICAL_THINKING,
+    "dialectical": FrameworkID.DIALECTICAL_THINKING,
+    "metacognition": FrameworkID.METACOGNITION,
+    # Philosophy
+    "ontology": FrameworkID.ONTOLOGY,
+    "ontological": FrameworkID.ONTOLOGY,
+    "epistemology": FrameworkID.EPISTEMOLOGY,
+    "epistemic": FrameworkID.EPISTEMOLOGY,
+    "phenomenology": FrameworkID.PHENOMENOLOGY,
+    "phenomenological": FrameworkID.PHENOMENOLOGY,
+    "dialectics": FrameworkID.DIALECTICS,
+    "teleology": FrameworkID.TELEOLOGY,
+    "teleological": FrameworkID.TELEOLOGY,
+    # Chemistry
+    "self_assembly": FrameworkID.SELF_ASSEMBLY,
+    "valence": FrameworkID.VALENCE,
+    "chemical_equilibrium": FrameworkID.CHEMICAL_EQUILIBRIUM,
+    "le_chateliers": FrameworkID.CHEMICAL_EQUILIBRIUM,
+    "chirality": FrameworkID.CHIRALITY,
+    "catalysis": FrameworkID.CATALYSIS,
+    "catalyst": FrameworkID.CATALYSIS,
+    "resonance": FrameworkID.RESONANCE,
+}
+
+
+def _concept_to_framework(concept_str: str, domain: Domain) -> FrameworkID:
+    """
+    Map an LLM-output concept name to a FrameworkID.
+    Accepts case variations, spaces, and common synonyms.
+    Falls back to the domain's primary framework only if unrecognized.
+    """
+    if not concept_str:
+        return _domain_to_framework(domain)
+
+    # Normalize: lowercase, strip, replace spaces/dashes with underscores
+    key = concept_str.strip().lower().replace(" ", "_").replace("-", "_")
+
+    if key in _CONCEPT_ALIASES:
+        return _CONCEPT_ALIASES[key]
+
+    # Try matching as a substring (e.g. "ontological_core" → "ontology")
+    for alias, fw in _CONCEPT_ALIASES.items():
+        if alias in key or key in alias:
+            return fw
+
+    return _domain_to_framework(domain)
+
+
 # ---------------------------------------------------------------------------
 # Trajectory building
 # ---------------------------------------------------------------------------
@@ -515,12 +653,18 @@ def _build_trajectories(
     if not root_causes:
         return []
 
+    # Step 1: Exact-name deduplication (cheap)
     seen: set[str] = set()
     unique: list[RootCause] = []
     for rc in root_causes:
         if rc.variable.name not in seen:
             seen.add(rc.variable.name)
             unique.append(rc)
+
+    # Step 2: Semantic deduplication across domains (Problem 7 fix)
+    # Two root causes from different domains describing the same underlying
+    # insight are merged into one with combined confidence and source domains.
+    unique = _semantic_dedupe_root_causes(unique)
 
     unique.sort(key=lambda rc: rc.confidence, reverse=True)
 
@@ -540,6 +684,102 @@ def _build_trajectories(
         ))
 
     return trajectories
+
+
+def _semantic_dedupe_root_causes(root_causes: list[RootCause]) -> list[RootCause]:
+    """
+    Cluster root causes by semantic similarity (TF-IDF cosine on description+evidence).
+    Two findings from different domains describing the same underlying insight get
+    merged: highest-confidence wins, frameworks combine, name describes the cluster.
+
+    Threshold: 0.6 (looser than the 0.7 bond threshold — we want to dedupe more
+    aggressively here since these are top-level findings going to the user).
+    """
+    if len(root_causes) <= 1:
+        return root_causes
+
+    try:
+        from src.llm.semantic import _tokenize, _compute_idf, _tfidf_vector, _cosine_similarity
+    except ImportError:
+        return root_causes
+
+    DEDUPE_THRESHOLD = 0.6
+
+    # Build TF-IDF over the variables
+    variables = [rc.variable for rc in root_causes]
+    docs = [_tokenize(v) for v in variables]
+    idf = _compute_idf(docs)
+    vectors = [_tfidf_vector(v, idf) for v in variables]
+
+    # Cluster: assign each rc to a cluster id
+    cluster_id = list(range(len(root_causes)))  # everyone starts in own cluster
+    for i in range(len(root_causes)):
+        for j in range(i + 1, len(root_causes)):
+            if cluster_id[i] == cluster_id[j]:
+                continue
+            sim = _cosine_similarity(vectors[i], vectors[j])
+            if sim >= DEDUPE_THRESHOLD:
+                # Merge cluster of j into cluster of i
+                old_cluster = cluster_id[j]
+                new_cluster = cluster_id[i]
+                for k in range(len(cluster_id)):
+                    if cluster_id[k] == old_cluster:
+                        cluster_id[k] = new_cluster
+
+    # Build clusters
+    clusters: dict[int, list[RootCause]] = {}
+    for idx, cid in enumerate(cluster_id):
+        clusters.setdefault(cid, []).append(root_causes[idx])
+
+    # Merge each cluster into a single root cause
+    merged: list[RootCause] = []
+    for cluster in clusters.values():
+        if len(cluster) == 1:
+            merged.append(cluster[0])
+            continue
+
+        # Pick the highest-confidence rc as the anchor
+        anchor = max(cluster, key=lambda rc: rc.confidence)
+
+        # Combine all unique frameworks
+        all_frameworks: list[FrameworkID] = []
+        seen_fw: set[str] = set()
+        for rc in cluster:
+            for fw in rc.frameworks_that_agree:
+                if fw.value not in seen_fw:
+                    all_frameworks.append(fw)
+                    seen_fw.add(fw.value)
+
+        # Combine evidence
+        all_evidence: list[str] = []
+        for rc in cluster:
+            all_evidence.extend(rc.evidence_chain)
+
+        # Boost confidence slightly for cross-domain agreement (capped)
+        boost = min(0.1 * (len(cluster) - 1), 0.15)
+        merged_confidence = min(anchor.confidence + boost, 0.99)
+
+        merged_var = Variable(
+            name=anchor.variable.name,
+            description=anchor.variable.description,
+            magnitude=anchor.variable.magnitude,
+            direction=anchor.variable.direction,
+            confidence=merged_confidence,
+            source_framework=anchor.variable.source_framework,
+            is_hidden=any(rc.variable.is_hidden for rc in cluster),
+            is_user_stated=False,
+            evidence=all_evidence[:8],
+        )
+
+        merged.append(RootCause(
+            variable=merged_var,
+            evidence_chain=all_evidence[:8],
+            confidence=merged_confidence,
+            frameworks_that_agree=all_frameworks,
+            bias_that_hid_it=anchor.bias_that_hid_it,
+        ))
+
+    return merged
 
 
 # ---------------------------------------------------------------------------
