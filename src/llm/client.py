@@ -71,7 +71,7 @@ class LLMClient:
     """
 
     # Default model — Sonnet is the muscle, the architecture is the brain
-    DEFAULT_MODEL = "claude-sonnet-4-20250514"
+    DEFAULT_MODEL = "claude-sonnet-4-6"
 
     # Safety limits
     MAX_RETRIES = 2
