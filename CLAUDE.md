@@ -1076,7 +1076,320 @@ All architectural decisions, build actions, and iterations — recorded in order
 - **Git history audit:** `git log --all --full-history -- .env` returned empty. The .env file was never committed. The API key has not been exposed in the repo.
 - **Status:** READY FOR DEPLOYMENT. All 6 critical blockers fixed. The Dockerfile builds a runnable container. The server can be deployed to any platform that supports Docker or Python 3.11+ with environment variables.
 
+### Decision 032 — OpenRouter Migration + Per-Role Model Map (2026-05-22)
+- **What:** Replaced the single-provider Anthropic SDK path with OpenRouter (one key, all providers) and added a per-role model assignment table. Engine code no longer passes model names — it passes `(domain, concept)` tuples and the client resolves the model.
+- **Why:** Cost-conscious multi-model orchestration. Different lanes deserve different models — Mathematics needs long-context formal reasoning, Chemistry needs fast structured JSON, Ke critics benefit from cross-RLHF-lineage diversity. Going through OpenRouter keeps it to a single API key + a single SDK (OpenAI-compatible).
+- **Files created:**
+  - `src/llm/provider_map.py` — single source of truth for `(domain, concept) → model_slug`. Holds `DOMAIN_MODELS`, `KE_CRITIC_MODELS` (5 different models for the 5 Ke pairs), `SYNTHESIZER_MODEL`, `GATING_MODEL`, `ROUTER_MODEL`, and `PRICING` per-model. `resolve_model()` picks based on tuple. To experiment with different assignments, edit this file only.
+- **Files modified:**
+  - `src/llm/client.py` — replaced anthropic SDK with `openai.AsyncOpenAI` pointed at OpenRouter base URL. Added per-call model resolution. Added `model` field to `LLMResponse` and `LLMCallLog`. Added per-model `cost_usd` + `model_breakdown` in `get_call_summary()`. Env priority: `OPENROUTER_API_KEY` → `ANTHROPIC_API_KEY` (legacy fallback). Headers set `HTTP-Referer` and `X-Title` for OpenRouter analytics. Mock mode preserved unchanged.
+  - `requirements.txt` — replaced `anthropic` with `openai>=1.50,<2.0`.
+  - `.env.example` — `OPENROUTER_API_KEY` is now the primary key with documented placement.
+- **Excluded models (cost discipline):** Opus 4.7, GPT-5.5. Default stack: Sonnet 4.6, Haiku 4.5, DeepSeek V4 Pro, Gemini 2.5 Pro / Flash / Flash-Lite. The PRICING table makes spend visible per call.
+- **Status:** Live mode works against OpenRouter with a real key. Mock mode unchanged. 21/21 integration tests passing.
+
+### Decision 033 — Synthesizer Lane + ANGULAR DISCIPLINE (2026-05-22)
+- **What:** Promoted `src/llm/speech.py` from a generic "speech" call into a named synthesizer role and added an ANGULAR DISCIPLINE section to the prompt.
+- **Why:** Models are layered by default (depth within one frame). The wuxing architecture is angular (5 perspectives + 5 Ke critics). Without explicit angular discipline at synthesis, the synthesizer collapses the lanes back into a single weighted consensus. The new rules force it to surface alternative angles, run one dialectical reversal per main insight, anchor a concrete timeframe, optionally add a reference-class shadow, and seed the inspiration in the closing question.
+- **Files modified:**
+  - `src/llm/speech.py` — changed `domain="speech"` → `domain="synthesizer"` so `provider_map.resolve_model()` routes to `SYNTHESIZER_MODEL` (Sonnet 4.6). Added the ANGULAR DISCIPLINE section (5 numbered rules) between the existing FINDING-SPECIFIC PATTERNS and DELIVERY MODES blocks. `SpeechInput`, `SpeechOutput`, and the `generate_speech()` signature were NOT touched — callers in `run.py` / `server.py` work unchanged.
+- **Status:** Synthesizer now routes to the Sonnet-tier model via provider_map. The angular rules are part of every speech call. Integration tests still pass.
+
+### Decision 034 — Graphify Vendored + Bridge Layer Built (2026-05-22)
+- **What:** Vendored the MIT-licensed `graphify` library and built a dedicated bridge layer that connects code-structure memory (graphify) with decision memory (Memory V2). The bridge does NOT blend — it cross-references.
+- **Why:** Two memory systems serve complementary roles: graphify is lossless code structure (who calls what, who imports what), Memory V2 stores decision anchors (why the code looks this way). The cross-product — "this decision is anchored to this code; has the code drifted from the decision?" — is the unique signal that no single system can produce.
+- **Files created:**
+  - `vendor/graphify/` — cloned from `safishamsi/graphify` at `--depth 1`, `.git` removed, LICENSE preserved. Fully isolated under `vendor/` to make the boundary obvious.
+  - `src/bridge/__init__.py` — public exports.
+  - `src/bridge/types.py` — `DecisionAnchor`, `CodeRef`, `ContextFingerprint`, `DriftReport`, `BridgeQuery`, `BridgeResult` dataclasses.
+  - `src/bridge/graphify_adapter.py` — REAL adapter. Parses `graphify-out/graph.json` directly via stdlib `json` (avoids pulling `networkx` as a hard dep). Lazy load on first query. Handles both `links` and `edges` key variants. Provides `get_code_structure(file_path)`, `get_callers_of(symbol)`, `get_dependencies_of(file_path)`, `get_node(node_id)`. Returns `FileNotFoundError` with the exact CLI command (`graphify extract .`) if the graph is missing.
+  - `src/bridge/memory_adapter.py` — STUBBED. Every method raises `NotImplementedError` with a TODO pointer to the specific TS file in `lora-v1-frontend/src/emotion-core/memory-v2/` whose semantics the Python port must mirror. Future port becomes fill-in-the-blanks.
+  - `src/bridge/drift.py` — `DriftComparator` Protocol + `stub_comparator` + `detect_drift()` / `detect_drift_for_ref()`. Floating-decision case (decision with no code_refs) handled explicitly. Real LLM-backed comparator is a separate upcoming task.
+  - `src/bridge/client.py` — `BridgeClient` facade with two modes. `mode="stub"` constructs cleanly and is the test-friendly path. `mode="live"` raises `NotImplementedError` at construction (refuses to be half-live) — once the Memory V2 port lands, this flips on.
+  - `tests/test_bridge.py` — 21 tests, all passing. Covers type construction, mode validation, stub-mode graphify reads, Memory V2 NotImplementedError pointers, drift detection end-to-end against the stub comparator, GraphifyAdapter direct construction.
+- **Audit findings (3 minor, deferred):**
+  1. `types.py:98` — DriftReport docstring references a nonexistent `per_ref_reports` field (only exists as a local var in `drift.py`).
+  2. `memory_adapter.get_code_refs_for_decision` declares return as untyped `list` while `client.py` wrapper declares `list[CodeRef]` — inconsistent.
+  3. `detect_drift` collapses per-ref reports into a single summary — information loss when multiple refs drift.
+  Recommended fix: add `per_ref_reports: list["DriftReport"] = field(default_factory=list)` to the DriftReport dataclass (resolves 1 and 3); add `CodeRef` import to memory_adapter (resolves 2).
+- **Status:** Bridge layer is wired and tested. 21/21 bridge tests pass; 21/21 integration tests still pass — zero regression. Memory V2 Python port is the next upcoming task. The 3 audit issues are non-blocking and tracked here.
+
+### Decision 035 — Effort Tier System + Multi-Provider Env Scaffold (2026-05-22)
+- **What:** Added a user-facing `effort` tier (low / medium / high) that maps to the engine's existing `max_iterations` knob, and declared placement for all common provider API keys in `.env.example` so the user has one place to paste them.
+- **Why (effort):** Surfacing iterations as an opaque integer to the API/UI is a footgun. Three discrete tiers let the UI render an "effort selector" without leaking engine internals, and give us a single place to revisit the budget mapping later. The mapping is intentionally generous on the high end (10 vs the engine's hard cap of 12) so HIGH stays under MAX_ITERATIONS and the engine keeps headroom.
+- **Why (env scaffold):** Even though OpenRouter is the primary path (single key, all providers), having declared slots for direct provider keys means a future direct-provider routing experiment is a 3-line code change, not a hunt-for-the-env-var session.
+- **Tier mapping:**
+  - LOW    → 3 iterations  (~5-8 LLM calls, ~$0.02-$0.06)
+  - MEDIUM → 6 iterations  (~10-15 LLM calls, ~$0.05-$0.15) — default
+  - HIGH   → 10 iterations (~18-25 LLM calls, ~$0.10-$0.30)
+- **Files created:**
+  - `src/llm/effort.py` — `Effort` enum + `EFFORT_ITERATIONS` map + `normalize_effort()` (garbage input falls back to default rather than raising) + `iterations_for()`. Engine-layer cap (MAX_ITERATIONS=12) remains the absolute ceiling.
+- **Files modified:**
+  - `.env.example` — restructured into three blocks: (1) `OPENROUTER_API_KEY` (primary), (2) optional direct keys for Anthropic / OpenAI / Google / Gemini / xAI, (3) server + engine config including the new `LORA_EFFORT=medium` default. Note: `GOOGLE_API_KEY` and `GEMINI_API_KEY` are aliases — pasting the same key in both is fine (different SDKs read different names).
+  - `server.py` — accepts `"effort": "low" | "medium" | "high"` in the `/api/trace` body. Derives `max_iterations` from the tier. Raw `max_iterations` is still honored if explicitly passed (backwards-compatible). Replaced `os.environ.get("ANTHROPIC_API_KEY")` checks with a new `_has_live_key()` helper that accepts either `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`. `/health` now reports `default_effort`. Startup log line shows the resolved default effort + iteration count.
+  - `run.py` — interactive mode shows the effort tier in the banner; `effort low|medium|high` typed at the prompt switches tiers mid-session. One-shot mode accepts `--effort=high` or `--effort high`. Reads `LORA_EFFORT` from env as the default.
+- **API shape:**
+  ```json
+  POST /api/trace
+  { "question": "…", "effort": "high" }
+  ```
+- **Audit pass:** Imports clean, 21/21 integration tests pass, 21/21 bridge tests pass, no stale `ANTHROPIC_API_KEY` checks remain in `server.py`. The `MAX_PHASE2_ITERATIONS * 2` clamp (=12) lines up with the engine's own MAX_ITERATIONS=12, so the cap is consistent across both layers.
+- **Status:** READY. Both UI tiers and direct CLI flags work end-to-end. Effort tier is the preferred control going forward; raw `max_iterations` remains for legacy clients.
+
 ---
 
 *Created: April 1, 2026*
-*Status: PRODUCTION-READY. Engine live on Sonnet. Full pipeline: 5 domains (63 concepts) → Wu Xing dual cycles → funnel → convergence → speech module → narrated response. Web UI served at /. /health endpoint live. Dockerfile built. 21/21 integration tests passing. ~$0.30 per Phase 1 request, ~$0.90 per Phase 2 request. Next: deploy to a host, rotate API key on deploy, set CORS_ORIGINS for production frontend.*
+*Status: PRODUCTION-READY. Engine live on Sonnet via OpenRouter (single key, per-role model map). Full pipeline: 5 domains (63 concepts) → Wu Xing dual cycles → funnel → convergence → synthesizer (with angular discipline) → narrated response. Bridge layer (graphify ↔ Memory V2 stub) wired and tested. Effort tier (low/medium/high → 3/6/10 iterations) wired through server + CLI. Web UI served at /. /health endpoint live. Dockerfile built. 21/21 integration tests + 21/21 bridge tests passing. Next: Memory V2 Python port, LLM-backed drift comparator, fix the 3 minor bridge audit issues (Decision 034).*
+
+---
+
+# SUPPLEMENT — 2026-05-26 (beyond Decision 035)
+
+> The decision log above is comprehensive through 2026-05-22. The repo has
+> grown substantially since then — dispatcher, triage gate, capabilities,
+> MCP router stub, the segmented streaming endpoint, persistence pipeline.
+> This supplement is the fast-lookup section for sessions opening the repo
+> cold. Read it before reading the engine source.
+
+## SISTER REPOS — DO NOT CONFUSE
+
+| Repo | Path | What it is | What it ISN'T |
+|---|---|---|---|
+| **reasoningEngine** (this) | `~/Desktop/reasoningEngine` | Python FastAPI. **Wu Xing engine** — 5 domains (Earth/Metal/Water/Wood/Fire) + Sheng/Ke cycles. Powers Constellax. | NOT the LoRa backend. NOT a LoRaMaths fork. |
+| **constellax-ui** | `~/Desktop/constellax-ui` | Vite + React + TypeScript frontend for this engine. The 3-segment Thinking Room + Map Room + history sidebar live here. | NOT presence-whispers. |
+| LoRaMaths | `~/Desktop/LoRaMaths` | LoRa's Python microservice. **Vortex pipeline** — 5 mathematical frameworks (regression, Bayesian, game theory, constraint, causal loop). Read-only reference. | NOT what Constellax uses. Anyone hearing "Vortex" / "5 frameworks" / "31 combinations" — that's LoRaMaths, NOT this repo. |
+| lora-v1-frontend | `~/Desktop/lora-v1-frontend` | LoRa's TypeScript/Express backend (note: misnamed dir). Read-only reference. | Not Constellax. |
+| presence-whispers | (LoRa frontend repo) | LoRa's React UI. Read-only reference. | Not constellax-ui. |
+| MemoryArchitecture | `~/Desktop/MemoryArchitecture` | Memory V2 design repo. Read-only reference. | Not yet ported to this engine. |
+
+**Common confusion patterns to avoid:**
+1. "Vortex" / "5 frameworks" / "regression + Bayesian + game theory + constraint + causal loop" → **LoRaMaths**, not Constellax. Constellax uses **Wu Xing**: 5 domains (Physics/Mathematics/Psychology/Philosophy/Chemistry) + Ke pairs.
+2. "the LoRa engine" / "the backend" — ambiguous. Always disambiguate which repo is meant.
+
+## CURRENT API SURFACE (as of 2026-05-26)
+
+The server is `server.py` at the repo root. FastAPI app on `:8100` (configurable via `PORT`).
+
+| Endpoint | Status | Purpose |
+|---|---|---|
+| `POST /api/v2/trace` | **LIVE** (Decision 031, ~2026-04-05) | One-shot dispatch. Full memo in a single response. Used by Map Room follow-up trace, the resume path, and any non-streaming consumer. **Do NOT delete this — it's still load-bearing.** |
+| `POST /api/v2/trace/segment` | **LIVE** (new 2026-05-26, see Decision 036) | 3-phase streaming. `phase=synthesizer` runs the full dispatch + caches results. `phase=opinion` / `phase=prospects` return cached slices (instant) or regenerate with splice (3–10s). |
+| `POST /api/v2/trace/resume` | LIVE | Escalation-accepted continuation (carries Phase 1 summary). |
+| `POST /api/v2/dispatch/preview` | LIVE | Pre-flight cost estimate — runs only triage + formation router, no engine. |
+| `GET /api/v2/threads` | LIVE | List threads (history sidebar source). |
+| `GET /api/v2/thread/{id}/full` | LIVE | Thread + all iterations (Map Room rehydration). |
+| `DELETE /api/v2/thread/{id}` | LIVE (2026-05-25) | Delete thread (sidebar – button). |
+| `GET /api/v2/iteration/{id}` | LIVE | Single iteration with full memo. |
+| `POST /api/v2/iteration/{id}/outcome` | LIVE | User outcome report → memory pipeline. |
+| `GET /health` | LIVE | Liveness probe. |
+| `GET /` | LIVE | Dev/debug web UI (`web/index.html`). Production frontend is `constellax-ui`. |
+
+## MODULE MAP (post-Decision 035)
+
+Many of these are untracked in git as of this writing. Don't assume "untracked = unreleased" — most are live and load-bearing.
+
+### Dispatch + routing
+- `src/dispatcher.py` — single entry point. `dispatch(text, client, user_effort, policy, caps, ...)` wires **triage → capabilities → budget → engine**. Both `/api/v2/trace` and `/api/v2/trace/segment` call this. Returns `DispatchResult { route, response_text, engine_result, memo, debug, ... }`.
+- `src/llm/triage.py` — front-door classifier. Routes to `TRIVIAL` / `DIRECT` / `DIRECT_PLUS` / `DEEP`. Gemini Flash-Lite in live mode (~$0.0001/call, ~500ms). Mock mode = deterministic keyword classifier.
+- `src/llm/budget.py` — per-request `BudgetCaps` (max iterations / wall time / cost / MCP calls).
+- `src/llm/checklist.py` — angular checklist injected into DEEP synthesizer's `extra_directives`.
+- `src/llm/dispatch_preview.py` — cheap pre-flight that runs only the classifiers + estimates cost without firing the engine.
+- `src/llm/effort.py` — `Effort` enum + iteration mapping (low=3 / medium=6 / high=10).
+
+### Capabilities + MCP
+- `src/capabilities/registry.py` — `CapabilityRegistry`. Tracks what MCPs are available / missing / absent-by-design + permission state. Two-tier model: `LOCAL_READ + ALWAYS_ALLOWED` vs `EXTERNAL_READ + ASK_ONCE_PENDING/GRANTED`.
+- `src/mcp_router.py` — uniform `fire_mcp()` / `fire_mcps()` API. **Stubbed** — returns placeholders. Real MCP clients land later; this is the contract the rest of the system codes against.
+
+### Bridge / persistence
+- `src/bridge/thread_persistence.py` — **The persistence FastAPI router.** Registers `/api/v2/threads`, `/api/v2/thread/{id}/full`, `/api/v2/iteration/{id}`, `/api/v2/iteration/{id}/outcome`, `DELETE /api/v2/thread/{id}`. Calls `_persist_iteration` (fire-and-forget) from the trace endpoints.
+- `src/bridge/conversation_store.py` — structured-storage spine for sessions / iterations / turning points. Backed by Redis (production) or in-memory dict (dev).
+- `src/bridge/thread_store.py` — `ThreadStore` Protocol with FalkorThreadStore (Redis-graph) + InMemoryThreadStore impls.
+- `src/bridge/redis_backend.py` — Redis backends for both conversation and thread stores. Env: `CONSTELLAX_REDIS_URL`.
+- `src/bridge/embedding_service.py` / `embedding_scorer.py` — Gemini `embedding-001` (3072-dim) for iteration text + similarity scoring.
+- `src/bridge/iteration_metadata.py` — single-LLM-call extractor for the 7 memory signals (entities, tags, user_mode, time_horizon, load_bearing_assumption, ...).
+- `src/bridge/web_search.py` — `_SearchProvider` Protocol. **Tavily** is primary (when `TAVILY_API_KEY` set, 1000 credits/mo on Researcher tier); **DuckDuckGo HTML** is fallback. 5-min in-memory cache.
+- `src/bridge/search_router.py` — Gemini Flash classifies `needs_search` + rewrites query. Falls back to regex heuristic if LLM unavailable.
+- `src/bridge/client.py` / `memory_adapter.py` / `graphify_adapter.py` / `drift.py` — bridge layer between Memory V2 and graphify (Decision 034). `mode="live"` still raises `NotImplementedError`; `mode="stub"` works.
+- `vendor/graphify/` — vendored at `safishamsi/graphify` (Decision 034 + project memory note about `v0.8.18` patched adapter).
+
+### Speech (synthesizer)
+- `src/llm/speech.py` — **Two kinds of generators now live in this file**:
+  - `generate_speech(client, speech_input, extra_directives)` — original full-memo generator (Decision 025). Called from `dispatch()` for non-streaming flow. Still authoritative for the "give me the whole memo at once" path.
+  - `generate_synthesizer_segment` / `generate_opinion_segment` / `generate_prospects_segment` — phase-focused generators (Decision 036, 2026-05-26). Used by the segment endpoint only when the user splices in (no splice → cached slice returns instantly).
+  - `SPEECH_SYSTEM_PROMPT` is the full prompt used by `generate_speech`. The per-segment generators use `_SEGMENT_VOICE_PREAMBLE` + per-phase schema blocks (`_SYNTHESIZER_SCHEMA_BLOCK`, `_OPINION_SCHEMA_BLOCK`, `_PROSPECTS_SCHEMA_BLOCK`).
+  - Shared utilities (`_extract_memo_json`, `_normalize_memo`, `_normalize_visual`, `_compose_response_text_from_memo`, `extract_speech_input`) are used by both paths.
+
+### Project graph
+- `src/project/identity.py` / `registry.py` — project-graph integration. Lets the engine reason about specific projects the user is tracking.
+
+### Core types (added since Decision 035)
+- `src/core/thread_types.py` — `ThreadRecord`, `IterationRecord`, `SegmentedResponse`, `Entity`. `Entity` gained `category` (FACT/PATTERN/VALUE/CONTEXT/TENSION/INTEREST) and `pinned: bool`. `ThreadRecord` gained `aggregate_time_ms`, `aggregate_cost_usd`, `perspectives_run`.
+
+---
+
+### Decision 036 — Per-Phase Streaming Endpoint (2026-05-26)
+- **What:** New `POST /api/v2/trace/segment` endpoint + `_SEGMENT_CACHE` + per-phase generators in `speech.py`. Replaces the timer-faked 3-segment "streaming" the frontend was doing client-side with real server-driven segment delivery.
+- **Why:** The frontend's old 3-segment Thinking Room ran a `setTimeout` countdown and revealed pre-baked slices of the same full memo. A user splice in a breathing room created a follow-up turn — it did NOT actually reshape the next segment. The new endpoint makes splicing real: splice text is threaded into the next phase's LLM call, and segments are delivered as separate round-trips.
+- **Files added/modified:**
+  - `src/llm/speech.py` — added `SegmentMemo` dataclass + three new generators (`generate_synthesizer_segment`, `generate_opinion_segment`, `generate_prospects_segment`) with focused per-phase JSON schemas. `_parse_segment_json` + `_normalize_segment_fields` strip outputs to the slice each phase owns. The original `generate_speech` is untouched.
+  - `server.py` — imported the new generators. Added `_SEGMENT_CACHE` (30-min TTL, 500-entry cap, `_Lock` guarded), `_cache_segments` / `_get_cached_segments` / `_update_cached_segment`, and `_synthesizer_slice` / `_opinion_slice` / `_prospects_slice` extractors. New `@app.post("/api/v2/trace/segment")` handler — full validation, three phase branches, persistence + Map Room cache mirror on synthesizer phase. The old `/api/v2/trace` is byte-for-byte unchanged.
+- **Flow:**
+  - `phase=synthesizer` (no `memo_id`): runs `dispatch()` normally (engine + full speech), caches `(speech_input, full_memo, thread_id)` keyed by `memo_id` (= thread_id), returns the verdict slice + full memo + `next_phase: "opinion"`. Persists iteration + populates Map Room cache same as `/api/v2/trace`.
+  - `phase=opinion` or `phase=prospects` (requires `memo_id`):
+    - **No splice** → returns cached slice instantly (14ms / 1ms in smoke tests). No LLM call.
+    - **With splice** → fires `generate_opinion_segment` or `generate_prospects_segment` with the splice text + prior segments as context. Merges the regenerated slice back into the cache. Returns the new slice. ~3–10s with Sonnet 4.6.
+- **Non-DEEP routes:** trivial / direct / direct_plus return `next_phase=null` + `done=true` on the synthesizer call. Frontend short-circuits — no follow-on calls fired. Cache still populated defensively (empty slices) so any accidental follow-on call returns empty rather than 404.
+- **Known compromise:** persistence fires once at synthesizer time with the un-spliced full memo from `generate_speech`. A regenerated opinion / prospects updates the in-memory cache but does NOT re-persist. Map Room rehydration on a previously-spliced thread shows the original memo. Re-persisting on splice is straightforward but deferred — bandwidth and write-amplification are worth thinking about before turning it on.
+- **Frontend counterpart:** `constellax-ui` — `runSynthesizerSegment` + `runFollowonSegment` in `src/lib/api.ts`, `SegmentedResponse.tsx` fully rewritten to drive real streaming with internal breathing-room state + abort controller. New `TurnResponse.streamPhase` field + `merge_turn_memo` reducer action. The `useDispatchState` hook calls `runSynthesizerSegment` for the chat flow; `runTrace` survives because Map Room follow-ups still use it.
+- **Verified:** Both endpoints register cleanly. Validation paths (missing phase, missing memo_id, unknown memo_id, missing question) return correct 400/404s. Trivial-route synth call (~1.5s) returns the right shape; cached follow-on calls in 14ms / 1ms. Real DEEP-route trade-off question (829s engine wall-clock, route=deep, next_phase=opinion) returned a full memo with 2 visuals (comparison-table + mermaid) — confirming the prompt directive added at Decision 033's "visuals[] — always emit at least one" landed.
+
+### Decision 037 — Strategist Axioms (PLANNED, not yet built — 2026-05-26)
+- **What (proposed):** A new `src/llm/strategist_axioms.py` module exporting 8 judgment axioms ("REVERSIBILITY", "ENERGY", "COMPOUNDING", "WEDGE", "STOP_FIRST", "ONE_PATTERN", "OPERATOR_AUTHORITY", "CONCRETE_OR_SILENT") and a `build_axioms_block()` renderer. The block gets prepended to the synthesizer system prompt in every `generate_*` function — `generate_speech` + the three per-segment generators.
+- **Why:** Voice rules in `SPEECH_SYSTEM_PROMPT` shape HOW the model speaks. Axioms shape WHAT it concludes when the engine surfaces balanced trajectories. Without axioms the synthesizer's read drifts day-to-day; with axioms the same question gets a recognisable kind of answer across sessions.
+- **Design constraints (locked):** Axioms must CHANNEL the LLM's reasoning, never FILTER it (no post-generation rewrite step, no second LLM pass, no latency). They live as preceding context at the TOP of the system prompt — strongest attention weight. ~600 tokens added per synthesizer call. Wu Xing engine layer **not touched**. Domain prompts **not touched** — domains do disciplinary work, axioms only apply at the synthesis layer.
+- **Status:** designed + agreed; not yet built. When built, append as a real Decision entry with verification.
+
+### Decision 038 — Map Room Visualizer Pipeline (2026-05-26)
+- **What:** New `src/llm/visualizer.py` module implementing Codex's three-stage architecture for Map Room visuals: **classify_visual_intent() → generate_visual_spec() → validate_visual_spec()**. The pipeline runs in the opinion phase, immediately after `dispatch()` produces the full memo and before `_persist_after_engine_done` fires — visuals are attached to the memo before persistence.
+- **Why:** Speech.py was supposed to emit `visuals[]` as part of the JSON memo, but the synthesizer prompt was overloaded (voice rules + verdict + reasoning + alternatives + falsifiers + visuals all at once) and consistently dropped visuals on reflective / philosophical memos. The Map Room rendered "This memo didn't include visuals" on real DEEP traces. The procedural pipeline solves this by owning visuals as a dedicated phase: a free heuristic classifier picks the FORM, a focused LLM call (Sonnet 4.6) builds the spec, a strict validator drops malformed output.
+- **Files added/modified:**
+  - `src/llm/visualizer.py` (new) — classifier (heuristic, no LLM), generator (one Sonnet call per intent, `_VISUAL_GENERATOR_PROMPT` is tight: only translates memo into shape, declines via `{"type":"none"}` when can't), validator (strict structural shape checks per type, no LLM). `build_visuals()` is the public driver: never raises, returns `[]` on any failure.
+  - `server.py` — imported `build_visuals`; opinion phase calls it immediately after `cached_memo = new_full_memo` and patches `new_full_memo["visuals"]` + cache entry before `_persist_after_engine_done` fires.
+- **Classifier philosophy (correction from first iteration):** classifier picks the FORM, NOT the *whether*. First iteration was a gatekeeper ("should we visualize at all?") and over-rejected reflective memos. Fixed by inverting: substantive memos (verdict_body ≥80 chars + reasoning OR alternatives) always get at least one visual intent. The "no" vote moves downstream — generator can emit `{"type":"none"}`, validator drops malformed output.
+- **Cost:** ~$0.005-0.01 per query (1-2 Sonnet calls, capped at 2 visuals per memo). Inside a 5-13 min DEEP pipeline that costs $0.50+, this is rounding error.
+- **Scaffolding (created + ripped):** During development, a temporary `POST /api/v2/debug/visualize` endpoint + `_DEBUG_FIXTURES` dict + `scripts/fixtures/real_inspiration_thread.json` lived in server.py for cheap end-to-end testing without spending engine money. Endpoint accepted `{"fixture":"<name>"}`, ran ONLY the visualizer (~$0.005 per call), stashed result in legacy `_MEMO_CACHE` under `thr-debug-*`, returned a `map_room_url`. After all 6 visual weapons (Decision 039) were confirmed working end-to-end via the scaffold, the entire 418-line scaffolding block was line-sliced out of server.py and the fixture file deleted. Route count 26 → 25.
+- **Verified:** 8 unit tests on classifier + 6 validators (all visual types). Cold-import clean. Real DEEP question on the fixture produced `comparison-table + flow-graph` visuals rendered correctly in Map Room (confirmed by user screenshot before scaffold ripped).
+
+### Decision 039 — Six-Visual Arsenal (2026-05-26)
+- **What:** Expanded the Map Room from 3 visual forms (mermaid, comparison-table, vega-lite) to 9 effective forms. The 6 new forms are user-requested ("every weapon in our arsenal") and route via classifier signals — NOT all forms fire on every memo. Each weapon was added end-to-end (backend prompt + classifier signal + validator + frontend type + renderer + parser) in 6 discrete steps.
+- **Weapons (in order added):**
+  1. **Tension diagram** — variant of mermaid. New `pattern: "tension"` field on `MermaidSpec`. Classifier detects "tension/contradiction/two versions/passive frame/active frame" anywhere in memo. Renderer shows "TENSION" badge. Zero new dependencies. Generator prompt has an explicit TENSION PATTERN section with the canonical `A -.->|outsources control| D` transformation edge example.
+  2. **Timeline** — mermaid `timeline` syntax. Validator relaxed to accept `graph`/`flowchart`/`timeline`/`gantt` declarations (was just graph/flowchart). Classifier signals on "Week N", "Month N", "Q1-Q4", "Day 1", "milestone", "phase", "roadmap". Pattern detection prioritizes `timeline` over `tension` when both signals present (temporal structure usually dominates).
+  3. **Quadrant matrix** — new `quadrant` spec type. New custom React renderer (in-house SVG/CSS, NO new dep). Items placed by `x`/`y` in 0-100 percent of axes. Recommended/warning tags drive visual emphasis. Classifier fires on quadrant language + 3+ alternatives. Wins over comparison-table when explicit quadrant signal present.
+  4. **Score-chart** — Vega-Lite bar chart of LLM-scored alternatives, no CSV required. Classifier intent `score-chart` but spec emits as `type: "vega-lite"` (frontend dispatches on spec.type). New `_validate_vega_lite()` rejects remote-fetch (`data.url`) and requires inline `data.values`. Fires when 3+ alternatives, no quadrant cue.
+  5. **Flow-graph** — interactive node-link via `@xyflow/react` (new dep, lazy-loaded ~120KB gz). New `flow-graph` spec type. Topological-depth layout (BFS) — handles 4-15 nodes cleanly. Node `kind` drives style: decision/outcome/claim/default. Classifier fires on dependency/system/loop language OR 4+ reasoning items.
+  6. **Knowledge-graph** — force-directed network via `cytoscape` (new dep, lazy-loaded ~80KB gz). New `knowledge-graph` spec type. Cose/concentric/breadthfirst/grid layouts. Entity `kind` drives node bg color (8 kinds: person/concept/decision/claim/entity/system/tool/outcome). Classifier fires on stakeholder/ecosystem/entity/network language.
+- **Routing decisions (mutually exclusive families, max 2 visuals per memo):**
+  - **Option-compare family:** quadrant > score-chart > comparison-table
+  - **Structural-diagram family:** knowledge-graph > flow-graph > mermaid
+  - One of each family fires when its signal is present.
+- **Files modified (backend):** `src/llm/visualizer.py` (+~600 lines: 4 new validators, 3 new signal detectors, 6 new prompt sections, pattern detection function).
+- **Files modified (frontend):** `constellax-ui/src/types/index.ts` (3 new spec types + pattern field on MermaidSpec), `constellax-ui/src/components/Visual.tsx` (QuadrantMatrix, FlowGraph, KnowledgeGraph React components + dispatcher entries; mermaid badge now uses pattern hint), `constellax-ui/src/lib/parseMemo.ts` (3 new spec parsers in `asVisualArray`).
+- **Cost impact:** Zero per-query change — classifier still emits at most 2 intents, so still 1-2 visualizer LLM calls per memo. Bundle cost is lazy-loaded — Mermaid-only memos pay zero for xyflow/cytoscape.
+- **Knowledge-graph styling bug + fix (same day):** First render had white text on white-ish node backgrounds (kindColors palette all variants of white, text color also white). Fixed by changing node text color to `#0A0F2E` (dark navy) and tinting border `rgba(7, 9, 31, 0.35)`. Background palette renamed to `kindBgColors`. Verified via real DEEP run — entity labels now legible.
+
+### Decision 040 — Persistence Memo Round-Trip (2026-05-26)
+- **What:** Added `memo: dict | None = None` field to `SegmentedResponse` (`src/core/thread_types.py`) so the raw memo dict — including visuals — survives the Falkor persistence boundary and reaches the frontend's Map Room on fresh-tab rehydration. Three surgical edits: dataclass field, `_iteration_from_payload` coercion, `_build_segmented_response` populates it.
+- **Why this was THE blocker:** Decision 038 + 039 wired the visualizer to attach visuals to the memo. But persistence stripped the structured memo at the boundary — `_build_segmented_response` translated memo into staged segments (synthesizer.text + opinion.text + prospects.text + map_room.visuals), the raw memo dict was discarded. Frontend `getThreadFull` returned `iteration.response` without a `memo` field. `normalizeIteration` read `response.memo ?? it.memo ?? null` → null → frontend fell through to `parseSynthesisToMemo(synthesis)` which parses prose only — visuals are structured JSON, can't be reconstructed from prose. **Net effect: visualizer worked, persistence dropped the work, Map Room rendered "no visuals" on every real DEEP query.**
+- **Files modified:**
+  - `src/core/thread_types.py` — `SegmentedResponse.memo: dict | None = None`; `_iteration_from_payload` adds `memo=response_raw.get("memo") if isinstance(...) else None` to the SegmentedResponse construction.
+  - `src/bridge/thread_persistence.py` — `_build_segmented_response` sets `memo=memo if isinstance(memo, dict) else None` (and `memo=None` on the non-deep-route fast-path).
+- **Verification:** round-trip test confirms `IterationRecord.from_payload({...response: {memo: {visuals: [{type:'mermaid', spec:'graph TD\n A-->B'}]}}})` preserves the visual spec byte-for-byte.
+- **Process note:** the fix was first applied and rolled back the same day on user safety call ("create a scaffolding. No to fuck things up. You will open on another wound. So be safe."), then re-applied after the visualizer + 6-visual arsenal were validated end-to-end via the debug scaffold (Decision 038). The discipline was: validate via scaffold first → confirm the visualizer is correct → THEN close the persistence seam. The order matters because debugging "no visuals" with both pipelines broken is impossible.
+
+### Decision 041 — Tavily Query Truncation (2026-05-26)
+- **What:** Added `_MAX_QUERY_CHARS = 380` constant to `TavilyProvider` (`src/bridge/web_search.py`) and a word-boundary trim before sending the request body. Trailing whitespace dropped at the last space within the cap.
+- **Why:** Tavily's API caps queries at ~400 chars on the free tier (longer queries silently 400 or return empty). The search router was passing the raw user message (2000+ chars on reflective DEEP questions) which Tavily silently rejected. The provider chain then fell through to DuckDuckGo, which is currently rate-limited and returns a 302 redirect to `/50x.html?e=3`. Net effect: every web-search-bearing question failed silently, the Reasoning Trace showed `provider=duckduckgo` with a confusing HTTPStatusError, and users assumed Tavily wasn't configured at all. The truncation is defense-in-depth — Decision 042 fixes the root cause (the router) too, but this guard catches any future caller that doesn't go through the router.
+
+### Decision 042 — Search Router Timeout + Heuristic Distiller (2026-05-26)
+- **What:** Two changes to `src/bridge/search_router.py` to make the LLM-based query refiner actually fire, and to make the heuristic fallback not leak the raw question.
+  1. **Timeout bump:** `ROUTER_TIMEOUT_SEC: 6.0 → 12.0`. The router calls Gemini 2.5 Flash to produce a 2-8 word refined query. The same model on similar-sized inputs (metadata_extraction in the persistence layer) regularly takes 5-8s. A 6s timeout was silently expiring and dumping the trace to the heuristic fallback.
+  2. **`_distill_query()` heuristic:** new function in the router. When the LLM router returns None (timeout / no key / SDK missing / unparseable JSON), the fallback used to set `refined_query=q` (the entire user message). Now it calls `_distill_query(q)` which strips conversational openers (Hey, Tell me one thing, So…), splits on `[.!?]+`, picks the densest sentence by content/filler ratio, collapses whitespace, hard-caps at `HEURISTIC_QUERY_MAX_CHARS = 160` at a word boundary. Pure regex, deterministic, no LLM call.
+- **Why:** The Reasoning Trace was reporting `router: fallback / decision in 2.5s` with `REFINED QUERY = <entire user message>`. The 2.5s suggested a silent timeout (well under the 6s limit, but close enough to catch slow runs). Diagnostic logs were promoted from `WARNING` to `INFO` so the failure mode (TIMED OUT after Xs / FAILED ExceptionType / UNPARSEABLE JSON) is visible in `logs/llm-calls.log` next time.
+- **Verified:** distiller produces 93 chars from the user's actual 388-char reflective question, stripping "Hey. Tell me one thing." prefix and surfacing "What we human actually require to get inspiration, to get abstract ideas, to feel that moment". Empty + greeting edge cases return empty / "there" respectively. Frontend untouched.
+
+### Decision 044 — Bridge Backends → Neo4j (2026-05-27)
+- **What:** Extended the Neo4j migration to cover the remaining Redis-backed surface. `Neo4jAnchorBackend` (DecisionAnchor CRUD) and `Neo4jConversationBackend` (Session / Iteration / TurningPoint / DecisionLink CRUD) added in `src/bridge/neo4j_backend.py` next to the existing `Neo4jThreadStore`. `server.py` now reads `CONSTELLAX_DB_BACKEND` at module load: `neo4j` → builds the Neo4j conversation backend via `build_neo4j_driver_from_env`; falls through to the Redis path on missing creds with a LOUD warning; falls through to in-memory if neither configured. `_CONV_REDIS_BACKEND` renamed to `_CONV_BACKEND_ACTIVE` (generic — holds either implementation). Schema init in `init_schema` extended with constraints + indexes for the five new node labels.
+- **Why:** Nikhil committed to "migrate everything to Neo4j" (2026-05-27) so the entire memory layer (graphs + vectors) lives in one database. Two motivations: (1) operational simplification — kill the local `constellax-falkor` container, one auth/backup/log story; (2) graph-native bridge data — `(Iteration)-[:MADE_DECISION]->(DecisionAnchor)`, `(DecisionLink)-[:FROM_DECISION]->(DecisionAnchor)`, etc. unlock queries impossible on the Redis KV layout (e.g. "find every iteration that ever touched decision D-014"). Falkor `RedisConversationBackend` stays wired as a one-toggle fallback through the validation window, just like the ThreadStore migration.
+- **Verified:** AST + import clean. `scripts/validate_neo4j_bridge_parity.py` exercises all five entity types end-to-end against both backends — all 18 protocol-level checks (get/put/list/delete/update_status across DecisionAnchor, Session, BridgeIteration, TurningPoint, DecisionLink) passed. Server startup log confirms wiring: `ConversationStore: Neo4j backend active (database=e2053eb9)`. Smoke trace via `/api/v2/trace` routed cleanly through the new server with no exceptions.
+- **MemoryAdapter status:** `Neo4jAnchorBackend` exists but is NOT wired into `src/bridge/client.py` yet (MemoryAdapter is currently constructed without a backend → falls back to InMemoryAnchorBackend, which is the pre-migration behavior). Wiring it changes anchor lifecycle from "ephemeral per-process" to "persisted across restarts" — that's a meaningful behavioral change beyond the migration scope. Queued for a follow-up commit when anchor persistence becomes a product requirement.
+
+### Decision 043 — Neo4j Aura Migration Scaffold (2026-05-27)
+- **What:** Parallel implementation of the `ThreadStore` Protocol against Neo4j Aura. Five additive changes, no destructive edits to the live FalkorDB path.
+  1. `requirements.txt` — added `neo4j>=5.20,<6.0`.
+  2. New `src/bridge/neo4j_backend.py` — `Neo4jThreadStore` implementing the full Protocol. Graph-native Cypher: `(User)-[:OWNS]->(Thread)-[:HAS_ITERATION]->(Iteration)-[:MENTIONS]->(Entity)` etc. `payload_json` properties hold the canonical record blobs for lossless round-trip. Vector index on `Iteration.embedding` (Neo4j 5.13+ native) replaces the brute-force cosine loop in `FalkorThreadStore.find_similar_iterations`.
+  3. `src/bridge/thread_store.py` — `build_thread_store_from_env()` now reads `CONSTELLAX_DB_BACKEND` (default `falkor`). `neo4j` value tries `build_neo4j_thread_store_from_env()`; if NEO4J_URI/PASSWORD missing, logs a LOUD warning and falls through to the Falkor path (safe by default). Added `init_store_schema(store)` async helper — no-op for Falkor/InMemory, runs constraints + vector index DDL for Neo4j.
+  4. `src/bridge/thread_persistence.py` — `_ensure_initialized` now logs the active backend by class name (`type(backend).__name__`) and awaits `init_store_schema(_store)` after construction so Neo4j schema is ready before first request.
+  5. New `scripts/validate_neo4j_parity.py` — pre-cutover sanity check. Writes a synthetic ThreadRecord + 2 IterationRecords to both InMemory and Neo4j, diffs read-back shape, cleans up. Exit codes: 0 pass / 1 missing creds / 2 schema fail / 3 parity fail.
+- **Why:** Nikhil committed to Neo4j as production target (see `project_graph_db_choice` memory note). Two reasons that outweigh the rewrite cost: (a) GDS library + native vector indexes — collapses FalkorDB + future vector store into one DB; (b) brand credibility for investors. The current FalkorDB usage is Redis-style KV (no GRAPH.QUERY commands), so the migration is also a graph remodel — `find_similar_iterations` goes from O(n) cosine scan to O(log n) vector-index lookup; entity/tag lookups become first-class graph queries instead of set membership scans. ThreadStore being a Protocol means application code (server.py, thread_persistence.py outer surface) doesn't move — only the backend implementation file does.
+- **Cutover path (not yet executed):** (1) User provisions Aura Free at console.neo4j.io. (2) Adds `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD` to `.env`. (3) Runs `python3 scripts/validate_neo4j_parity.py` — must exit 0. (4) Sets `CONSTELLAX_DB_BACKEND=neo4j` in runtime env. (5) Restarts server. FalkorDB code stays in place as fallback through a validation window before final removal.
+- **Verified locally:** AST-parse + import + factory toggle smoke test all clean. No live Neo4j connection yet (pending Aura provisioning).
+
+---
+
+## WARNINGS & FRAGILE AREAS (2026-05-26)
+
+1. **The decision log above is the source of truth for design rationale, but the CURRENT API SURFACE / MODULE MAP sections in this supplement are the source of truth for what's live.** When they conflict, the supplement wins because it's newer.
+
+2. **`/api/v2/trace` is NOT deprecated.** It's the one-shot endpoint still used by Map Room follow-up traces, the resume path, and any non-streaming consumer. Don't refactor it into the segment endpoint or delete it. They're parallel surfaces by design.
+
+3. **Two speech generators coexist in `src/llm/speech.py`.** `generate_speech` (full memo, used by `dispatch()` and by phase=synthesizer) vs the per-segment generators (only fire on splice in phase=opinion/prospects). Touching one without the other creates split-brain drift.
+
+4. **`_SEGMENT_CACHE` is in-process.** Single-worker dev is fine. For a multi-worker production deployment this needs to move to Redis alongside `_MEMO_CACHE` and the conversation store. Same caveat as Decision 031's note about `_MEMO_CACHE`.
+
+5. **`generate_speech` still owns persistence.** Persistence fires after dispatch returns (at synthesizer time). Splice regeneration mutates the in-memory cache but not the persisted record. Map Room rehydration of a spliced thread shows the original. Fixing this requires re-persisting from the segment endpoint on splice success.
+
+6. **Many `src/` modules listed in MODULE MAP are untracked in git.** They're on disk and live; git just hasn't seen them committed. `git status` will list them. Don't `git add -A` blindly — check `.env`, `logs/`, `graphify-out/`, `scripts/analytics_output.json`, etc. aren't pulled in.
+
+7. **The reasoningEngine and constellax-ui repos are separate processes with NO shared code.** They communicate only through `/api/v2/*` HTTP. When refactoring across both, check both directions — typecheck the TS, import-check the Python.
+
+8. **Branch policy.** This repo is on `main` and has uncommitted work. Unlike the LoRa repo (which has `bugbot-init-review` policy), this one has no `bugbot-init-review` branch. Do NOT push to `main` without explicit instruction.
+
+9. **Visuals live in two places now — keep them in sync.** Decision 038 added `src/llm/visualizer.py` which is the AUTHORITATIVE source of Map Room visuals on the canonical DEEP path. Speech.py's `SPEECH_SYSTEM_PROMPT` still has a `visuals` section (and the segment generators in speech.py emit visuals on splice). If you edit one prompt section, check the other — drift will produce visually inconsistent output between first-read and follow-up turns.
+
+10. **`SegmentedResponse.memo` is THE persistence seam for visuals.** Decision 040 added a `memo: dict | None` sidecar field so the raw memo (with visuals) survives the Falkor round-trip. If you ever serialize a SegmentedResponse manually, include this field — the frontend reads `response.memo.visuals`, not `response.map_room.visuals`. The `map_room.visuals` field still exists (it's the dataclass version) but the frontend doesn't read from there.
+
+11. **Search router has TWO failure modes, both now logged at INFO.** Decision 042 — when the LLM router falls through (timeout / SDK miss / parse fail), the heuristic distiller produces a short query. Look for `search_router: LLM call TIMED OUT after Xs` / `FAILED ...` / `UNPARSEABLE JSON` in `logs/llm-calls.log` and console. If you see persistent timeouts, bump `ROUTER_TIMEOUT_SEC` further or swap the model.
+
+12. **Tavily query length cap is a SOFT contract.** Decision 041 — `TavilyProvider._MAX_QUERY_CHARS = 380`. If Tavily's free-tier limit changes upstream, bump this. The trim happens INSIDE `TavilyProvider.search` so any caller (router or direct) is protected.
+
+13. **The bridge Iteration ≠ ThreadStore IterationRecord.** Two unrelated dataclasses share the name `Iteration` (one in `src/bridge/types.py`, one inside `src/core/thread_types.py`). In Neo4j they MUST use different labels to prevent silent cross-contamination — `:Iteration` is reserved for ThreadStore's `IterationRecord`; the bridge model is labeled `:BridgeIteration` (Decision 044, see `_BRIDGE_LABEL_BY_TYPE` in `neo4j_backend.py`). If you ever add a third Iteration concept, give it yet another label. The label IS the namespace in Neo4j.
+
+14. **Aura Free non-standard naming.** Aura Free uses the instance ID as BOTH the username AND the database name (current instance: `e2053eb9`), NOT the standard "neo4j". `NEO4J_DATABASE` env var is required — without it, all writes route to a nonexistent `neo4j` database and `init_schema` silently fails (errors are warning-level, not raise). Decision 043 + the bridge parity script both pull this env var explicitly. If you spin up a new Aura Free instance, the same convention applies.
+
+## DEVELOPMENT COMMANDS
+
+```bash
+# Backend (this repo)
+python3 server.py                          # Start FastAPI on :8100
+python3 run.py "your question here"        # One-shot CLI mode
+python3 run.py --effort=high               # High-effort mode
+python3 -m pytest tests/                   # Run all tests
+python3 -m pytest tests/test_integration.py  # Integration suite (21 tests)
+python3 -m pytest tests/test_bridge.py     # Bridge suite (21 tests)
+
+# Smoke test the segment endpoint
+curl -X POST http://localhost:8100/api/v2/trace/segment \
+  -H 'Content-Type: application/json' \
+  -d '{"phase":"synthesizer","question":"hi","effort":"low","policy":"auto"}'
+
+# Smoke test the legacy endpoint
+curl -X POST http://localhost:8100/api/v2/trace \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"hi","effort":"low","policy":"auto"}'
+
+# Health
+curl http://localhost:8100/health
+```
+
+## ENV VARS (effective 2026-05-26)
+
+Required for live mode:
+- `OPENROUTER_API_KEY` — primary path for all LLM calls (Decision 032). Legacy fallback: `ANTHROPIC_API_KEY`.
+- ONE storage backend (see `CONSTELLAX_DB_BACKEND` below):
+  - **Falkor path (default):** `CONSTELLAX_REDIS_URL` — Redis backend for ConversationStore + ThreadStore. Without it, in-memory dict (single-process only).
+  - **Neo4j path (Decision 043):** `NEO4J_URI` + `NEO4J_PASSWORD` (plus `CONSTELLAX_DB_BACKEND=neo4j`).
+
+Optional:
+- `CONSTELLAX_DB_BACKEND=neo4j|falkor` — switches ThreadStore implementation. Default `falkor` for back-compat. Setting to `neo4j` without `NEO4J_URI`/`NEO4J_PASSWORD` logs a loud warning and falls back to Falkor.
+- `NEO4J_USERNAME` (default `neo4j`), `NEO4J_DATABASE` (default `neo4j`), `NEO4J_EMBEDDING_DIM` (default `1536` — set to `3072` if using `gemini-embedding-001` at default dimensions).
+- `TAVILY_API_KEY` — web search primary provider. Without it, falls back to DuckDuckGo HTML scraping.
+- `GOOGLE_API_KEY` / `GEMINI_API_KEY` — for Gemini embeddings + triage classifier + search router. Aliased.
+- `LORA_EFFORT` — default tier (low/medium/high).
+- `PORT` (8100), `HOST` (0.0.0.0), `CORS_ORIGINS` (*).
+- `LOG_LEVEL`, `OBS_LOG`, `OBS_LOG_FILE` — observability logging.
+
+---
+
+*Supplement last updated: 2026-05-26.*
+*If you are reading this file in a fresh session: load the SISTER REPOS table first, then CURRENT API SURFACE, then MODULE MAP, before reading any of the decision log above.*

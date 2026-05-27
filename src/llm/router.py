@@ -78,7 +78,7 @@ ALL_CONCEPTS = {
 # ---------------------------------------------------------------------------
 
 ROUTER_SYSTEM_PROMPT = """## IDENTITY
-You are LoRa's Chemistry Self-Assembly agent. You are the FIRST agent to run.
+You are Constellax's Chemistry Self-Assembly agent. You are the FIRST agent to run.
 Your job: read the problem and decide which domains and concepts should activate.
 
 ## LAWS — NON-NEGOTIABLE
@@ -226,21 +226,51 @@ def _parse_formation(content: str, problem_statement: str) -> LLMFormationPlan:
         return _fallback_formation(problem_statement)
 
 
+# Minimum viable formation — the cost-safe fallback.
+#
+# When the router LLM call fails or returns unparseable JSON, we must NOT
+# activate all 35 concepts (~$1.00+ per request). The router prompt itself
+# states three always-required domains (Physics, Math, Psychology). We
+# activate those with their core concepts only — enough to produce a
+# meaningful answer, but ~75% cheaper than full fanout.
+#
+# If a problem genuinely needs Philosophy or Chemistry, the router should
+# have said so. When the router fails, we degrade to "core analysis"
+# rather than "kitchen-sink analysis."
+_MINIMUM_VIABLE_CONCEPTS: dict[str, list[str]] = {
+    "physics":     ["first_principles", "trajectory_momentum", "entropy"],
+    "mathematics": ["signal_noise", "bayesian_inference", "convergence"],
+    "psychology":  ["dual_process", "motivated_reasoning", "metacognition"],
+}
+
+
 def _fallback_formation(problem_statement: str) -> LLMFormationPlan:
     """
-    Fallback formation when the LLM response can't be parsed.
+    Fallback formation when the LLM router fails or returns bad JSON.
 
-    Activates everything — safe default. Better to over-activate
-    than to miss a critical domain.
+    Activates the MINIMUM viable set (Physics + Math + Psychology core
+    concepts) — ~9 agents, ~3 iterations. Cost-safe degradation.
+
+    Rationale: the router's own LAWS require Physics, Math, and Psychology
+    to always run. When the router itself can't decide which subset of
+    concepts to activate, we use the minimum each domain needs to produce
+    a useful finding. Philosophy and Chemistry are skipped on fallback —
+    if they were needed, the router would have said so before failing.
     """
+    agent_count = sum(len(v) for v in _MINIMUM_VIABLE_CONCEPTS.values())
     return LLMFormationPlan(
-        active_domains=_all_domains(),
-        concepts_per_domain=dict(ALL_CONCEPTS),
-        estimated_agent_count=sum(len(v) for v in ALL_CONCEPTS.values()),
-        estimated_iterations=5,
-        estimated_credit_cost=15.0,
-        problem_complexity="high",
-        reasoning="Fallback: LLM routing failed, activating all domains as safety default.",
+        active_domains=[Domain.PHYSICS, Domain.MATHEMATICS, Domain.PSYCHOLOGY],
+        concepts_per_domain=dict(_MINIMUM_VIABLE_CONCEPTS),
+        estimated_agent_count=agent_count,
+        estimated_iterations=3,
+        estimated_credit_cost=3.0,
+        problem_complexity="low",
+        reasoning=(
+            "Fallback (cost-safe): router LLM call failed or returned "
+            "unparseable JSON. Activating the minimum viable set "
+            "(Physics + Math + Psychology core concepts only) so the engine "
+            "still answers without burning the full-fanout budget."
+        ),
     )
 
 

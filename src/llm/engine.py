@@ -35,6 +35,7 @@ from src.core.types import (
     SignalType,
     Variable,
 )
+from src.llm.budget import BudgetTracker
 from src.llm.client import LLMClient, LLMResponse
 from src.llm.router import LLMFormationPlan, route_problem, ALL_CONCEPTS
 from src.llm.validator import validate_formation, ValidationResult
@@ -105,12 +106,20 @@ async def run_async_formation(
     client: LLMClient,
     cache_path: str = "",
     max_iterations: int | None = None,
+    budget: BudgetTracker | None = None,
 ) -> EngineResult:
     """
     Run the full async Wu Xing Formation Engine.
 
     This is the async version of the orchestrator that uses real (or mock)
     LLM calls via the client, with dynamic fan-out and fan-in.
+
+    Optional `budget` enables mid-loop enforcement: before each iteration
+    the engine asks the tracker if it's allowed to continue, and after
+    each iteration it records iteration count + rolls up LLM call costs.
+    When the budget breaches (wall-time, cost, iteration, or MCP cap),
+    the engine sets convergence_history.forced_stop=True and returns
+    a partial result. Existing callers that pass no budget are unaffected.
     """
     max_iter = max_iterations or MAX_ITERATIONS
 
@@ -153,7 +162,32 @@ async def run_async_formation(
     # =====================================================================
     # STAGES 3-5: DUAL CYCLES + FUNNEL + CONVERGENCE
     # =====================================================================
+    # Track how many entries of client.call_log we've already rolled up
+    # into the budget. Starts at 0 so the very first iteration's pre-check
+    # captures the Stage 1 router/validator calls too.
+    _last_seen_log_len = 0
+
     for iteration in range(1, max_iter + 1):
+
+        # --- PRE-ITERATION BUDGET GATE ---
+        # Roll up any LLM calls made since our last rollup (Stage 1 on the
+        # first iteration, the prior iteration's calls thereafter), then
+        # check whether any cap has breached. forced_stop=True signals to
+        # callers that we hit a user-budget cap, not the engine's own cap.
+        if budget is not None:
+            for _log_entry in client.call_log[_last_seen_log_len:]:
+                budget.record_llm_call(
+                    _log_entry.model or "",
+                    _log_entry.input_tokens,
+                    _log_entry.output_tokens,
+                )
+            _last_seen_log_len = len(client.call_log)
+
+            _check = budget.check()
+            if not _check.allowed:
+                convergence_history.forced_stop = True
+                convergence_history.total_iterations = iteration - 1
+                break
 
         # --- STEP 1.4: TRIBUTARY SPAWNING (Sheng Fan-Out) ---
         sheng_calls = []
@@ -277,6 +311,12 @@ async def run_async_formation(
         )
         convergence_history.snapshots.append(snapshot)
 
+        # Count this iteration toward the budget regardless of convergence.
+        # Per-call cost rollup happens at the TOP of the next iteration's
+        # pre-check (or in the final-rollup block below if we break here).
+        if budget is not None:
+            budget.increment_iteration()
+
         if snapshot.is_converged:
             convergence_history.final_converged = True
             convergence_history.total_iterations = iteration
@@ -288,6 +328,19 @@ async def run_async_formation(
     else:
         convergence_history.forced_stop = True
         convergence_history.total_iterations = max_iter
+
+    # --- FINAL COST ROLLUP ---
+    # Capture any calls made in the last iteration that didn't get rolled
+    # up by a subsequent pre-check (because we broke on convergence or
+    # the loop completed naturally).
+    if budget is not None:
+        for _log_entry in client.call_log[_last_seen_log_len:]:
+            budget.record_llm_call(
+                _log_entry.model or "",
+                _log_entry.input_tokens,
+                _log_entry.output_tokens,
+            )
+        _last_seen_log_len = len(client.call_log)
 
     # =====================================================================
     # STAGE 6 + 7: POST-CONVERGENCE
@@ -670,16 +723,18 @@ def _build_trajectories(
 
     trajectories = []
     for rc in unique[:4]:
-        cost = (
-            f"If '{rc.variable.name}' is left unaddressed, consequences compound."
-            if rc.variable.direction == Direction.NEGATIVE
-            else f"Variable '{rc.variable.name}' continues unchecked."
-        )
+        # cost_if_ignored used to be a templated footer like
+        #   "If 'Three_Distinct_Force_Vectors_Masquerading_As_One_Problem'
+        #    is left unaddressed, consequences compound."
+        # That leaked internal variable names into the UI and read as
+        # generated filler. Now we leave it empty; the serializer's
+        # body fallback shows nothing if no real consequence is computed,
+        # and the title + reasoning trace carry the substance.
         trajectories.append(Trajectory(
             root_cause=rc,
             confidence=rc.confidence,
             consequences=[],
-            cost_if_ignored=cost,
+            cost_if_ignored="",
             source_domains=[fw.value for fw in rc.frameworks_that_agree],
         ))
 

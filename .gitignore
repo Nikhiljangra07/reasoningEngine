@@ -1,6 +1,10 @@
 .env
 .env.local
 __pycache__/
+
+# Graphify cached output — regenerable via scripts/refresh_graph.sh, ~24MB
+graphify-out/
+
 *.pyc
 *.pyo
 *.pyd

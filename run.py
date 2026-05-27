@@ -1,10 +1,10 @@
 """
-LoRa Deep Reasoning Engine — Interactive CLI.
+Constellax Reasoning Engine — Interactive CLI.
 
 Run from the project root:
     python run.py
 
-Type your problem. LoRa thinks. LoRa speaks.
+Type your problem. Constellax thinks. Constellax speaks.
 Type 'quit' to exit.
 """
 
@@ -25,6 +25,7 @@ from src.core.types import (
     Variable,
 )
 from src.llm.client import LLMClient, ClientMode
+from src.llm.effort import Effort, iterations_for, normalize_effort
 from src.llm.engine import run_async_formation
 from src.llm.speech import generate_speech, extract_speech_input
 
@@ -93,22 +94,23 @@ def parse_problem(text: str) -> Problem:
     )
 
 
-async def run_lora(text: str, client: LLMClient) -> None:
+async def run_lora(text: str, client: LLMClient, effort: Effort = Effort.MEDIUM) -> None:
     """Run the full LoRa pipeline on a user's problem."""
     problem = parse_problem(text)
 
+    max_iters = iterations_for(effort)
+
     print()
-    print("  LoRa is thinking...")
+    print(f"  LoRa is thinking... (effort={effort.value}, iterations={max_iters})")
     print(f"  ({len(problem.variables)} variables extracted)")
     print()
 
     start = time.monotonic()
 
-    # Run the engine (2 iterations for Phase 1)
     engine_result = await run_async_formation(
         problem=problem,
         client=client,
-        max_iterations=2,
+        max_iterations=max_iters,
     )
 
     engine_time = time.monotonic() - start
@@ -145,29 +147,39 @@ async def run_lora(text: str, client: LLMClient) -> None:
     print()
 
 
-async def main():
-    # Determine mode
-    has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
-
+def _resolve_mode_and_effort() -> tuple[ClientMode, str, Effort]:
+    """Pick LIVE/MOCK and the default effort tier from the environment."""
+    has_key = bool(
+        os.environ.get("OPENROUTER_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    )
     if has_key:
         mode = ClientMode.LIVE
-        mode_label = "LIVE (Sonnet)"
+        mode_label = "LIVE (OpenRouter)"
     else:
         mode = ClientMode.MOCK
-        mode_label = "MOCK (no API key — set ANTHROPIC_API_KEY in .env for live mode)"
+        mode_label = "MOCK (no API key — set OPENROUTER_API_KEY in .env for live mode)"
+    effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+    return mode, mode_label, effort
+
+
+async def main(effort: Effort):
+    mode, mode_label, _ = _resolve_mode_and_effort()
 
     print()
     print("  ╔══════════════════════════════════════════════════════╗")
-    print("  ║         LoRa Deep Reasoning Engine v2               ║")
+    print("  ║         Constellax Reasoning Engine v2              ║")
     print("  ║         5 domains · 63 concepts · Wu Xing           ║")
     print("  ╚══════════════════════════════════════════════════════╝")
     print()
     print(f"  Mode: {mode_label}")
-    print("  Type your problem. LoRa will think and respond.")
-    print("  Type 'quit' to exit.")
+    print(f"  Effort: {effort.value} (iterations={iterations_for(effort)})")
+    print("  Type your problem. Constellax will think and respond.")
+    print("  Type 'quit' to exit. Type 'effort low|medium|high' to switch tiers.")
     print()
 
     client = LLMClient(mode=mode)
+    current_effort = effort
 
     while True:
         try:
@@ -180,6 +192,15 @@ async def main():
                 print("\n  Goodbye.\n")
                 break
 
+            # Effort switch shortcut: "effort low" / "effort medium" / "effort high"
+            lower = text.lower()
+            if lower.startswith("effort "):
+                tier = lower.split(None, 1)[1].strip()
+                current_effort = normalize_effort(tier)
+                print(f"  → effort={current_effort.value} "
+                      f"(iterations={iterations_for(current_effort)})\n")
+                continue
+
             # Support multi-line input (end with empty line)
             while True:
                 more = input("  │ ").strip()
@@ -190,7 +211,7 @@ async def main():
             # Reset call log for fresh stats per problem
             client.call_log = []
 
-            await run_lora(text, client)
+            await run_lora(text, client, effort=current_effort)
 
         except KeyboardInterrupt:
             print("\n\n  Goodbye.\n")
@@ -199,23 +220,49 @@ async def main():
             print(f"\n  Error: {e}\n")
 
 
+def _parse_cli_args(argv: list[str]) -> tuple[str, Effort]:
+    """
+    Pull `--effort low|medium|high` out of argv, return (problem_text, effort).
+
+    Effort comes from the flag if present, otherwise from LORA_EFFORT env,
+    otherwise DEFAULT_EFFORT (medium).
+    """
+    effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+    cleaned: list[str] = []
+    i = 0
+    while i < len(argv):
+        token = argv[i]
+        if token == "--effort" and i + 1 < len(argv):
+            effort = normalize_effort(argv[i + 1])
+            i += 2
+            continue
+        if token.startswith("--effort="):
+            effort = normalize_effort(token.split("=", 1)[1])
+            i += 1
+            continue
+        cleaned.append(token)
+        i += 1
+    return " ".join(cleaned), effort
+
+
 if __name__ == "__main__":
-    # If a problem is passed as command line argument, run once and exit
+    # If a problem is passed as command line argument, run once and exit.
+    # Usage: python run.py "my problem" --effort high
     if len(sys.argv) > 1:
-        problem_text = " ".join(sys.argv[1:])
+        problem_text, cli_effort = _parse_cli_args(sys.argv[1:])
 
         async def single_run():
-            has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
-            mode = ClientMode.LIVE if has_key else ClientMode.MOCK
-
+            mode, mode_label, _ = _resolve_mode_and_effort()
             print()
-            print(f"  Mode: {'LIVE (Sonnet)' if has_key else 'MOCK'}")
+            print(f"  Mode: {mode_label}")
+            print(f"  Effort: {cli_effort.value} (iterations={iterations_for(cli_effort)})")
             print(f"  Problem: {problem_text[:80]}...")
 
             client = LLMClient(mode=mode)
-            await run_lora(problem_text, client)
+            await run_lora(problem_text, client, effort=cli_effort)
 
         asyncio.run(single_run())
     else:
-        # Interactive mode
-        asyncio.run(main())
+        # Interactive mode — effort from env, switchable mid-session via "effort <tier>"
+        env_effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+        asyncio.run(main(env_effort))
