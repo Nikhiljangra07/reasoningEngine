@@ -42,7 +42,12 @@ from src.llm.effort import Effort, iterations_for, normalize_effort
 from src.llm.engine import EngineResult, run_async_formation
 from src.llm.speech import extract_speech_input, generate_speech
 from src.llm.triage import Route, TriageResult, triage
-from src.mcp_router import McpResult, fire_mcp
+from src.mcp_router import (
+    McpHandlerRegistry,
+    McpResult,
+    fire_mcp,
+    format_mcp_results_for_prompt,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +124,7 @@ async def dispatch(
     conversation_store: ConversationStore | None = None,
     session_id: str | None = None,
     memory_directive: str = "",
+    mcp_handlers: McpHandlerRegistry | None = None,
 ) -> DispatchResult:
     """
     Route a request through the appropriate path.
@@ -137,6 +143,14 @@ async def dispatch(
             is a no-op (back-compat with callers that don't pass them).
         session_id: the conversation session this request belongs to.
             See conversation_store above for the recording contract.
+        mcp_handlers: optional McpHandlerRegistry mapping capability name
+            → real async handler. When provided, fire_mcp() dispatches to
+            the matching handler instead of returning a stub; the
+            dispatcher then folds the handler results into the prompt
+            via format_mcp_results_for_prompt. When None, the router
+            returns stub results (the pre-Phase-B contract) and nothing
+            gets injected into prompts. Callers that don't wire handlers
+            see no behavior change.
     """
     triage_result = (
         force_triage_result
@@ -162,6 +176,7 @@ async def dispatch(
         result = await _dispatch_direct_plus(
             text, client, triage_result, budget, reg,
             memory_directive=memory_directive,
+            mcp_handlers=mcp_handlers,
         )
     else:
         # DEEP route — memory injection appends to the speech extra_directives
@@ -170,6 +185,7 @@ async def dispatch(
             text, client, triage_result, budget, reg,
             user_effort=user_eff, policy=policy,
             memory_directive=memory_directive,
+            mcp_handlers=mcp_handlers,
         )
 
     # Conversation recording — opt-in, back-compat. If either arg is missing
@@ -228,6 +244,7 @@ async def resume_with_choice(
     registry: CapabilityRegistry | None = None,
     conversation_store: ConversationStore | None = None,
     session_id: str | None = None,
+    mcp_handlers: McpHandlerRegistry | None = None,
 ) -> DispatchResult:
     """
     Run dispatch at the effort the user explicitly authorized.
@@ -239,7 +256,9 @@ async def resume_with_choice(
 
     Optional conversation_store + session_id propagate through to dispatch()
     so the resumed call gets recorded as another Iteration in the same
-    session (continuing the thread, not branching).
+    session (continuing the thread, not branching). mcp_handlers
+    propagate the same way so handler-driven MCP results land in the
+    resumed call's prompt too.
     """
     return await dispatch(
         text=text,
@@ -250,6 +269,7 @@ async def resume_with_choice(
         registry=registry,
         conversation_store=conversation_store,
         session_id=session_id,
+        mcp_handlers=mcp_handlers,
     )
 
 
@@ -335,15 +355,17 @@ async def _dispatch_direct_plus(
     registry: CapabilityRegistry,
     *,
     memory_directive: str = "",
+    mcp_handlers: McpHandlerRegistry | None = None,
 ) -> DispatchResult:
     """
     Single LLM call + bridge retrieval.
 
-    For now: any MCP the triage gate asked for that isn't AVAILABLE in the
-    registry becomes a missing_capability_offers entry. The engine proceeds
-    with degraded context and the response surfaces what was missing.
-
-    Memory V2 is always missing in this drop (stub raises NotImplementedError).
+    MCPs that triage requested are fired through the router. Blocked
+    capabilities (MISSING / DENIED / consent-pending) surface as
+    conversational missing-capability offers. Successful real-handler
+    fires get folded into the prompt as an MCP CONTEXT block (Phase B1).
+    Stub fires count toward the budget but don't inject prompt context
+    — they're placeholders until a handler is registered for that name.
     """
     check = budget.check()
     if not check.allowed:
@@ -353,16 +375,24 @@ async def _dispatch_direct_plus(
 
     # Fire each MCP the triage gate asked for through the router. Blocked
     # capabilities surface as conversational missing-capability offers;
-    # successful fires (stubbed in this drop) count toward the budget's
-    # mcp_calls cap and get noted in the debug log.
+    # successful fires count toward the budget's mcp_calls cap and are
+    # noted in the debug log.
     missing_offers: list[dict] = []
     mcp_fired: list[dict] = []
+    mcp_results: list[McpResult] = []
     for mcp in triage_result.mcps_needed:
+        purpose = mcp.why or "context for this question"
         result = await fire_mcp(
             registry=registry,
             name=mcp.name,
-            purpose=mcp.why or "context for this question",
+            purpose=purpose,
+            handlers=mcp_handlers,
         )
+        # Stamp the purpose into the handler result so the prompt
+        # renderer can echo it back when listing the MCP context block.
+        if result.ok and not result.stub:
+            result.result.setdefault("_purpose", purpose)
+        mcp_results.append(result)
         mcp_fired.append({
             "name": mcp.name,
             "ok": result.ok,
@@ -398,6 +428,12 @@ async def _dispatch_direct_plus(
     if memory_directive:
         # Phase 4 — Decision Trace prior memory.
         system_prompt = system_prompt + "\n\n" + memory_directive
+    # Phase B1 — fold real MCP handler results into the prompt. Stubs
+    # and blocked fires are filtered out by format_mcp_results_for_prompt;
+    # empty string when no real results, so the concat is no-op-safe.
+    mcp_block = format_mcp_results_for_prompt(mcp_results)
+    if mcp_block:
+        system_prompt = system_prompt + "\n\n" + mcp_block
 
     response = await client.call(
         system_prompt=system_prompt,
@@ -431,8 +467,15 @@ async def _dispatch_deep(
     policy: str,
     *,
     memory_directive: str = "",
+    mcp_handlers: McpHandlerRegistry | None = None,
 ) -> DispatchResult:
-    """Full wuxing engine at resolved effort tier."""
+    """Full wuxing engine at resolved effort tier.
+
+    mcp_handlers is accepted for signature parity with the other route
+    dispatchers; the deep route's MCP integration lives inside the engine
+    itself (it has its own per-iteration MCP gating). When deep-route
+    handler wiring lands as a follow-up, this parameter is the seam.
+    """
     resolved_effort, escalation_offer = _resolve_effort(
         gate_effort=triage_result.recommended_effort,
         user_effort=user_effort,

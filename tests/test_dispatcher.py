@@ -609,6 +609,80 @@ async def test_router_fire_counts_to_budget():
     assert r.budget_summary["mcp_calls"] >= 1
 
 
+@test("12.4 mcp_handlers: registered handler runs and result lands in dispatcher")
+async def test_dispatcher_uses_mcp_handlers():
+    from src.mcp_router import McpHandlerRegistry
+    handlers = McpHandlerRegistry()
+
+    captured = {}
+    async def memory_handler(args, purpose):
+        captured["purpose"] = purpose
+        return {"text": "User decided to use OAuth2 last week."}
+
+    handlers.register("memory_v2", memory_handler)
+
+    reg = CapabilityRegistry()  # memory_v2 already AVAILABLE post-Phase-A
+    r = await dispatch(
+        "what did we decide about auth?",
+        client=mk_client(),
+        registry=reg,
+        mcp_handlers=handlers,
+    )
+
+    # Handler fired with the triage-provided purpose
+    assert captured.get("purpose")
+    # Dispatcher records the real (non-stub) fire in debug
+    fired = r.debug.get("mcps_fired", [])
+    memory_attempts = [f for f in fired if f["name"] == "memory_v2"]
+    assert len(memory_attempts) == 1
+    assert memory_attempts[0]["ok"] is True
+    assert memory_attempts[0]["stub"] is False  # real handler, not stub
+    # No missing-capability offer when the handler ran cleanly
+    offer_names = [o["capability"] for o in r.missing_capability_offers]
+    assert "memory_v2" not in offer_names
+
+
+@test("12.5 mcp_handlers None → back-compat stub behavior preserved")
+async def test_dispatcher_without_handlers_is_back_compat():
+    # No mcp_handlers provided → fire_mcp returns stub for memory_v2.
+    # Dispatcher still works exactly as it did pre-Phase-B1.
+    r = await dispatch(
+        "what did we decide about auth?",
+        client=mk_client(),
+    )
+    fired = r.debug.get("mcps_fired", [])
+    memory_attempts = [f for f in fired if f["name"] == "memory_v2"]
+    assert len(memory_attempts) == 1
+    assert memory_attempts[0]["ok"] is True
+    assert memory_attempts[0]["stub"] is True
+
+
+@test("12.6 handler exception → missing offer surfaces (no crash)")
+async def test_dispatcher_handler_exception_graceful():
+    from src.mcp_router import McpHandlerRegistry
+    handlers = McpHandlerRegistry()
+
+    async def broken_handler(args, purpose):
+        raise RuntimeError("retriever offline")
+
+    handlers.register("memory_v2", broken_handler)
+
+    reg = CapabilityRegistry()
+    r = await dispatch(
+        "what did we decide?",
+        client=mk_client(),
+        registry=reg,
+        mcp_handlers=handlers,
+    )
+    fired = r.debug.get("mcps_fired", [])
+    memory_attempts = [f for f in fired if f["name"] == "memory_v2"]
+    assert len(memory_attempts) == 1
+    assert memory_attempts[0]["ok"] is False
+    # The dispatcher surfaces a missing-capability offer when fire failed
+    offer_names = [o["capability"] for o in r.missing_capability_offers]
+    assert "memory_v2" in offer_names
+
+
 # ---------------------------------------------------------------------------
 # 13. ConversationStore integration — opt-in recording on dispatch
 # ---------------------------------------------------------------------------
@@ -782,6 +856,9 @@ ALL_TESTS = [
     test_direct_plus_uses_router,
     test_direct_plus_router_when_available,
     test_router_fire_counts_to_budget,
+    test_dispatcher_uses_mcp_handlers,
+    test_dispatcher_without_handlers_is_back_compat,
+    test_dispatcher_handler_exception_graceful,
     test_no_conv_store_silent,
     test_record_trivial,
     test_record_direct,

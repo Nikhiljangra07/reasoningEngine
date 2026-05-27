@@ -18,7 +18,13 @@ from src.capabilities import (
     CapabilityType,
     PermissionState,
 )
-from src.mcp_router import McpResult, fire_mcp, fire_mcps
+from src.mcp_router import (
+    McpHandlerRegistry,
+    McpResult,
+    fire_mcp,
+    fire_mcps,
+    format_mcp_results_for_prompt,
+)
 
 
 PASSED = 0
@@ -208,6 +214,167 @@ async def test_args_passthrough():
 
 
 # ---------------------------------------------------------------------------
+# 10. McpHandlerRegistry — real-dispatch path (Phase B1)
+# ---------------------------------------------------------------------------
+
+@test("10.1 handler-less fire_mcp still returns stub (back-compat)")
+async def test_fire_mcp_without_handlers():
+    reg = CapabilityRegistry()
+    result = await fire_mcp(reg, "graphify", purpose="x", handlers=None)
+    assert result.ok is True
+    assert result.stub is True
+
+
+@test("10.2 fire_mcp dispatches to a registered handler and returns real data")
+async def test_fire_mcp_dispatch_to_handler():
+    reg = CapabilityRegistry()
+    handlers = McpHandlerRegistry()
+
+    async def fake_handler(args, purpose):
+        return {"text": "real data here", "echo_args": args, "purpose": purpose}
+
+    handlers.register("graphify", fake_handler)
+
+    result = await fire_mcp(
+        reg, "graphify",
+        purpose="get structure",
+        args={"file": "x.py"},
+        handlers=handlers,
+    )
+    assert result.ok is True
+    assert result.stub is False
+    assert result.result["text"] == "real data here"
+    assert result.result["echo_args"] == {"file": "x.py"}
+    assert result.result["purpose"] == "get structure"
+
+
+@test("10.3 handler exception → ok=False with the error in blocked_reason")
+async def test_handler_exception_becomes_failure():
+    reg = CapabilityRegistry()
+    handlers = McpHandlerRegistry()
+
+    async def broken_handler(args, purpose):
+        raise RuntimeError("network down")
+
+    handlers.register("graphify", broken_handler)
+
+    result = await fire_mcp(reg, "graphify", purpose="x", handlers=handlers)
+    assert result.ok is False
+    assert "network down" in result.blocked_reason
+    # Failure is logged into usage history with success=False
+    history = reg.usage_history("graphify")
+    assert history[-1].success is False
+    assert "network down" in (history[-1].error or "")
+
+
+@test("10.4 handler returning non-dict is treated as failure (defensive)")
+async def test_handler_non_dict_result():
+    reg = CapabilityRegistry()
+    handlers = McpHandlerRegistry()
+
+    async def bad_shape(args, purpose):
+        return "just a string"  # type: ignore[return-value]
+
+    handlers.register("graphify", bad_shape)
+    result = await fire_mcp(reg, "graphify", purpose="x", handlers=handlers)
+    assert result.ok is False
+    assert "non-dict" in result.blocked_reason
+
+
+@test("10.5 registry without this name → stub fallback (graceful)")
+async def test_handlers_present_but_name_unregistered():
+    reg = CapabilityRegistry()
+    handlers = McpHandlerRegistry()
+
+    async def github_handler(args, purpose):
+        return {"text": "issues..."}
+
+    handlers.register("github", github_handler)
+
+    # graphify has no handler registered → stub fallback
+    result = await fire_mcp(reg, "graphify", purpose="x", handlers=handlers)
+    assert result.ok is True
+    assert result.stub is True
+
+
+@test("10.6 fire_mcps passes handlers through to each call")
+async def test_fire_mcps_uses_handlers():
+    reg = CapabilityRegistry()
+    handlers = McpHandlerRegistry()
+
+    async def graphify_handler(args, purpose):
+        return {"text": "code structure"}
+
+    handlers.register("graphify", graphify_handler)
+
+    results = await fire_mcps(
+        reg,
+        [
+            {"name": "graphify", "purpose": "structure"},
+            {"name": "bridge", "purpose": "decisions"},
+        ],
+        handlers=handlers,
+    )
+    assert results[0].stub is False
+    assert results[0].result["text"] == "code structure"
+    assert results[1].stub is True  # bridge has no handler
+
+
+@test("10.7 McpHandlerRegistry rejects invalid registrations")
+def test_handler_registry_validation():
+    h = McpHandlerRegistry()
+    try:
+        h.register("", lambda a, p: None)  # empty name
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("expected ValueError on empty name")
+
+    try:
+        h.register("github", "not a callable")  # type: ignore[arg-type]
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("expected TypeError on non-callable handler")
+
+
+# ---------------------------------------------------------------------------
+# 11. format_mcp_results_for_prompt — Phase B1 prompt injection helper
+# ---------------------------------------------------------------------------
+
+@test("11.1 format with no real results returns empty string")
+def test_format_empty_when_all_stubs():
+    out = format_mcp_results_for_prompt([
+        McpResult(ok=True, capability="graphify", stub=True, result={"stub": True}),
+        McpResult(ok=False, capability="github", blocked_reason="missing"),
+    ])
+    assert out == ""
+
+
+@test("11.2 format renders real handler results with PRIOR-MEMORY-style header")
+def test_format_renders_real_results():
+    real = McpResult(
+        ok=True, capability="github", stub=False,
+        result={"text": "PR #482 is approved.", "_purpose": "check PR state"},
+    )
+    out = format_mcp_results_for_prompt([real])
+    assert "## MCP CONTEXT" in out
+    assert "### github — check PR state" in out
+    assert "PR #482 is approved." in out
+
+
+@test("11.3 format falls back to JSON dump when handler has no 'text' field")
+def test_format_falls_back_to_dump():
+    real = McpResult(
+        ok=True, capability="docs", stub=False,
+        result={"library": "stripe", "snippet": "Idempotency-Key header"},
+    )
+    out = format_mcp_results_for_prompt([real])
+    assert "### docs" in out
+    assert "stripe" in out
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -224,6 +391,16 @@ ALL_TESTS = [
     test_fire_mcps_batch,
     test_fire_mcps_missing_purpose,
     test_args_passthrough,
+    test_fire_mcp_without_handlers,
+    test_fire_mcp_dispatch_to_handler,
+    test_handler_exception_becomes_failure,
+    test_handler_non_dict_result,
+    test_handlers_present_but_name_unregistered,
+    test_fire_mcps_uses_handlers,
+    test_handler_registry_validation,
+    test_format_empty_when_all_stubs,
+    test_format_renders_real_results,
+    test_format_falls_back_to_dump,
 ]
 
 
