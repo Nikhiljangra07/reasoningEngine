@@ -80,8 +80,10 @@ async def test_local_read_logs_usage():
 
 @test("2.1 fire_mcp on MISSING capability returns ok=False with not-connected reason")
 async def test_missing_blocked():
+    # github is still MISSING by default (its MCP client isn't wired yet).
+    # memory_v2 was MISSING pre-Phase-A but is now AVAILABLE.
     reg = CapabilityRegistry()
-    result = await fire_mcp(reg, "memory_v2", purpose="check prior decisions")
+    result = await fire_mcp(reg, "github", purpose="check PR state")
     assert result.ok is False
     assert "not connected" in result.blocked_reason
 
@@ -89,8 +91,8 @@ async def test_missing_blocked():
 @test("2.2 blocked fires still log usage (with success=False)")
 async def test_blocked_logs_failure():
     reg = CapabilityRegistry()
-    await fire_mcp(reg, "memory_v2", purpose="x")
-    history = reg.usage_history("memory_v2")
+    await fire_mcp(reg, "github", purpose="x")
+    history = reg.usage_history("github")
     assert len(history) == 1
     assert history[0].success is False
 
@@ -167,16 +169,17 @@ async def test_unknown_blocked():
 
 @test("8.1 fire_mcps returns one result per request, same order")
 async def test_fire_mcps_batch():
+    # Use github (still MISSING) instead of memory_v2 (now AVAILABLE post-Phase-A).
     reg = CapabilityRegistry()
     requests = [
         {"name": "graphify", "purpose": "code structure"},
-        {"name": "memory_v2", "purpose": "prior decisions"},
+        {"name": "github", "purpose": "check PR state"},
         {"name": "file_write", "purpose": "edit"},
     ]
     results = await fire_mcps(reg, requests)
     assert len(results) == 3
     assert results[0].ok is True            # graphify available
-    assert results[1].ok is False           # memory_v2 missing
+    assert results[1].ok is False           # github missing
     assert results[2].ok is False           # file_write absent
     assert "absent by design" in results[2].blocked_reason
 

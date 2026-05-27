@@ -100,10 +100,10 @@ _DEFAULT_CAPABILITIES: list[Capability] = [
     Capability(
         name="memory_v2",
         type=CapabilityType.LOCAL_READ,
-        status=CapabilityStatus.MISSING,  # Python port is upcoming
+        status=CapabilityStatus.AVAILABLE,
         permission=PermissionState.ALWAYS_ALLOWED,
-        description="Reads prior decisions and project context from the Memory V2 store.",
-        install_hint="Memory V2 Python port is upcoming — see src/bridge/memory_adapter.py.",
+        description="Reads prior decisions and cross-thread iterations from the Memory V2 store (Neo4j-backed Decision Trace).",
+        install_hint="Set NEO4J_URI + NEO4J_PASSWORD; the server wires Neo4jAnchorBackend + MemoryRetriever automatically.",
     ),
     Capability(
         name="graphify",
@@ -120,15 +120,32 @@ _DEFAULT_CAPABILITIES: list[Capability] = [
         permission=PermissionState.ALWAYS_ALLOWED,
         description="Bridge layer connecting graphify (code structure) and Memory V2 (decisions).",
     ),
+    Capability(
+        # Local file reads from the IDE/extension host. Mirrors the frontend
+        # MCP_OPTIONS picker key. UI opt-in is the consent gate; the registry
+        # mirrors graphify's LOCAL_READ + ALWAYS_ALLOWED posture. Status
+        # stays MISSING until the file-read client is wired through
+        # mcp_router (Phase B).
+        name="filesystem",
+        type=CapabilityType.LOCAL_READ,
+        status=CapabilityStatus.MISSING,
+        permission=PermissionState.ALWAYS_ALLOWED,
+        description="Reads files from the directory the user is working in (extension/IDE host only — no network).",
+        install_hint="Wire @modelcontextprotocol/server-filesystem in src/mcp_router.py with the project root scoped path.",
+    ),
 
-    # External reads — ask-once, missing until the host connects them.
+    # External reads — ask-once, status reflects whether the host has
+    # connected the implementation.
     Capability(
         name="web_search",
         type=CapabilityType.EXTERNAL_READ,
-        status=CapabilityStatus.MISSING,
+        # Tavily client is real (src/bridge/web_search.py) and TAVILY_API_KEY
+        # drives provider selection. Falls through to DuckDuckGo HTML if no
+        # key is set, so the capability is functionally AVAILABLE either way.
+        status=CapabilityStatus.AVAILABLE,
         permission=PermissionState.ASK_ONCE_PENDING,
-        description="Search the public web for current info beyond the 2025 training cutoff.",
-        install_hint="claude mcp add web_search",
+        description="Search the public web for current info beyond the 2025 training cutoff (Tavily primary, DuckDuckGo fallback).",
+        install_hint="Set TAVILY_API_KEY for Tavily; without it DuckDuckGo HTML is used automatically.",
     ),
     Capability(
         name="github",

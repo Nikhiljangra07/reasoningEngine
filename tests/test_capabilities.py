@@ -63,9 +63,9 @@ def run_test(fn):
 @test("1.1 default registry seeds expected capabilities")
 def test_default_seed():
     reg = CapabilityRegistry()
-    for name in ("memory_v2", "graphify", "bridge", "web_search",
-                 "github", "docs", "browser", "file_write",
-                 "shell_exec", "send_message"):
+    for name in ("memory_v2", "graphify", "bridge", "filesystem",
+                 "web_search", "github", "docs", "browser",
+                 "file_write", "shell_exec", "send_message"):
         assert reg.get(name) is not None, f"missing seed: {name}"
 
 
@@ -84,20 +84,29 @@ def test_unknown():
 # 2. Query subsets
 # ---------------------------------------------------------------------------
 
-@test("2.1 available() includes graphify and bridge")
+@test("2.1 available() includes graphify, bridge, memory_v2, web_search")
 def test_available_query():
     reg = CapabilityRegistry()
     names = {c.name for c in reg.available()}
+    # Local reads that are actually wired:
     assert "graphify" in names
     assert "bridge" in names
+    # Phase 1-6 memory pipeline is shipped — Neo4j-backed Memory V2 is real.
+    assert "memory_v2" in names
+    # web_search has a real Tavily client (with DuckDuckGo fallback).
+    assert "web_search" in names
 
 
-@test("2.2 missing() includes web_search, github, docs, browser, memory_v2")
+@test("2.2 missing() includes github, docs, browser, filesystem")
 def test_missing_query():
     reg = CapabilityRegistry()
     names = {c.name for c in reg.missing()}
-    for expected in ("web_search", "github", "docs", "browser", "memory_v2"):
+    # External reads not yet wired through mcp_router.
+    for expected in ("github", "docs", "browser"):
         assert expected in names, f"expected missing: {expected}"
+    # Filesystem is registered (UI exposes it) but its client isn't wired
+    # in mcp_router yet — Phase B.
+    assert "filesystem" in names
 
 
 @test("2.3 absent_by_design() includes all write capabilities")
@@ -114,9 +123,10 @@ def test_absent_query():
 
 @test("3.1 mark_available flips MISSING → AVAILABLE")
 def test_mark_available():
+    # github is still MISSING by default — exercise the flip on it.
     reg = CapabilityRegistry()
-    reg.mark_available("web_search")
-    assert reg.is_available("web_search")
+    reg.mark_available("github")
+    assert reg.is_available("github")
 
 
 @test("3.2 mark_missing flips AVAILABLE → MISSING")
@@ -243,8 +253,9 @@ def test_can_fire_local():
 
 @test("6.2 can_fire=False for MISSING capability")
 def test_can_fire_missing():
+    # github is still MISSING by default — exercise the not-connected path.
     reg = CapabilityRegistry()
-    allowed, reason = reg.can_fire("web_search")
+    allowed, reason = reg.can_fire("github")
     assert allowed is False
     assert "not connected" in reason
 
@@ -313,23 +324,26 @@ def test_needs_consent_after_grant():
 
 @test("8.1 build_missing_capability_response: connectable MCP shape is complete")
 def test_build_response_connectable():
+    # Use github — still MISSING by default with a clean `claude mcp add`
+    # install hint. (web_search is now AVAILABLE post-Phase-A, so building
+    # a missing-capability response against it would be off-purpose.)
     reg = CapabilityRegistry()
     resp = reg.build_missing_capability_response(
-        "web_search",
-        why_needed="checking current Stripe pricing",
+        "github",
+        why_needed="checking PR #482 status",
         current_confidence=0.65,
         confidence_if_connected=0.9,
-        fallback_caveat="working from 2025 training data",
+        fallback_caveat="working from local repo state only",
     )
-    assert resp["capability"] == "web_search"
-    assert resp["why_needed"] == "checking current Stripe pricing"
+    assert resp["capability"] == "github"
+    assert resp["why_needed"] == "checking PR #482 status"
     assert resp["current_confidence"] == 0.65
     assert resp["confidence_if_connected"] == 0.9
-    assert resp["fallback_caveat"] == "working from 2025 training data"
+    assert resp["fallback_caveat"] == "working from local repo state only"
     # Connect option present + carries install hint
     connect = [o for o in resp["user_options"] if o["id"] == "connect"]
     assert len(connect) == 1
-    assert connect[0]["instruction"] == "claude mcp add web_search"
+    assert connect[0]["instruction"] == "claude mcp add github"
     # Other options present
     ids = {o["id"] for o in resp["user_options"]}
     assert "fallback" in ids and "skip" in ids

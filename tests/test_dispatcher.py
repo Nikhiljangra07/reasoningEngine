@@ -140,7 +140,16 @@ async def test_direct_plus_route():
 
 @test("3.2 DIRECT_PLUS surfaces memory_v2 missing-capability offer")
 async def test_direct_plus_missing_offer():
-    r = await dispatch("what did we decide about routing?", client=mk_client())
+    # memory_v2 is AVAILABLE by default post-Phase-A. To exercise the
+    # "missing → surface an offer" flow, simulate the pre-wired state by
+    # explicitly marking it missing on a custom registry.
+    reg = CapabilityRegistry()
+    reg.mark_missing("memory_v2")
+    r = await dispatch(
+        "what did we decide about routing?",
+        client=mk_client(),
+        registry=reg,
+    )
     assert r.route == Route.DIRECT_PLUS
     assert len(r.missing_capability_offers) >= 1
     offer = r.missing_capability_offers[0]
@@ -546,18 +555,24 @@ async def test_trivial_no_prompts():
 
 @test("12.1 DIRECT_PLUS fires MCPs through the router; missing → offer surfaced")
 async def test_direct_plus_uses_router():
+    # memory_v2 is AVAILABLE by default post-Phase-A. Mark it missing on a
+    # custom registry so the router's missing-path + offer-surfacing flow
+    # is the thing under test (mk_client's mock triage hardcodes memory_v2
+    # for memory queries).
+    reg = CapabilityRegistry()
+    reg.mark_missing("memory_v2")
     r = await dispatch(
         "what did we decide about routing last week?",
         client=mk_client(),
+        registry=reg,
     )
     assert r.route == Route.DIRECT_PLUS
     # mcp_fired present in debug, each entry tells us what happened
     fired = r.debug.get("mcps_fired", [])
     assert len(fired) >= 1
-    # memory_v2 should be the one fired (mock triage hardcodes it for memory queries)
     memory_attempts = [f for f in fired if f["name"] == "memory_v2"]
     assert len(memory_attempts) == 1
-    assert memory_attempts[0]["ok"] is False  # memory_v2 is MISSING in seed
+    assert memory_attempts[0]["ok"] is False  # forced MISSING by this test
     # And the missing-capability offer should be surfaced
     offer_names = [o["capability"] for o in r.missing_capability_offers]
     assert "memory_v2" in offer_names
