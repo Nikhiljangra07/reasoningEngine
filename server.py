@@ -62,6 +62,10 @@ from src.bridge.context7_client import (
     build_context7_client_from_env,
     make_context7_handler,
 )
+from src.bridge.filesystem_handler import (
+    make_filesystem_handler,
+    normalize_attached_files,
+)
 from src.llm.memory_injection import build_memory_directive
 from src.mcp_router import McpHandlerRegistry
 from src.core.types import Direction, FrameworkID, Problem, Variable
@@ -275,20 +279,38 @@ else:
     log.info("MCP: docs (context7) handler NOT registered (CONTEXT7_ENABLED unset)")
 
 
-def _make_capability_registry():
+def _make_capability_registry(*, attached_files: list | None = None):
     """Build a per-request CapabilityRegistry with startup-detected MCPs
-    flipped to AVAILABLE.
+    flipped to AVAILABLE plus per-request capabilities (filesystem) when
+    the request brings the data they need.
 
     Constructed fresh per request so usage_log stays request-scoped.
-    The set of "actually available" external MCPs is determined ONCE
-    at startup by env detection (above); this helper just applies that
-    state to each new registry instance.
+    The set of "actually available" external MCPs is determined ONCE at
+    startup by env detection (above); filesystem is a per-request
+    capability — AVAILABLE iff this request attached files.
     """
     from src.capabilities import CapabilityRegistry
     reg = CapabilityRegistry()
     for name in _MCP_AVAILABLE_AT_STARTUP:
         reg.mark_available(name)
+    if attached_files:
+        reg.mark_available("filesystem")
     return reg
+
+
+def _make_request_mcp_handlers(*, attached_files: list | None = None):
+    """Return an McpHandlerRegistry for this request.
+
+    Returns the shared module-level registry when no per-request handlers
+    apply (saves a clone). When attached_files are present, returns an
+    extended copy with a request-scoped filesystem handler that closes
+    over those files.
+    """
+    if not attached_files:
+        return _MCP_HANDLERS
+    handlers = _MCP_HANDLERS.extend()
+    handlers.register("filesystem", make_filesystem_handler(attached_files))
+    return handlers
 
 
 # ---------------------------------------------------------------------------
@@ -1180,17 +1202,22 @@ async def trace_v2(request: Request) -> JSONResponse:
             question=question, body=body,
             parent_thread_id=body.get("parent_thread_id"),
         )
+        # Phase B5: extract per-request attached files (IDE-extension path).
+        # Normalize once here so the registry + handler wiring see the same
+        # validated payload. Empty list when no files attached — handlers
+        # registry falls back to the shared module-level instance.
+        attached_files = normalize_attached_files(body.get("attached_files"))
         result: DispatchResult = await dispatch(
             text=question,
             client=client,
             user_effort=user_effort,
             policy=policy,
             caps=caps,
-            registry=_make_capability_registry(),
+            registry=_make_capability_registry(attached_files=attached_files),
             conversation_store=conv_store,
             session_id=session_id,
             memory_directive=memory_directive,
-            mcp_handlers=_MCP_HANDLERS,
+            mcp_handlers=_make_request_mcp_handlers(attached_files=attached_files),
         )
         total_ms = (time.time() - request_start) * 1000
 
@@ -2111,16 +2138,17 @@ async def trace_segment(request: Request) -> JSONResponse:
         # Triage already ran; dispatch will re-run it internally (cheap)
         # and route appropriately. Persistence fires here since the
         # full memo IS complete in one round-trip for these routes.
+        attached_files = normalize_attached_files(body.get("attached_files"))
         result: DispatchResult = await dispatch(
             text=question,
             client=client,
             user_effort=user_effort,
             policy=policy,
             caps=caps,
-            registry=_make_capability_registry(),
+            registry=_make_capability_registry(attached_files=attached_files),
             conversation_store=conv_store,
             session_id=session_id,
-            mcp_handlers=_MCP_HANDLERS,
+            mcp_handlers=_make_request_mcp_handlers(attached_files=attached_files),
         )
         total_ms = (time.time() - request_start) * 1000
         log.info(

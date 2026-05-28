@@ -320,6 +320,29 @@ async def test_fire_mcps_uses_handlers():
     assert results[1].stub is True  # bridge has no handler
 
 
+@test("10.7b McpHandlerRegistry.extend() returns an isolated copy")
+def test_handler_registry_extend():
+    base = McpHandlerRegistry()
+
+    async def base_handler(args, purpose):
+        return {"text": "base"}
+
+    async def extra_handler(args, purpose):
+        return {"text": "extra"}
+
+    base.register("github", base_handler)
+
+    # Extended registry inherits base's handlers
+    extended = base.extend()
+    assert extended.has("github")
+    assert extended.get("github") is base_handler
+
+    # Mutating the extended registry does NOT touch the base
+    extended.register("filesystem", extra_handler)
+    assert extended.has("filesystem")
+    assert not base.has("filesystem")
+
+
 @test("10.7 McpHandlerRegistry rejects invalid registrations")
 def test_handler_registry_validation():
     h = McpHandlerRegistry()
@@ -397,6 +420,7 @@ ALL_TESTS = [
     test_handler_non_dict_result,
     test_handlers_present_but_name_unregistered,
     test_fire_mcps_uses_handlers,
+    test_handler_registry_extend,
     test_handler_registry_validation,
     test_format_empty_when_all_stubs,
     test_format_renders_real_results,

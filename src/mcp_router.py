@@ -108,6 +108,17 @@ class McpHandlerRegistry:
     def names(self) -> list[str]:
         return list(self._handlers.keys())
 
+    def extend(self) -> "McpHandlerRegistry":
+        """Return a shallow copy with the same handlers.
+
+        Used by per-request wiring (e.g. filesystem, which closes over
+        the request's attached_files payload) so the request-scoped
+        handler doesn't mutate the shared module-level registry.
+        """
+        new = McpHandlerRegistry()
+        new._handlers = dict(self._handlers)
+        return new
+
 
 @dataclass
 class McpResult:
