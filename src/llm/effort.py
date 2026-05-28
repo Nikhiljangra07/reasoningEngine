@@ -42,16 +42,20 @@ class Effort(str, Enum):
 
 # Iteration budget per tier. Capped by MAX_ITERATIONS=12 in the engine.
 #
-# These used to be 3/6/10/12. Halved because each iteration fans out
-# to 5 domains × multiple concepts × Ke critics, so even MEDIUM (6 iter)
-# routinely overshot the 720s wall-time cap on long DEEP prompts and
-# the frontend gave up before the engine returned. AUTO=8 matches the
-# benchmark setting that produced responses reliably.
+# 2026-05-28 retuning: LOW/MEDIUM/HIGH each step up one iter from the
+# prior 2/3/5 setting to give convergence more room now that the angle
+# layer runs on cheaper models (DeepSeek/Haiku/Gemini Flash) and one
+# extra iteration is affordable. HIGH=8 is the deepest sweep — Pro
+# tier's flagship setting. AUTO drops to 4: it now means "let the
+# engine decide, on a budget" rather than the deepest tier. Users who
+# want the deepest sweep pick HIGH explicitly. The effort ordering in
+# dispatcher._resolve_effort() still ranks AUTO as the discretionary
+# top tier (rank 4) — it just consumes fewer iterations than HIGH.
 EFFORT_ITERATIONS: dict[Effort, int] = {
-    Effort.LOW: 2,
-    Effort.MEDIUM: 3,
-    Effort.HIGH: 5,
-    Effort.AUTO: 8,
+    Effort.LOW: 3,
+    Effort.MEDIUM: 5,
+    Effort.HIGH: 8,
+    Effort.AUTO: 4,
 }
 
 

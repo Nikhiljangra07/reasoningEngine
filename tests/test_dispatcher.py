@@ -165,7 +165,7 @@ async def test_direct_plus_missing_offer():
 @test("4.1 'should I X or Y' → DEEP, engine runs, non-empty response")
 async def test_deep_engine_runs():
     client = mk_client()
-    # Force LOW effort to keep test fast (2 iterations only).
+    # Force LOW effort to keep test fast (3 iterations only).
     r = await dispatch(
         "should I refactor this module or just extend it?",
         client=client,
@@ -175,7 +175,7 @@ async def test_deep_engine_runs():
     assert r.route == Route.DEEP
     assert r.engine_result is not None
     assert r.response_text  # speech module produces narrative
-    assert r.debug["max_iterations"] == 2
+    assert r.debug["max_iterations"] == 3
 
 
 @test("4.2 DEEP populates budget summary with engine cost + iterations")
@@ -279,7 +279,7 @@ async def test_strict_caps_at_user_effort():
     )
     assert r.escalation_offer is None
     assert r.engine_result is not None
-    assert r.debug["max_iterations"] == 2  # LOW = 2 iterations
+    assert r.debug["max_iterations"] == 3  # LOW = 3 iterations
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +342,7 @@ async def test_custom_caps():
 # 9. resume_with_choice — user response to an escalation_offer
 # ---------------------------------------------------------------------------
 
-@test("9.1 resume with HIGH after accepting → engine runs at high (5 iter)")
+@test("9.1 resume with HIGH after accepting → engine runs at high (8 iter)")
 async def test_resume_accept_high():
     client = mk_client()
     r = await resume_with_choice(
@@ -353,10 +353,10 @@ async def test_resume_accept_high():
     assert r.route == Route.DEEP
     assert r.engine_result is not None
     assert r.escalation_offer is None  # policy=strict means no offer
-    assert r.debug["max_iterations"] == 5
+    assert r.debug["max_iterations"] == 8
 
 
-@test("9.2 resume with MEDIUM after declining → engine runs at medium (3 iter)")
+@test("9.2 resume with MEDIUM after declining → engine runs at medium (5 iter)")
 async def test_resume_decline_stay_medium():
     client = mk_client()
     r = await resume_with_choice(
@@ -367,7 +367,7 @@ async def test_resume_decline_stay_medium():
     assert r.route == Route.DEEP
     assert r.engine_result is not None
     assert r.escalation_offer is None
-    assert r.debug["max_iterations"] == 3
+    assert r.debug["max_iterations"] == 5
 
 
 @test("9.3 resume NEVER produces a second escalation_offer (policy=strict)")
@@ -380,7 +380,7 @@ async def test_resume_no_second_offer():
         accepted_effort=Effort.LOW,
     )
     assert r.escalation_offer is None
-    assert r.debug["max_iterations"] == 2  # LOW = 2 iter
+    assert r.debug["max_iterations"] == 3  # LOW = 3 iter
 
 
 @test("9.4 resume accepts string effort ('high') equivalent to enum")
@@ -389,7 +389,7 @@ async def test_resume_string_effort():
     r = await resume_with_choice(
         text="should I rewrite or extend?", client=client, accepted_effort="high",
     )
-    assert r.debug["max_iterations"] == 5
+    assert r.debug["max_iterations"] == 8
 
 
 @test("9.5 resume populates budget + capability state like dispatch()")
@@ -419,10 +419,10 @@ async def test_resume_trivial_message():
 # 10. AUTO mode — user opts into full discretion up to engine cap
 # ---------------------------------------------------------------------------
 
-@test("10.1 Effort.AUTO maps to 8 iterations (benchmark-validated ceiling)")
+@test("10.1 Effort.AUTO maps to 4 iterations (budget-conscious 'engine decides' tier)")
 def test_auto_iterations_cap():
     from src.llm.effort import iterations_for
-    assert iterations_for(Effort.AUTO) == 8
+    assert iterations_for(Effort.AUTO) == 4
 
 
 @test("10.2 _resolve_effort: user=AUTO, gate=HIGH → resolve to AUTO, no offer")
@@ -441,7 +441,7 @@ def test_resolve_user_auto_all_gates():
             assert offer is None, f"gate={gate}, policy={policy}"
 
 
-@test("10.4 dispatch with effort=AUTO + DEEP question uses 8 iter cap")
+@test("10.4 dispatch with effort=AUTO + DEEP question uses 4 iter cap")
 async def test_dispatch_auto_deep():
     client = mk_client()
     r = await dispatch(
@@ -452,13 +452,13 @@ async def test_dispatch_auto_deep():
     )
     assert r.route == Route.DEEP
     assert r.escalation_offer is None  # AUTO never produces offers
-    assert r.debug["max_iterations"] == 8
+    assert r.debug["max_iterations"] == 4
 
 
 @test("10.5 dispatch with effort=AUTO + tight cost cap stops engine early")
 async def test_dispatch_auto_with_tight_budget():
     client = mk_client()
-    # AUTO would normally run to 8 iter, but cost cap is impossibly tight —
+    # AUTO would normally run to 4 iter, but cost cap is impossibly tight —
     # the first mock LLM call costs more than $0.0001, so engine's first
     # pre-iteration check breaches.
     r = await dispatch(
@@ -469,12 +469,12 @@ async def test_dispatch_auto_with_tight_budget():
         caps=BudgetCaps(max_cost_usd=0.0001),
     )
     assert r.route == Route.DEEP
-    # Engine must be capped well under AUTO's normal 8 iterations.
-    assert r.budget_summary["iterations"] < 8
+    # Engine must be capped well under AUTO's normal 4 iterations.
+    assert r.budget_summary["iterations"] < 4
     assert r.budget_summary["breached"] is True
 
 
-@test("10.6 resume_with_choice('auto') runs at 8-iter cap")
+@test("10.6 resume_with_choice('auto') runs at 4-iter cap")
 async def test_resume_with_auto():
     r = await resume_with_choice(
         text="should I do this thing?",
@@ -483,7 +483,7 @@ async def test_resume_with_auto():
     )
     assert r.route == Route.DEEP
     assert r.escalation_offer is None
-    assert r.debug["max_iterations"] == 8
+    assert r.debug["max_iterations"] == 4
 
 
 # ---------------------------------------------------------------------------

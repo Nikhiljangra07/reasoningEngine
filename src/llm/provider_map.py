@@ -84,35 +84,48 @@ DEFAULT_MODEL = "anthropic/claude-sonnet-4-6"
 
 # ---------------------------------------------------------------------------
 # Per-domain models (Sheng cycle — each domain runs in its own lane)
+#
+# 2026-05-28 reassignment: Sonnet 4.6 leaves the angle layer entirely. The
+# angles are "laborious workers" — they dig one perspective deep, output
+# structured findings, and never need cross-domain synthesis. Smart-model
+# spend concentrates on the synthesizer (speech.py) where everything
+# converges. Provider diversity preserved across three families (DeepSeek
+# / Anthropic / Google) so the synthesizer sees genuinely different
+# perspectives, not three takes from one training corpus.
 # ---------------------------------------------------------------------------
 DOMAIN_MODELS: dict[str, str] = {
-    "physics":     "anthropic/claude-sonnet-4-6",    # root cause + consequence; needs low hallucination
-    "mathematics": "deepseek/deepseek-v4-pro",       # formal reasoning + long context (operating system)
-    "psychology":  "anthropic/claude-sonnet-4-6",    # nuance, bias detection — Anthropic's home turf
-    "philosophy":  "anthropic/claude-sonnet-4-6",    # ontology, hidden utility — same family for voice consistency
-    "chemistry":   "google/gemini-2.5-flash",        # router / formation planner — fast structured JSON
+    "physics":     "deepseek/deepseek-v4-pro",       # heavy multi-step reasoning over forces/conservation/trajectory
+    "mathematics": "deepseek/deepseek-v4-pro",       # formal logic, Bayesian inference, long structured output
+    "psychology":  "anthropic/claude-haiku-4-5",     # nuanced prose, identity-safe RLHF, dual-process clarity
+    "philosophy":  "google/gemini-2.5-flash",        # long-context ontology + different training bias for diversity
+    "chemistry":   "anthropic/claude-haiku-4-5",     # FIRST agent — needs fast + reliable structured JSON
 }
 
 
 # ---------------------------------------------------------------------------
-# Per Ke-critic-pair models (5 different voices for 5 different lenses)
+# Per Ke-critic-pair models (cross-domain checking cycle)
 # Each pair: (challenger, target) → critic model
+#
+# 2026-05-28 reassignment: every critic is Haiku 4.5. Ke critics produce
+# short structured cross-checks ("did the target domain miss X?"), not
+# long-form reasoning — Haiku's strength. Provider diversity is already
+# carried by the Sheng (DOMAIN_MODELS) layer above.
 # ---------------------------------------------------------------------------
 KE_CRITIC_MODELS: dict[tuple[str, str], str] = {
     # Earth dams Water — does psychology survive material reality?
-    ("physics", "psychology"):   "anthropic/claude-sonnet-4-6",
+    ("physics", "psychology"):    "anthropic/claude-haiku-4-5",
 
     # Water extinguishes Fire — does the chemistry hold up under emotional reality?
-    ("psychology", "chemistry"): "deepseek/deepseek-v4-pro",        # different RLHF lineage
+    ("psychology", "chemistry"):  "anthropic/claude-haiku-4-5",
 
     # Fire melts Metal — does math survive the actual catalyst structure?
-    ("chemistry", "mathematics"): "google/gemini-2.5-pro",          # formal challenge, different ecosystem
+    ("chemistry", "mathematics"): "anthropic/claude-haiku-4-5",
 
     # Metal chops Wood — does philosophy survive formal scrutiny?
-    ("mathematics", "philosophy"): "anthropic/claude-sonnet-4-6",   # epistemic rigor
+    ("mathematics", "philosophy"): "anthropic/claude-haiku-4-5",
 
     # Wood penetrates Earth — has physics questioned its own assumptions?
-    ("philosophy", "physics"):    "anthropic/claude-haiku-4-5",     # cheap, fast structural check
+    ("philosophy", "physics"):    "anthropic/claude-haiku-4-5",
 }
 
 

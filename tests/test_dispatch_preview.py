@@ -125,24 +125,28 @@ def test_estimate_deep():
     assert cb.phases["domain_calls"] > 0
     assert cb.phases["ke_calls"] > 0
     assert cb.phases["speech"] > 0
-    # MEDIUM = 3 iters × (5 domains + 5 ke) + triage + router + speech = 33 calls
-    assert cb.estimated_llm_calls == 1 + 1 + 3 * 5 + 3 * 5 + 1
+    # MEDIUM = 5 iters × (5 domains + 5 ke) + triage + router + speech = 53 calls
+    assert cb.estimated_llm_calls == 1 + 1 + 5 * 5 + 5 * 5 + 1
 
 
 # ---------------------------------------------------------------------------
 # 3. Effort scaling
 # ---------------------------------------------------------------------------
 
-@test("3.1 DEEP @ HIGH > DEEP @ MEDIUM > DEEP @ LOW (cost monotonic in effort)")
+@test("3.1 DEEP cost ordering: LOW(3) < AUTO(4) < MEDIUM(5) < HIGH(8)")
 def test_effort_monotonic():
+    # 2026-05-28 retuning: AUTO is no longer the deepest tier — it now
+    # means "let the engine decide on a budget" (4 iter). HIGH is the
+    # explicit deepest sweep (8 iter). Order is now non-monotonic by
+    # the Effort enum but monotonic in iteration count.
     low    = estimate_cost_breakdown(Route.DEEP, Effort.LOW)
     medium = estimate_cost_breakdown(Route.DEEP, Effort.MEDIUM)
     high   = estimate_cost_breakdown(Route.DEEP, Effort.HIGH)
     auto   = estimate_cost_breakdown(Route.DEEP, Effort.AUTO)
-    assert low.total_usd < medium.total_usd < high.total_usd <= auto.total_usd
+    assert low.total_usd < auto.total_usd < medium.total_usd < high.total_usd
 
 
-@test("3.2 Effort affects iter count: LOW=2, MEDIUM=3, HIGH=5, AUTO=8")
+@test("3.2 Effort affects iter count: LOW=3, MEDIUM=5, HIGH=8, AUTO=4")
 def test_effort_iter_count():
     # Each iter adds: num_active_domains + num_ke_pairs LLM calls
     # Default: 5 + 5 = 10 calls per iter
@@ -151,10 +155,10 @@ def test_effort_iter_count():
     medium_calls = estimate_cost_breakdown(Route.DEEP, Effort.MEDIUM).estimated_llm_calls
     high_calls   = estimate_cost_breakdown(Route.DEEP, Effort.HIGH).estimated_llm_calls
     auto_calls   = estimate_cost_breakdown(Route.DEEP, Effort.AUTO).estimated_llm_calls
-    assert low_calls    == base + 2 * 10
-    assert medium_calls == base + 3 * 10
-    assert high_calls   == base + 5 * 10
-    assert auto_calls   == base + 8 * 10
+    assert low_calls    == base + 3 * 10
+    assert medium_calls == base + 5 * 10
+    assert high_calls   == base + 8 * 10
+    assert auto_calls   == base + 4 * 10
 
 
 # ---------------------------------------------------------------------------
@@ -172,8 +176,8 @@ def test_fewer_domains_cheaper():
 @test("4.2 num_active_domains=1, num_ke_pairs=0 — minimal DEEP shape")
 def test_minimal_deep():
     cb = estimate_cost_breakdown(Route.DEEP, Effort.LOW, num_active_domains=1, num_ke_pairs=0)
-    # LOW = 2 iters × (1 + 0) = 2 calls. + triage + router + speech = 5.
-    assert cb.estimated_llm_calls == 5
+    # LOW = 3 iters × (1 + 0) = 3 calls. + triage + router + speech = 6.
+    assert cb.estimated_llm_calls == 6
 
 
 @test("4.3 converged_iterations override caps the iter count")
@@ -349,13 +353,14 @@ async def test_mcps_propagate():
 # 9. Sanity bounds — the dispatch ceiling is real
 # ---------------------------------------------------------------------------
 
-@test("9.1 worst-case DEEP @ AUTO with all domains stays under $1.50 estimate")
+@test("9.1 worst-case DEEP @ HIGH with all domains stays under $1.50 estimate")
 def test_worst_case_under_threshold():
-    # The budget tracker caps at $1.00 by default, but the ESTIMATE for
-    # full-fanout AUTO can exceed that — the tracker is what stops the
-    # actual spend. We just verify the estimate is in a sensible range.
-    cb = estimate_cost_breakdown(Route.DEEP, Effort.AUTO, num_active_domains=5, num_ke_pairs=5)
-    assert 0.5 < cb.total_usd < 2.5  # ballpark — adjust if pricing changes
+    # 2026-05-28: HIGH is the new deepest tier (8 iter). AUTO is now a
+    # mid-budget tier (4 iter), so the "worst case" assertion lives on
+    # HIGH. The budget tracker caps actual spend; this just verifies
+    # the estimate sits in a sensible range.
+    cb = estimate_cost_breakdown(Route.DEEP, Effort.HIGH, num_active_domains=5, num_ke_pairs=5)
+    assert 0.3 < cb.total_usd < 2.0  # ballpark — adjust if pricing changes
 
 
 @test("9.2 cheapest DIRECT is under 5 cents")
