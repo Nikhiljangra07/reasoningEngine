@@ -705,6 +705,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Supabase Auth middleware (Phase 3A — non-breaking).
+# Verifies Authorization: Bearer <jwt> against SUPABASE_JWT_SECRET and
+# attaches the VerifiedUser to request.state when valid. NEVER rejects:
+# unauthenticated requests flow through with verified_user=None and the
+# existing body-supplied user_id path is preserved. Endpoint-level
+# enforcement (require_auth) lands in Phase 3C once the frontend is
+# sending JWTs. When SUPABASE_JWT_SECRET is unset (current default), the
+# middleware is a no-op for behavior — every token verification returns
+# None and request.state.verified_user is always None.
+from src.auth.supabase_auth import (
+    auth_middleware as _supabase_auth_middleware,
+    is_auth_configured as _is_auth_configured,
+)
+app.middleware("http")(_supabase_auth_middleware)
+if _is_auth_configured():
+    log.info("Auth: Supabase JWT verification ENABLED (SUPABASE_JWT_SECRET set)")
+else:
+    log.info(
+        "Auth: Supabase JWT verification IDLE (SUPABASE_JWT_SECRET unset) — "
+        "every request flows through anonymously; body user_id is the only identity"
+    )
+
 # Thread/iteration memory pipeline — adds:
 #   GET  /api/v2/threads
 #   GET  /api/v2/thread/{id}/full
