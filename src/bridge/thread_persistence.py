@@ -42,7 +42,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
-from src.auth.supabase_auth import get_effective_user_id
+from src.auth.supabase_auth import get_effective_user_id, get_verified_user
 
 from src.bridge.thread_store import (
     FalkorThreadStore, InMemoryThreadStore, ThreadStore,
@@ -340,6 +340,53 @@ async def _record_iteration_async(
 
 # ─── FastAPI router (4 read endpoints + 1 outcome write) ──────────────
 
+
+def _assert_thread_ownership(thread: Any, request: Request) -> None:
+    """Phase 3C-strict ownership gate (strict-when-authed).
+
+    When the request carries a verified Supabase JWT, the thread MUST be
+    owned by that verified identity. Mismatches return 404 (not 403) to
+    avoid leaking which thread IDs exist.
+
+    Anonymous callers (no JWT) pass through unchanged — current behavior
+    is preserved. This is deliberate: locking anonymous reads would
+    break the legacy localStorage-UUID flow, which the frontend hasn't
+    been updated to send on detail/delete endpoints. Tightening
+    anonymous flows is a separate concern (Phase 3D or a follow-up).
+
+    Orphan threads (user_id is None) are visible to anonymous callers
+    only — once you're signed in, the system refuses to associate you
+    with unowned legacy data. Forces clean ownership going forward.
+    """
+    verified = get_verified_user(request)
+    if verified is None:
+        return  # anonymous caller — preserve legacy behavior
+    owner = getattr(thread, "user_id", None)
+    if owner is None or owner != verified.user_id:
+        # Return the same 404 we'd return for a non-existent thread so
+        # callers can't probe for which thread IDs are real.
+        raise HTTPException(404, "thread not found")
+
+
+async def _load_thread_for_iteration(
+    store: Any, iter_id: str,
+) -> tuple[Any | None, Any | None]:
+    """Two-hop fetch: iteration → thread. Returns (iteration, thread)
+    or (iteration, None) when the iteration has no thread_id, or
+    (None, None) when the iteration doesn't exist."""
+    it = await store.get_iteration(iter_id)
+    if it is None:
+        return None, None
+    thread_id = getattr(it, "thread_id", "") or ""
+    if not thread_id:
+        return it, None
+    try:
+        thread = await store.get_thread(thread_id)
+    except Exception:
+        thread = None
+    return it, thread
+
+
 def get_router() -> APIRouter:
     """Returns a fresh APIRouter with the thread/iteration endpoints.
     server.py calls app.include_router(get_router()) at startup."""
@@ -378,7 +425,7 @@ def get_router() -> APIRouter:
             return JSONResponse({"threads": [], "error": str(e)}, status_code=200)
 
     @router.get("/api/v2/thread/{thread_id}/full")
-    async def get_thread_full_endpoint(thread_id: str):
+    async def get_thread_full_endpoint(request: Request, thread_id: str):
         """Full thread + all its iterations. Used by the thread page."""
         store = await _maybe_store()
         if store is None:
@@ -386,6 +433,9 @@ def get_router() -> APIRouter:
         thread = await store.get_thread(thread_id)
         if not thread:
             raise HTTPException(404, f"thread {thread_id} not found")
+        # Phase 3C-strict: when a JWT is on the request, the caller must
+        # own this thread. Anonymous callers pass through unchanged.
+        _assert_thread_ownership(thread, request)
         iters = await store.list_iterations_for_thread(thread_id)
         return {
             "thread": thread.to_payload(),
@@ -393,13 +443,19 @@ def get_router() -> APIRouter:
         }
 
     @router.delete("/api/v2/thread/{thread_id}")
-    async def delete_thread_endpoint(thread_id: str):
+    async def delete_thread_endpoint(request: Request, thread_id: str):
         """Delete a thread and every iteration it owns. Cascades through
         the store's authoritative iteration list so leftover index
         entries get cleaned up too."""
         store = await _maybe_store()
         if store is None:
             raise HTTPException(503, "store not initialized")
+        # Phase 3C-strict: verify ownership BEFORE the destructive op.
+        # Anonymous callers preserve legacy behavior (no ownership check).
+        thread = await store.get_thread(thread_id)
+        if not thread:
+            raise HTTPException(404, f"thread {thread_id} not found")
+        _assert_thread_ownership(thread, request)
         try:
             ok = await store.delete_thread(thread_id)
         except Exception as e:
@@ -410,22 +466,44 @@ def get_router() -> APIRouter:
         return {"ok": True, "thread_id": thread_id}
 
     @router.get("/api/v2/iteration/{iter_id}")
-    async def get_iteration_endpoint(iter_id: str):
+    async def get_iteration_endpoint(request: Request, iter_id: str):
         """One iteration — used by the Map Room when opened in a fresh tab."""
         store = await _maybe_store()
         if store is None:
             raise HTTPException(404, "store not initialized")
-        it = await store.get_iteration(iter_id)
-        if not it:
+        it, thread = await _load_thread_for_iteration(store, iter_id)
+        if it is None:
             raise HTTPException(404, f"iteration {iter_id} not found")
+        # Iteration without a parent thread is a data anomaly — block
+        # signed-in access (anonymous pre-3C reads stay open).
+        if thread is None:
+            verified = get_verified_user(request)
+            if verified is not None:
+                raise HTTPException(404, f"iteration {iter_id} not found")
+        else:
+            _assert_thread_ownership(thread, request)
         return it.to_payload()
 
     @router.post("/api/v2/iteration/{iter_id}/outcome")
-    async def post_iteration_outcome(iter_id: str, payload: dict):
+    async def post_iteration_outcome(
+        request: Request, iter_id: str, payload: dict,
+    ):
         """Record user's report of how the recommendation actually played out."""
         store = await _maybe_store()
         if store is None:
             raise HTTPException(503, "store not initialized")
+        # Phase 3C-strict: ownership-gate the write. Two-hop lookup
+        # because IterationRecord doesn't carry user_id directly.
+        it, thread = await _load_thread_for_iteration(store, iter_id)
+        if it is None:
+            raise HTTPException(404, f"iteration {iter_id} not found")
+        if thread is None:
+            verified = get_verified_user(request)
+            if verified is not None:
+                raise HTTPException(404, f"iteration {iter_id} not found")
+        else:
+            _assert_thread_ownership(thread, request)
+
         outcome = OutcomeRecord(
             reported_at=time.time(),
             outcome_text=str(payload.get("outcome_text", "")).strip(),
@@ -443,6 +521,7 @@ def get_router() -> APIRouter:
 
     @router.get("/api/v2/threads/similar")
     async def find_similar_threads(
+        request: Request,
         iter_id: str = Query(...),
         k: int = Query(5, ge=1, le=20),
     ):
@@ -453,11 +532,42 @@ def get_router() -> APIRouter:
         store = await _maybe_store()
         if store is None:
             return JSONResponse({"matches": []}, status_code=200)
-        base = await store.get_iteration(iter_id)
-        if not base or base.embedding is None:
+        # Phase 3C-strict: caller must own the base iteration. Without
+        # this gate, anyone with an iter_id could probe the global
+        # similarity graph and read related iterations across users.
+        base, base_thread = await _load_thread_for_iteration(store, iter_id)
+        if base is None or base.embedding is None:
             return {"matches": [], "warning": "iteration missing embedding"}
+        if base_thread is None:
+            verified = get_verified_user(request)
+            if verified is not None:
+                return JSONResponse({"matches": []}, status_code=200)
+        else:
+            _assert_thread_ownership(base_thread, request)
+
+        verified = get_verified_user(request)
         try:
-            results = await store.find_similar_iterations(base.embedding, k=k, exclude_iter_id=iter_id)
+            results = await store.find_similar_iterations(
+                base.embedding, k=k, exclude_iter_id=iter_id,
+            )
+            # When the caller is signed in, filter the results to only
+            # include iterations from threads they own. This prevents
+            # cross-user similarity leaks even when the embedding graph
+            # is shared. Anonymous callers see the unfiltered result
+            # set (legacy behavior).
+            if verified is not None:
+                filtered: list = []
+                for score, it_record in results:
+                    thread_id = getattr(it_record, "thread_id", "") or ""
+                    if not thread_id:
+                        continue
+                    try:
+                        t = await store.get_thread(thread_id)
+                    except Exception:
+                        continue
+                    if t and getattr(t, "user_id", None) == verified.user_id:
+                        filtered.append((score, it_record))
+                results = filtered
             return {"matches": [
                 {"score": s, "iteration": it.to_payload()} for s, it in results
             ]}
