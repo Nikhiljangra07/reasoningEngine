@@ -716,6 +716,7 @@ app.add_middleware(
 # None and request.state.verified_user is always None.
 from src.auth.supabase_auth import (
     auth_middleware as _supabase_auth_middleware,
+    get_effective_user_id,
     is_auth_configured as _is_auth_configured,
 )
 app.middleware("http")(_supabase_auth_middleware)
@@ -1338,10 +1339,18 @@ async def trace_v2(request: Request) -> JSONResponse:
     try:
         client = LLMClient(mode=(ClientMode.LIVE if _has_live_key() else ClientMode.MOCK))
         conv_store = _make_conv_store(project_id) if session_id else None
+        # Phase 3C: resolve the effective user id ONCE per request. Prefers
+        # the JWT-verified Supabase sub when the auth middleware attached
+        # one, else falls back to the body-supplied user_id (anonymous /
+        # legacy path). Every downstream consumer reads this resolved
+        # value so scoping is consistent across memory, persistence, and
+        # segment cache reads.
+        effective_user_id = get_effective_user_id(request, body.get("user_id"))
+
         # Phase 4: build Decision Trace prior-memory block. Empty string when
         # disabled / no user_id / Neo4j unavailable. Adds ~0.5-1s when active.
         memory_directive = await _build_memory_for_request(
-            question=question, body=body,
+            question=question, user_id=effective_user_id, body=body,
             parent_thread_id=body.get("parent_thread_id"),
         )
         # Phase B5: extract per-request attached files (IDE-extension path).
@@ -1471,7 +1480,11 @@ async def trace_v2(request: Request) -> JSONResponse:
                 dispatch_result=result,
                 triage=payload["triage"],
                 cached_memo=result.memo,
-                user_id=body.get("user_id"),
+                # Auth-resolved id (Phase 3C) — verified JWT sub takes
+                # precedence over body user_id so signed-in users get
+                # their iterations scoped to their Supabase identity
+                # rather than the browser's anonymous UUID.
+                user_id=effective_user_id,
                 project_id=project_id,
                 workspace_id=body.get("workspace_id"),
                 surface_id=body.get("surface_id"),
@@ -2136,6 +2149,13 @@ async def trace_segment(request: Request) -> JSONResponse:
         client = LLMClient(mode=(ClientMode.LIVE if _has_live_key() else ClientMode.MOCK))
         conv_store = _make_conv_store(project_id) if session_id else None
 
+        # Phase 3C: resolve the effective user id ONCE per request. Same
+        # contract as /api/v2/trace — JWT-verified Supabase sub wins,
+        # else body user_id, else None. Captured into `extra` below so
+        # the deferred _persist_after_engine_done sees the same id when
+        # it fires on the opinion/prospects phases.
+        effective_user_id = get_effective_user_id(request, body.get("user_id"))
+
         # ─── Triage first — decides whether to skip the engine ────────
         # Cheap classifier (~500ms live, instant in mock). Determines
         # whether this question needs the full Wu Xing engine. If yes,
@@ -2232,7 +2252,12 @@ async def trace_segment(request: Request) -> JSONResponse:
                     },
                     "session_id":        session_id,
                     "project_id":        project_id,
-                    "user_id":           body.get("user_id"),
+                    # Phase 3C: store the auth-resolved id so the deferred
+                    # _persist_after_engine_done picks up the verified
+                    # Supabase identity (not the raw body value, which
+                    # would lose the auth resolution by the time the
+                    # opinion/prospects phases fire seconds-to-minutes later).
+                    "user_id":           effective_user_id,
                     "workspace_id":      body.get("workspace_id"),
                     "surface_id":        body.get("surface_id"),
                     "parent_thread_id":  body.get("parent_thread_id"),
@@ -2442,7 +2467,11 @@ async def trace_segment(request: Request) -> JSONResponse:
                 dispatch_result=result,
                 triage=payload["triage"],
                 cached_memo=result.memo,
-                user_id=body.get("user_id"),
+                # Auth-resolved id (Phase 3C) — verified JWT sub takes
+                # precedence over body user_id so signed-in users get
+                # their iterations scoped to their Supabase identity
+                # rather than the browser's anonymous UUID.
+                user_id=effective_user_id,
                 project_id=project_id,
                 workspace_id=body.get("workspace_id"),
                 surface_id=body.get("surface_id"),
@@ -3092,12 +3121,23 @@ async def _get_memory_retriever():
     return _MEMORY_RETRIEVER
 
 
-async def _build_memory_for_request(*, question: str, body: dict, parent_thread_id: str | None) -> str:
+async def _build_memory_for_request(
+    *,
+    question: str,
+    user_id: str | None,
+    body: dict,
+    parent_thread_id: str | None,
+) -> str:
     """Build the PRIOR MEMORY directive for one trace request. Returns
-    empty string on any failure — never blocks the dispatch path."""
+    empty string on any failure — never blocks the dispatch path.
+
+    `user_id` is the auth-resolved identity (verified JWT sub if present,
+    else the body-supplied user_id, else None). Callers should compute
+    this once via get_effective_user_id() and pass it here instead of
+    reaching into `body` again — keeps the scoping decision in one place.
+    """
     if not MEMORY_RECALL_ENABLED:
         return ""
-    user_id = body.get("user_id") if isinstance(body, dict) else None
     if not user_id:
         return ""
     retriever = await _get_memory_retriever()
@@ -3109,9 +3149,9 @@ async def _build_memory_for_request(*, question: str, body: dict, parent_thread_
             retriever=retriever,
             user_id=user_id,
             thread_id=parent_thread_id,
-            project_id=body.get("project_id"),
-            workspace_id=body.get("workspace_id"),
-            surface_id=body.get("surface_id"),
+            project_id=body.get("project_id") if isinstance(body, dict) else None,
+            workspace_id=body.get("workspace_id") if isinstance(body, dict) else None,
+            surface_id=body.get("surface_id") if isinstance(body, dict) else None,
         )
     except Exception as e:
         log.warning("memory directive build failed (continuing): %s", e)
