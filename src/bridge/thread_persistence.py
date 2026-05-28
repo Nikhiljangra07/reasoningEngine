@@ -39,8 +39,10 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+
+from src.auth.supabase_auth import get_effective_user_id
 
 from src.bridge.thread_store import (
     FalkorThreadStore, InMemoryThreadStore, ThreadStore,
@@ -345,18 +347,29 @@ def get_router() -> APIRouter:
 
     @router.get("/api/v2/threads")
     async def list_threads_endpoint(
+        request: Request,
         user_id: str | None = Query(None, alias="user"),
         project_id: str | None = Query(None, alias="project"),
         workspace_id: str | None = Query(None, alias="workspace"),
         limit: int = Query(50, ge=1, le=200),
         offset: int = Query(0, ge=0),
     ):
+        # Phase 3C: when the request carries a verified Supabase JWT, the
+        # verified `sub` claim trumps the `?user=` query param. This closes
+        # the race where the frontend caches the legacy localStorage UUID
+        # and sends it as ?user= even after sign-in — the backend now
+        # always scopes the query to the verified identity instead.
+        # Anonymous requests still use the query param value, exactly as
+        # before (Phase 3A non-breaking contract).
+        effective_user_id = get_effective_user_id(request, user_id)
+
         store = await _maybe_store()
         if store is None:
             return JSONResponse({"threads": [], "warning": "store not initialized"}, status_code=200)
         try:
             threads = await store.list_threads(
-                user_id=user_id, project_id=project_id, workspace_id=workspace_id,
+                user_id=effective_user_id,
+                project_id=project_id, workspace_id=workspace_id,
                 limit=limit, offset=offset,
             )
             return {"threads": [t.to_payload() for t in threads], "count": len(threads)}
