@@ -62,6 +62,10 @@ from src.bridge.filesystem_handler import (
     make_filesystem_handler,
     normalize_attached_files,
 )
+from src.bridge.playwright_client import (
+    build_playwright_client_from_env,
+    make_playwright_handler,
+)
 from src.llm.memory_injection import build_memory_directive
 from src.mcp_router import McpHandlerRegistry
 from src.core.types import Direction, FrameworkID, Problem, Variable
@@ -276,6 +280,20 @@ if _context7_client is not None:
     log.info("MCP: docs (context7) handler registered (CONTEXT7_ENABLED truthy)")
 else:
     log.info("MCP: docs (context7) handler NOT registered (CONTEXT7_ENABLED unset)")
+
+# Playwright — drive a real browser for UI verification questions.
+# OFF by default (PLAYWRIGHT_ENABLED); the playwright package itself is
+# an optional dependency, so build_playwright_client_from_env may also
+# return None if installed but disabled. Capability `browser` only flips
+# AVAILABLE when both the env is set AND we successfully constructed a
+# client — same honest-registry contract as context7.
+_playwright_client = build_playwright_client_from_env()
+if _playwright_client is not None:
+    _MCP_HANDLERS.register("browser", make_playwright_handler(_playwright_client))
+    _MCP_AVAILABLE_AT_STARTUP.append("browser")
+    log.info("MCP: browser (playwright) handler registered (PLAYWRIGHT_ENABLED truthy)")
+else:
+    log.info("MCP: browser (playwright) handler NOT registered (PLAYWRIGHT_ENABLED unset)")
 
 
 def _make_capability_registry(
