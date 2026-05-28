@@ -54,7 +54,12 @@ from src.bridge.neo4j_backend import (
 )
 from src.bridge.memory_retriever import MemoryRetriever
 from src.bridge.embedding_service import GeminiEmbeddingService
+from src.bridge.github_client import (
+    build_github_client_from_env,
+    make_github_handler,
+)
 from src.llm.memory_injection import build_memory_directive
+from src.mcp_router import McpHandlerRegistry
 from src.core.types import Direction, FrameworkID, Problem, Variable
 from src.dispatcher import DispatchResult, dispatch, resume_with_choice
 from src.llm.budget import BudgetCaps
@@ -233,6 +238,44 @@ def _make_bridge_client(
         mode="stub",
         project_id=project_id,
     )
+
+
+# ---------------------------------------------------------------------------
+# MCP handler registry — Phase B startup wiring
+# ---------------------------------------------------------------------------
+# Constructed once at module load. Handlers are registered for each
+# capability whose backing service is configured (env-detected). The
+# matching capability gets flipped MISSING → AVAILABLE on the per-request
+# CapabilityRegistry via _MCP_AVAILABLE_AT_STARTUP so the registry stays
+# honest with the actual wiring.
+
+_MCP_HANDLERS = McpHandlerRegistry()
+_MCP_AVAILABLE_AT_STARTUP: list[str] = []
+
+# GitHub — read-only PRs / issues / repo / commits / file contents.
+_github_client = build_github_client_from_env()
+if _github_client is not None:
+    _MCP_HANDLERS.register("github", make_github_handler(_github_client))
+    _MCP_AVAILABLE_AT_STARTUP.append("github")
+    log.info("MCP: github handler registered (GITHUB_TOKEN detected)")
+else:
+    log.info("MCP: github handler NOT registered (GITHUB_TOKEN unset)")
+
+
+def _make_capability_registry():
+    """Build a per-request CapabilityRegistry with startup-detected MCPs
+    flipped to AVAILABLE.
+
+    Constructed fresh per request so usage_log stays request-scoped.
+    The set of "actually available" external MCPs is determined ONCE
+    at startup by env detection (above); this helper just applies that
+    state to each new registry instance.
+    """
+    from src.capabilities import CapabilityRegistry
+    reg = CapabilityRegistry()
+    for name in _MCP_AVAILABLE_AT_STARTUP:
+        reg.mark_available(name)
+    return reg
 
 
 # ---------------------------------------------------------------------------
@@ -1130,9 +1173,11 @@ async def trace_v2(request: Request) -> JSONResponse:
             user_effort=user_effort,
             policy=policy,
             caps=caps,
+            registry=_make_capability_registry(),
             conversation_store=conv_store,
             session_id=session_id,
             memory_directive=memory_directive,
+            mcp_handlers=_MCP_HANDLERS,
         )
         total_ms = (time.time() - request_start) * 1000
 
@@ -1529,9 +1574,11 @@ async def trace_segment(request: Request) -> JSONResponse:
                     user_effort=user_effort,
                     policy=policy,
                     caps=caps,
+                    registry=_make_capability_registry(),
                     conversation_store=conv_store,
                     session_id=extra.get("session_id"),
                     force_triage_result=forced_triage,
+                    mcp_handlers=_MCP_HANDLERS,
                 )
                 engine_ms = (time.time() - request_start) * 1000
                 log.info(
@@ -2057,8 +2104,10 @@ async def trace_segment(request: Request) -> JSONResponse:
             user_effort=user_effort,
             policy=policy,
             caps=caps,
+            registry=_make_capability_registry(),
             conversation_store=conv_store,
             session_id=session_id,
+            mcp_handlers=_MCP_HANDLERS,
         )
         total_ms = (time.time() - request_start) * 1000
         log.info(
