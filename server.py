@@ -718,6 +718,7 @@ from src.auth.supabase_auth import (
     auth_middleware as _supabase_auth_middleware,
     get_effective_user_id,
     is_auth_configured as _is_auth_configured,
+    is_guest_user_id,
 )
 app.middleware("http")(_supabase_auth_middleware)
 if _is_auth_configured():
@@ -3135,10 +3136,19 @@ async def _build_memory_for_request(
     else the body-supplied user_id, else None). Callers should compute
     this once via get_effective_user_id() and pass it here instead of
     reaching into `body` again — keeps the scoping decision in one place.
+
+    Guest gate (2026-05-28): when `user_id` looks like a guest identifier
+    (usr-web-* / usr-ide-* / None), the memory directive is skipped
+    regardless of MEMORY_RECALL_ENABLED. Product principle: guests get
+    to explore, but the model doesn't BUILD on their work — no prior-
+    memory injection means each guest interaction starts fresh. Sign-in
+    is the contract that unlocks accumulation.
     """
     if not MEMORY_RECALL_ENABLED:
         return ""
     if not user_id:
+        return ""
+    if is_guest_user_id(user_id):
         return ""
     retriever = await _get_memory_retriever()
     if retriever is None:

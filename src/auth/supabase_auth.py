@@ -199,6 +199,57 @@ def get_verified_user(request: Request) -> VerifiedUser | None:
     return getattr(request.state, "verified_user", None)
 
 
+# ---------------------------------------------------------------------------
+# Guest vs signed-in discriminator
+# ---------------------------------------------------------------------------
+#
+# The product premise (locked 2026-05-28): guests can explore, but the
+# model only BUILDS on signed-in identities. Memory V2 retrieval, fact
+# anchor accumulation, and similar long-term-memory primitives skip
+# guest identifiers so the persistent reasoning state belongs only to
+# verified users. Two ways someone arrives with a guest id:
+#
+#   1. They never signed in. The frontend's identity.ts seeds
+#      `usr-web-<uuid>` into localStorage on first visit and sends that
+#      as body.user_id. The auth seam never finds a JWT, so
+#      get_effective_user_id() falls back to this id.
+#
+#   2. They're using the VS Code extension, which injects an identity
+#      via `window.__CONSTELLAX_USER_ID__`. That id uses the `usr-ide-`
+#      prefix and is treated as guest too — IDE-host identity is
+#      device-scoped, not user-verified.
+#
+# Anything else (no prefix, canonical 8-4-4-4-12 UUID hex format) is
+# assumed to be a Supabase user UUID — i.e. signed in.
+
+_GUEST_ID_PREFIXES = ("usr-web-", "usr-ide-")
+
+
+def is_guest_user_id(user_id: Any | None) -> bool:
+    """True when the id is a guest/anonymous identifier rather than a
+    verified Supabase user UUID.
+
+    Empty / None / non-string → True (no identity = treat as guest).
+    Known guest prefixes → True.
+    Anything else → False (assumed signed-in).
+
+    The discriminator is intentionally based on the id's SHAPE, not on
+    request.state, so it can be called from contexts that don't have a
+    Request handy (background tasks, sweepers, persistence helpers).
+    Pair with get_verified_user(request) when you need the request-
+    bound truth.
+    """
+    if not isinstance(user_id, str):
+        return True
+    stripped = user_id.strip()
+    if not stripped:
+        return True
+    for prefix in _GUEST_ID_PREFIXES:
+        if stripped.startswith(prefix):
+            return True
+    return False
+
+
 def get_effective_user_id(
     request: Request,
     body_user_id: Any | None = None,
@@ -249,6 +300,7 @@ __all__ = [
     "SUPABASE_JWT_ALG",
     "SUPABASE_JWT_LEEWAY_SEC",
     "is_auth_configured",
+    "is_guest_user_id",
     "verify_jwt",
     "extract_bearer_token",
     "auth_middleware",

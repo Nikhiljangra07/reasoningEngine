@@ -28,6 +28,7 @@ from src.auth.supabase_auth import (
     get_effective_user_id,
     get_verified_user,
     is_auth_configured,
+    is_guest_user_id,
     require_auth,
     verify_jwt,
 )
@@ -543,6 +544,56 @@ def test_get_verified_no_state():
 
 
 # ---------------------------------------------------------------------------
+# 9. is_guest_user_id — guest vs signed-in discriminator
+# ---------------------------------------------------------------------------
+
+@test("9.1 None / empty / whitespace → guest")
+def test_guest_empty():
+    assert is_guest_user_id(None) is True
+    assert is_guest_user_id("") is True
+    assert is_guest_user_id("   ") is True
+
+
+@test("9.2 usr-web-* prefix (frontend localStorage UUID) → guest")
+def test_guest_web_prefix():
+    assert is_guest_user_id("usr-web-5abec0e3-0a99-4f3f-9378-4de2c13dfe49") is True
+    assert is_guest_user_id("usr-web-anything") is True
+
+
+@test("9.3 usr-ide-* prefix (VS Code extension host) → guest")
+def test_guest_ide_prefix():
+    assert is_guest_user_id("usr-ide-xyz") is True
+
+
+@test("9.4 Supabase user UUID (canonical 8-4-4-4-12 hex) → signed in")
+def test_signed_in_supabase_uuid():
+    assert is_guest_user_id("1df48ad1-f72d-47a3-ae4c-d7c1ed428c0e") is False
+    assert is_guest_user_id("abcdef01-2345-6789-abcd-ef0123456789") is False
+
+
+@test("9.5 non-string inputs → guest (defensive)")
+def test_guest_non_string():
+    assert is_guest_user_id(42) is True  # type: ignore[arg-type]
+    assert is_guest_user_id({"id": "x"}) is True  # type: ignore[arg-type]
+    assert is_guest_user_id([1, 2, 3]) is True  # type: ignore[arg-type]
+
+
+@test("9.6 case-sensitivity: USR-WEB-* (uppercase) is NOT a recognized guest prefix")
+def test_guest_prefix_case_sensitive():
+    # We match exact lowercase prefixes only. Anything else falls through
+    # to the "signed-in by default" branch — defensive in case someone
+    # later introduces a real id with that shape.
+    assert is_guest_user_id("USR-WEB-abc") is False
+
+
+@test("9.7 prefix-only / partial match (e.g. 'usr-web-' with nothing after) is still guest")
+def test_guest_prefix_only():
+    # The prefix alone is structurally a guest id; treating it as guest
+    # is the safe call even if the suffix is empty.
+    assert is_guest_user_id("usr-web-") is True
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -584,6 +635,13 @@ ALL_TESTS = [
     test_get_verified_present,
     test_get_verified_none,
     test_get_verified_no_state,
+    test_guest_empty,
+    test_guest_web_prefix,
+    test_guest_ide_prefix,
+    test_signed_in_supabase_uuid,
+    test_guest_non_string,
+    test_guest_prefix_case_sensitive,
+    test_guest_prefix_only,
 ]
 
 
