@@ -58,6 +58,10 @@ from src.bridge.github_client import (
     build_github_client_from_env,
     make_github_handler,
 )
+from src.bridge.context7_client import (
+    build_context7_client_from_env,
+    make_context7_handler,
+)
 from src.llm.memory_injection import build_memory_directive
 from src.mcp_router import McpHandlerRegistry
 from src.core.types import Direction, FrameworkID, Problem, Variable
@@ -260,6 +264,15 @@ if _github_client is not None:
     log.info("MCP: github handler registered (GITHUB_TOKEN detected)")
 else:
     log.info("MCP: github handler NOT registered (GITHUB_TOKEN unset)")
+
+# Context7 — on-demand library / API documentation.
+_context7_client = build_context7_client_from_env()
+if _context7_client is not None:
+    _MCP_HANDLERS.register("docs", make_context7_handler(_context7_client))
+    _MCP_AVAILABLE_AT_STARTUP.append("docs")
+    log.info("MCP: docs (context7) handler registered (CONTEXT7_ENABLED truthy)")
+else:
+    log.info("MCP: docs (context7) handler NOT registered (CONTEXT7_ENABLED unset)")
 
 
 def _make_capability_registry():
