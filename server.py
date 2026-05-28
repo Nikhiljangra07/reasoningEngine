@@ -54,10 +54,6 @@ from src.bridge.neo4j_backend import (
 )
 from src.bridge.memory_retriever import MemoryRetriever
 from src.bridge.embedding_service import GeminiEmbeddingService
-from src.bridge.github_client import (
-    build_github_client_from_env,
-    make_github_handler,
-)
 from src.bridge.context7_client import (
     build_context7_client_from_env,
     make_context7_handler,
@@ -260,14 +256,17 @@ def _make_bridge_client(
 _MCP_HANDLERS = McpHandlerRegistry()
 _MCP_AVAILABLE_AT_STARTUP: list[str] = []
 
-# GitHub — read-only PRs / issues / repo / commits / file contents.
-_github_client = build_github_client_from_env()
-if _github_client is not None:
-    _MCP_HANDLERS.register("github", make_github_handler(_github_client))
-    _MCP_AVAILABLE_AT_STARTUP.append("github")
-    log.info("MCP: github handler registered (GITHUB_TOKEN detected)")
-else:
-    log.info("MCP: github handler NOT registered (GITHUB_TOKEN unset)")
+# NOTE on GitHub: intentionally NOT wired. Constellax is a thinking
+# partner, not a code editor — direct GitHub API integration belongs in
+# tools that actually touch code (Claude Code, Cursor, Copilot). Public
+# GitHub state (issues, PRs, READMEs) is already reachable via web_search
+# (Tavily indexes github.com). Wiring a shared GITHUB_TOKEN would also
+# make the server a security middleman for every user's queries — not a
+# trade-off worth the marginal value. The `github` entry stays in the
+# capability registry as MISSING so the dispatcher surfaces a transparent
+# "Constellax doesn't have direct GitHub access" response if triage ever
+# asks for it. Don't reintroduce a handler without first solving per-user
+# OAuth — see commit message for the full reasoning.
 
 # Context7 — on-demand library / API documentation.
 _context7_client = build_context7_client_from_env()

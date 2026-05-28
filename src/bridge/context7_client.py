@@ -22,7 +22,7 @@ refuses to make outbound calls without an explicit operator decision.
 Set CONTEXT7_ENABLED=1 (or any truthy value) to enable. When unset, the
 handler is NOT registered and the `docs` capability stays MISSING — the
 dispatcher surfaces a missing-capability offer when triage requests doc
-lookup. Same honest-registry contract as github_client.
+lookup. Honest-registry contract: AVAILABLE iff a handler is registered.
 
 CONFIGURABLE API ROOT
 =====================
