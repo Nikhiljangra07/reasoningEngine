@@ -344,6 +344,49 @@ def _normalize_selected_mcps(raw) -> list[str]:
     return out
 
 
+def _web_search_enabled_from_body(body: dict) -> bool:
+    """True iff the request's selected_mcps explicitly opts into web_search.
+
+    The ambient web-search pre-augmentation (route → search → prepend WEB
+    CONTEXT block) only fires when the user has toggled "Web Search" in
+    the picker. Default-off matches the capability registry contract:
+    web_search starts ASK_ONCE_PENDING; only selected_mcps containing
+    "web_search" promotes it to ASK_ONCE_GRANTED.
+
+    Until this gate existed, the ambient path ran on every trace request
+    regardless of the picker — the picker toggle was decorative for
+    web_search. This helper closes that loop without coupling to the
+    full CapabilityRegistry (which is built later in the handler).
+    """
+    if not isinstance(body, dict):
+        return False
+    selected = _normalize_selected_mcps(body.get("selected_mcps"))
+    return "web_search" in selected
+
+
+def _skipped_web_search_meta(reason: str) -> dict:
+    """Trace-meta dict recording a deliberate web_search skip.
+
+    Mirrors the shape of the populated meta dict so the Reasoning Trace
+    UI doesn't need a special-case for "we didn't search." `decision_via`
+    is the discriminator the UI keys off — `"skipped"` tells it to render
+    a quiet "Web search off" row instead of a route/run summary.
+    """
+    return {
+        "decision_via":   "skipped",
+        "needs_search":   False,
+        "router_reason":  reason,
+        "router_model":   None,
+        "router_ms":      0,
+        "refined_query":  "",
+        "results":        [],
+        "provider":       None,
+        "search_ms":      0,
+        "cached":         False,
+        "answer":         None,
+    }
+
+
 def _make_request_mcp_handlers(*, attached_files: list | None = None):
     """Return an McpHandlerRegistry for this request.
 
@@ -1141,63 +1184,76 @@ async def trace_v2(request: Request) -> JSONResponse:
     # query. When it says yes, we hit Tavily (or DDG fallback) and
     # prepend the results as a "WEB CONTEXT" block to the prompt.
     #
+    # Picker gate: only fires when "web_search" is in selected_mcps.
+    # Default-off matches the capability registry contract (ASK_ONCE_PENDING
+    # until the picker grants it). Without this gate the ambient path
+    # ignored the picker — toggling Web Search off was decorative.
+    #
     # Every step is recorded into `web_search_meta` so the Reasoning
     # Trace surfaces the full footprint: decision + reason + refined
     # query + provider + URLs visited + latency.
     web_context = ""
     web_search_meta: dict | None = None
-    try:
-        decision = await _route_search(question)
-        web_search_meta = {
-            "decision_via":   decision.via,         # "llm" | "heuristic" | "fallback"
-            "needs_search":   decision.needs_search,
-            "router_reason":  decision.reason,
-            "router_model":   decision.model,
-            "router_ms":      decision.latency_ms,
-            "refined_query":  decision.refined_query if decision.needs_search else "",
-            "results":        [],
-            "provider":       None,
-            "search_ms":      0,
-            "cached":         False,
-            "answer":         None,
-        }
-        log.info(
-            "[%s] search.route via=%s needs=%s ms=%d reason=%r",
-            request_id, decision.via, decision.needs_search,
-            decision.latency_ms, decision.reason,
+    if not _web_search_enabled_from_body(body):
+        web_search_meta = _skipped_web_search_meta(
+            "web_search not in selected_mcps (picker opt-out)"
         )
+        log.info(
+            "[%s] search.skipped reason=picker_off", request_id,
+        )
+    else:
+        try:
+            decision = await _route_search(question)
+            web_search_meta = {
+                "decision_via":   decision.via,         # "llm" | "heuristic" | "fallback"
+                "needs_search":   decision.needs_search,
+                "router_reason":  decision.reason,
+                "router_model":   decision.model,
+                "router_ms":      decision.latency_ms,
+                "refined_query":  decision.refined_query if decision.needs_search else "",
+                "results":        [],
+                "provider":       None,
+                "search_ms":      0,
+                "cached":         False,
+                "answer":         None,
+            }
+            log.info(
+                "[%s] search.route via=%s needs=%s ms=%d reason=%r",
+                request_id, decision.via, decision.needs_search,
+                decision.latency_ms, decision.reason,
+            )
 
-        if decision.needs_search and decision.refined_query:
-            try:
-                ws_result = await _web_search(decision.refined_query, max_results=5)
-                web_search_meta["provider"]   = ws_result.provider
-                web_search_meta["search_ms"]  = ws_result.latency_ms
-                web_search_meta["cached"]     = ws_result.cached
-                web_search_meta["answer"]     = ws_result.answer
-                web_search_meta["results"]    = [
-                    {"title": h.title, "url": h.url, "snippet": h.snippet}
-                    for h in ws_result.hits
-                ]
-                if ws_result.ok:
-                    web_context = _format_web_context_block(ws_result)
-                    log.info(
-                        "[%s] search.run provider=%s hits=%d cached=%s ms=%d",
-                        request_id, ws_result.provider, len(ws_result.hits),
-                        ws_result.cached, ws_result.latency_ms,
-                    )
-                else:
-                    web_search_meta["error"] = ws_result.error
-                    log.info(
-                        "[%s] search.run produced no results (error=%s)",
-                        request_id, ws_result.error,
-                    )
-            except Exception as e:
-                log.warning("[%s] search.run raised (non-fatal): %s", request_id, e)
-                web_search_meta["error"] = f"{type(e).__name__}: {e}"
-    except Exception as e:
-        # Outer guard — search must never break a trace.
-        log.warning("[%s] search routing raised (non-fatal): %s", request_id, e)
-        web_search_meta = {"error": f"{type(e).__name__}: {e}", "decision_via": "error"}
+            if decision.needs_search and decision.refined_query:
+                try:
+                    ws_result = await _web_search(decision.refined_query, max_results=5)
+                    web_search_meta["provider"]   = ws_result.provider
+                    web_search_meta["search_ms"]  = ws_result.latency_ms
+                    web_search_meta["cached"]     = ws_result.cached
+                    web_search_meta["answer"]     = ws_result.answer
+                    web_search_meta["results"]    = [
+                        {"title": h.title, "url": h.url, "snippet": h.snippet}
+                        for h in ws_result.hits
+                    ]
+                    if ws_result.ok:
+                        web_context = _format_web_context_block(ws_result)
+                        log.info(
+                            "[%s] search.run provider=%s hits=%d cached=%s ms=%d",
+                            request_id, ws_result.provider, len(ws_result.hits),
+                            ws_result.cached, ws_result.latency_ms,
+                        )
+                    else:
+                        web_search_meta["error"] = ws_result.error
+                        log.info(
+                            "[%s] search.run produced no results (error=%s)",
+                            request_id, ws_result.error,
+                        )
+                except Exception as e:
+                    log.warning("[%s] search.run raised (non-fatal): %s", request_id, e)
+                    web_search_meta["error"] = f"{type(e).__name__}: {e}"
+        except Exception as e:
+            # Outer guard — search must never break a trace.
+            log.warning("[%s] search routing raised (non-fatal): %s", request_id, e)
+            web_search_meta = {"error": f"{type(e).__name__}: {e}", "decision_via": "error"}
 
     if web_context:
         # Prepend web context — comes before the user question itself so
@@ -1953,45 +2009,55 @@ async def trace_segment(request: Request) -> JSONResponse:
     if attachment_blocks:
         question = "\n\n".join(attachment_blocks) + "\n\n" + question
 
-    # Web search — mirror /api/v2/trace.
+    # Web search — mirror /api/v2/trace. Same picker gate: only fires
+    # when "web_search" is in selected_mcps. See trace_v2 for the full
+    # contract.
     web_context = ""
     web_search_meta: dict | None = None
-    try:
-        decision = await _route_search(question)
-        web_search_meta = {
-            "decision_via":  decision.via,
-            "needs_search":  decision.needs_search,
-            "router_reason": decision.reason,
-            "router_model":  decision.model,
-            "router_ms":     decision.latency_ms,
-            "refined_query": decision.refined_query if decision.needs_search else "",
-            "results":       [],
-            "provider":      None,
-            "search_ms":     0,
-            "cached":        False,
-            "answer":        None,
-        }
-        if decision.needs_search and decision.refined_query:
-            try:
-                ws_result = await _web_search(decision.refined_query, max_results=5)
-                web_search_meta["provider"]  = ws_result.provider
-                web_search_meta["search_ms"] = ws_result.latency_ms
-                web_search_meta["cached"]    = ws_result.cached
-                web_search_meta["answer"]    = ws_result.answer
-                web_search_meta["results"]   = [
-                    {"title": h.title, "url": h.url, "snippet": h.snippet}
-                    for h in ws_result.hits
-                ]
-                if ws_result.ok:
-                    web_context = _format_web_context_block(ws_result)
-                else:
-                    web_search_meta["error"] = ws_result.error
-            except Exception as e:
-                log.warning("[%s] search.run raised (non-fatal): %s", request_id, e)
-                web_search_meta["error"] = f"{type(e).__name__}: {e}"
-    except Exception as e:
-        log.warning("[%s] search routing raised (non-fatal): %s", request_id, e)
-        web_search_meta = {"error": f"{type(e).__name__}: {e}", "decision_via": "error"}
+    if not _web_search_enabled_from_body(body):
+        web_search_meta = _skipped_web_search_meta(
+            "web_search not in selected_mcps (picker opt-out)"
+        )
+        log.info(
+            "[%s] search.skipped reason=picker_off", request_id,
+        )
+    else:
+        try:
+            decision = await _route_search(question)
+            web_search_meta = {
+                "decision_via":  decision.via,
+                "needs_search":  decision.needs_search,
+                "router_reason": decision.reason,
+                "router_model":  decision.model,
+                "router_ms":     decision.latency_ms,
+                "refined_query": decision.refined_query if decision.needs_search else "",
+                "results":       [],
+                "provider":      None,
+                "search_ms":     0,
+                "cached":        False,
+                "answer":        None,
+            }
+            if decision.needs_search and decision.refined_query:
+                try:
+                    ws_result = await _web_search(decision.refined_query, max_results=5)
+                    web_search_meta["provider"]  = ws_result.provider
+                    web_search_meta["search_ms"] = ws_result.latency_ms
+                    web_search_meta["cached"]    = ws_result.cached
+                    web_search_meta["answer"]    = ws_result.answer
+                    web_search_meta["results"]   = [
+                        {"title": h.title, "url": h.url, "snippet": h.snippet}
+                        for h in ws_result.hits
+                    ]
+                    if ws_result.ok:
+                        web_context = _format_web_context_block(ws_result)
+                    else:
+                        web_search_meta["error"] = ws_result.error
+                except Exception as e:
+                    log.warning("[%s] search.run raised (non-fatal): %s", request_id, e)
+                    web_search_meta["error"] = f"{type(e).__name__}: {e}"
+        except Exception as e:
+            log.warning("[%s] search routing raised (non-fatal): %s", request_id, e)
+            web_search_meta = {"error": f"{type(e).__name__}: {e}", "decision_via": "error"}
     if web_context:
         question = web_context + "\n" + question
 

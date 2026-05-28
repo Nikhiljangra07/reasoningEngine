@@ -149,6 +149,69 @@ def test_empty_selected():
 
 
 # ---------------------------------------------------------------------------
+# 3. _web_search_enabled_from_body — picker gate for ambient web search
+# ---------------------------------------------------------------------------
+
+@test("3.1 empty body → web_search disabled (default-off)")
+def test_gate_empty_body():
+    assert server._web_search_enabled_from_body({}) is False
+
+
+@test("3.2 selected_mcps missing key → False")
+def test_gate_missing_key():
+    assert server._web_search_enabled_from_body({"selected_mcps": ["github"]}) is False
+
+
+@test("3.3 selected_mcps contains web_search → True")
+def test_gate_enabled():
+    assert server._web_search_enabled_from_body(
+        {"selected_mcps": ["web_search"]}
+    ) is True
+
+
+@test("3.4 selected_mcps with whitespace around web_search still grants")
+def test_gate_whitespace_tolerant():
+    # _normalize_selected_mcps strips, so "  web_search  " → "web_search"
+    assert server._web_search_enabled_from_body(
+        {"selected_mcps": ["  web_search  ", "github"]}
+    ) is True
+
+
+@test("3.5 non-dict body → False (defensive)")
+def test_gate_non_dict_body():
+    # Should not crash; should return False
+    assert server._web_search_enabled_from_body(None) is False  # type: ignore[arg-type]
+    assert server._web_search_enabled_from_body("not a dict") is False  # type: ignore[arg-type]
+    assert server._web_search_enabled_from_body(42) is False  # type: ignore[arg-type]
+
+
+@test("3.6 selected_mcps wrong type → False (defensive)")
+def test_gate_wrong_type():
+    # _normalize_selected_mcps returns [] for non-list, so gate stays False
+    assert server._web_search_enabled_from_body(
+        {"selected_mcps": "web_search,github"}
+    ) is False
+    assert server._web_search_enabled_from_body(
+        {"selected_mcps": {"web_search": True}}
+    ) is False
+
+
+@test("3.7 _skipped_web_search_meta has the discriminator + reason")
+def test_skip_meta_shape():
+    meta = server._skipped_web_search_meta("test reason")
+    assert meta["decision_via"] == "skipped"
+    assert meta["needs_search"] is False
+    assert meta["router_reason"] == "test reason"
+    # Must mirror the populated-meta shape so the UI doesn't need a
+    # special case — every key the populated path emits should exist here.
+    for key in (
+        "router_model", "router_ms", "refined_query", "results",
+        "provider", "search_ms", "cached", "answer",
+    ):
+        assert key in meta, f"skip meta missing key: {key}"
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -163,6 +226,13 @@ ALL_TESTS = [
     test_grant_always_allowed_noop,
     test_combined_layers,
     test_empty_selected,
+    test_gate_empty_body,
+    test_gate_missing_key,
+    test_gate_enabled,
+    test_gate_whitespace_tolerant,
+    test_gate_non_dict_body,
+    test_gate_wrong_type,
+    test_skip_meta_shape,
 ]
 
 
