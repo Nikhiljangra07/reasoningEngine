@@ -278,23 +278,70 @@ else:
     log.info("MCP: docs (context7) handler NOT registered (CONTEXT7_ENABLED unset)")
 
 
-def _make_capability_registry(*, attached_files: list | None = None):
-    """Build a per-request CapabilityRegistry with startup-detected MCPs
-    flipped to AVAILABLE plus per-request capabilities (filesystem) when
-    the request brings the data they need.
+def _make_capability_registry(
+    *,
+    attached_files: list | None = None,
+    selected_mcps: list[str] | None = None,
+):
+    """Build a per-request CapabilityRegistry.
 
-    Constructed fresh per request so usage_log stays request-scoped.
-    The set of "actually available" external MCPs is determined ONCE at
-    startup by env detection (above); filesystem is a per-request
-    capability — AVAILABLE iff this request attached files.
+    Three layers of state get applied per request:
+      1. Startup env-detection — _MCP_AVAILABLE_AT_STARTUP flips those
+         caps to AVAILABLE (Context7 etc.).
+      2. attached_files — filesystem flips to AVAILABLE iff this
+         request brought files (per-request capability).
+      3. selected_mcps — user-opt-in via the UI's MCP picker grants the
+         per-turn ASK_ONCE_PENDING consent on those capabilities. MCPs
+         NOT in the list keep their default permission, so triage can
+         still request them but fire_mcp will block with a missing-
+         capability offer. Names must match capability identifiers in
+         src/capabilities/registry.py — unknown names are silently
+         skipped (defensive against frontend/backend drift).
+
+    Constructed fresh per request so usage_log + permission grants
+    stay request-scoped.
     """
     from src.capabilities import CapabilityRegistry
+    from src.capabilities.registry import PermissionState
+
     reg = CapabilityRegistry()
     for name in _MCP_AVAILABLE_AT_STARTUP:
         reg.mark_available(name)
     if attached_files:
         reg.mark_available("filesystem")
+    if selected_mcps:
+        for name in selected_mcps:
+            cap = reg.get(name)
+            if cap is None:
+                # Unknown capability key — drop silently rather than
+                # raise. Frontend may evolve and send keys the backend
+                # doesn't recognize yet; better to drop one grant than
+                # to break the whole request.
+                continue
+            # Only grant consent for caps that actually need it. Local
+            # reads (ALWAYS_ALLOWED) don't take a grant; writes
+            # (ABSENT_BY_DESIGN) refuse to flip — both are no-ops.
+            if cap.permission == PermissionState.ASK_ONCE_PENDING:
+                reg.grant_permission(name)
     return reg
+
+
+def _normalize_selected_mcps(raw) -> list[str]:
+    """Validate the request's `selected_mcps` payload.
+
+    Accepts a list of capability-name strings. Drops anything that isn't
+    a non-empty string. Returns an empty list on any other shape — same
+    defensive pattern as normalize_attached_files: a single bad entry
+    shouldn't poison the request, and unknown payload shapes shouldn't
+    crash dispatch.
+    """
+    if not isinstance(raw, list):
+        return []
+    out: list[str] = []
+    for item in raw:
+        if isinstance(item, str) and item.strip():
+            out.append(item.strip())
+    return out
 
 
 def _make_request_mcp_handlers(*, attached_files: list | None = None):
@@ -1206,13 +1253,20 @@ async def trace_v2(request: Request) -> JSONResponse:
         # validated payload. Empty list when no files attached — handlers
         # registry falls back to the shared module-level instance.
         attached_files = normalize_attached_files(body.get("attached_files"))
+        # Frontend Phase 2 wiring: which MCPs the user toggled on via the
+        # picker for this turn. Pass through to the registry helper for
+        # per-turn permission grants. Empty/missing is a no-op.
+        selected_mcps = _normalize_selected_mcps(body.get("selected_mcps"))
         result: DispatchResult = await dispatch(
             text=question,
             client=client,
             user_effort=user_effort,
             policy=policy,
             caps=caps,
-            registry=_make_capability_registry(attached_files=attached_files),
+            registry=_make_capability_registry(
+                attached_files=attached_files,
+                selected_mcps=selected_mcps,
+            ),
             conversation_store=conv_store,
             session_id=session_id,
             memory_directive=memory_directive,
@@ -2138,13 +2192,17 @@ async def trace_segment(request: Request) -> JSONResponse:
         # and route appropriately. Persistence fires here since the
         # full memo IS complete in one round-trip for these routes.
         attached_files = normalize_attached_files(body.get("attached_files"))
+        selected_mcps = _normalize_selected_mcps(body.get("selected_mcps"))
         result: DispatchResult = await dispatch(
             text=question,
             client=client,
             user_effort=user_effort,
             policy=policy,
             caps=caps,
-            registry=_make_capability_registry(attached_files=attached_files),
+            registry=_make_capability_registry(
+                attached_files=attached_files,
+                selected_mcps=selected_mcps,
+            ),
             conversation_store=conv_store,
             session_id=session_id,
             mcp_handlers=_make_request_mcp_handlers(attached_files=attached_files),
