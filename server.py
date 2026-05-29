@@ -42,6 +42,7 @@ from src.bridge.thread_persistence import (
     get_router as _get_thread_persistence_router,
     schedule_record_iteration as _persist_iteration,
 )
+from src.wandering.routes import get_router as _get_wandering_router
 from src.bridge.web_search import (
     format_web_context_block as _format_web_context_block,
     web_search as _web_search,
@@ -736,6 +737,14 @@ else:
 #   POST /api/v2/iteration/{id}/outcome
 #   GET  /api/v2/threads/similar?iter_id=...
 app.include_router(_get_thread_persistence_router())
+
+# Wandering Room — research mode for people mid-build on hard concepts.
+# Mounted additively; doesn't touch any other route.
+#   POST /api/v2/wandering/brief
+#   POST /api/v2/wandering/session
+#   GET  /api/v2/wandering/session/{id}
+#   POST /api/v2/wandering/session/{id}/dig-deeper
+app.include_router(_get_wandering_router(), prefix="/api/v2/wandering")
 
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 if os.path.isdir(WEB_DIR):
