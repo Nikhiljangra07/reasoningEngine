@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.report import Confidence, ExplorationReport
@@ -52,10 +52,15 @@ ARTICULATE_CONCEPT = "wandering_articulation"
 class ArticulatedCard:
     """One report, rendered for the user.
 
-    All six fields are strings. None is optional — if articulation can't
-    produce a field, we render "(unable to articulate)" rather than
-    silently dropping it. This is a transparency choice: the user sees
-    that something was attempted, not that nothing exists.
+    The six articulated text fields are strings. None is optional — if
+    articulation can't produce a field, we render "(unable to articulate)"
+    rather than silently dropping it. This is a transparency choice: the
+    user sees that something was attempted, not that nothing exists.
+
+    The provenance fields (agent_id, domain, citations, match_strength)
+    pass through from the raw ExplorationReport unchanged — they're not
+    re-derived or "improved" by articulation. The frontend uses them
+    for the card header, the cited-sources block, and the match bar.
     """
 
     report_id: str
@@ -67,9 +72,17 @@ class ArticulatedCard:
     confidence: Confidence
     confidence_detail: str = ""  # ratio summary like "act:0/4 ess:4/5 mec:5/5"
 
-    def to_dict(self) -> dict[str, str]:
+    # Provenance — copied verbatim from the source ExplorationReport.
+    agent_id: str = ""
+    domain: str = ""
+    citations: list[dict] = field(default_factory=list)
+    match_strength: float = 0.0  # 0.0–1.0, total_matched / total_cushion
+
+    def to_dict(self) -> dict:
         return {
             "report_id": self.report_id,
+            "agent_id": self.agent_id,
+            "domain": self.domain,
             "spark": self.spark,
             "source_shape": self.source_shape,
             "bridge": self.bridge,
@@ -77,6 +90,8 @@ class ArticulatedCard:
             "limit": self.limit,
             "confidence": self.confidence.value,
             "confidence_detail": self.confidence_detail,
+            "citations": list(self.citations),
+            "match_strength": float(self.match_strength),
         }
 
 
@@ -264,6 +279,32 @@ def parse_articulation_response(response_text: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
+def _citations_from_report(report: ExplorationReport) -> list[dict]:
+    """Project the report's source_locations into the dict shape the
+    frontend's card citation block reads. Pass-through only — we do not
+    filter or re-rank sources here."""
+    out: list[dict] = []
+    for src in report.source_locations:
+        out.append({
+            "title": src.title,
+            "url": src.url,
+            "snippet": src.excerpt,
+        })
+    return out
+
+
+def _match_strength_from_report(report: ExplorationReport) -> float:
+    """Single 0.0–1.0 number for the card's match bar.
+
+    Uses the report's existing aggregate (total matched / total cushion).
+    No new weighting scheme — this is the same ratio compute_confidence
+    already reads. The bar is the visual surface of that ratio."""
+    total_cushion = report.total_cushion_nodes()
+    if total_cushion <= 0:
+        return 0.0
+    return min(1.0, max(0.0, report.total_matched_nodes() / total_cushion))
+
+
 async def articulate_report(
     report: ExplorationReport,
     client: LLMClient,
@@ -282,11 +323,16 @@ async def articulate_report(
         concept=ARTICULATE_CONCEPT,
     )
 
+    citations = _citations_from_report(report)
+    match_strength = _match_strength_from_report(report)
+
     if not response.success:
         log.warning("articulation LLM call failed: %s", response.error)
         # Fallback: use the report's raw fields directly.
         return ArticulatedCard(
             report_id=report.report_id,
+            agent_id=report.agent_id,
+            domain=report.domain_explored,
             spark=report.exploration_summary or "(unable to articulate)",
             source_shape=(
                 report.source_locations[0].title
@@ -298,12 +344,16 @@ async def articulate_report(
             limit=report.what_does_not_map or "(unable to articulate)",
             confidence=report.confidence,
             confidence_detail=report.match_ratio_summary(),
+            citations=citations,
+            match_strength=match_strength,
         )
 
     fields = parse_articulation_response(response.content)
 
     return ArticulatedCard(
         report_id=report.report_id,
+        agent_id=report.agent_id,
+        domain=report.domain_explored,
         spark=fields["spark"],
         source_shape=fields["source_shape"],
         bridge=fields["bridge"],
@@ -311,6 +361,8 @@ async def articulate_report(
         limit=fields["limit"],
         confidence=report.confidence,
         confidence_detail=report.match_ratio_summary(),
+        citations=citations,
+        match_strength=match_strength,
     )
 
 
