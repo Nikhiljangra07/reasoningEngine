@@ -25,6 +25,21 @@ from typing import Any
 from src.wandering.cushion import CushionInput
 
 
+import asyncio as _asyncio
+import time as _time
+
+
+# Per-user TTL cache. Wandering /brief is called repeatedly during a
+# session (re-runs, dig-deeper, etc); without a cache each call would
+# fetch the user's recent threads from Neo4j fresh. With a 60-second
+# TTL the cushion composer reads warm memory, and the user's project
+# state still feels "current" — refreshed automatically the next time
+# the cache window expires.
+_ENRICHMENT_TTL_SECONDS = 60
+_ENRICHMENT_CACHE: dict[str, tuple[float, str]] = {}
+_ENRICHMENT_LOCK = _asyncio.Lock()
+
+
 log = logging.getLogger("constellax.wandering.memory_enrichment")
 
 
@@ -110,8 +125,15 @@ async def fetch_memory_enrichment_real(user_id: str | None) -> str:
     if not user_id:
         return ""
 
+    async with _ENRICHMENT_LOCK:
+        cached = _ENRICHMENT_CACHE.get(user_id)
+        if cached is not None and (_time.time() - cached[0]) < _ENRICHMENT_TTL_SECONDS:
+            return cached[1]
+
     store = await _try_build_thread_store()
     if store is None:
+        async with _ENRICHMENT_LOCK:
+            _ENRICHMENT_CACHE[user_id] = (_time.time(), "")
         return ""
 
     try:
@@ -127,9 +149,13 @@ async def fetch_memory_enrichment_real(user_id: str | None) -> str:
         )
     except Exception as e:
         log.debug("list_threads failed for user_id=%s: %s", user_id, e)
+        async with _ENRICHMENT_LOCK:
+            _ENRICHMENT_CACHE[user_id] = (_time.time(), "")
         return ""
 
     if not threads:
+        async with _ENRICHMENT_LOCK:
+            _ENRICHMENT_CACHE[user_id] = (_time.time(), "")
         return ""
 
     lines: list[str] = [
@@ -146,6 +172,8 @@ async def fetch_memory_enrichment_real(user_id: str | None) -> str:
     enrichment = "\n".join(lines)
     if len(enrichment) > MAX_ENRICHMENT_CHARS:
         enrichment = enrichment[:MAX_ENRICHMENT_CHARS] + "\n[... truncated]"
+    async with _ENRICHMENT_LOCK:
+        _ENRICHMENT_CACHE[user_id] = (_time.time(), enrichment)
     return enrichment
 
 
@@ -169,9 +197,15 @@ async def enrich_cushion_input(
     input_data.memory_enrichment = await fetch_memory_enrichment_real(user_id)
 
 
+def clear_memory_enrichment_cache() -> None:
+    """Drop the per-user TTL cache. Test-only helper."""
+    _ENRICHMENT_CACHE.clear()
+
+
 __all__ = [
     "MAX_THREADS_FOR_ENRICHMENT",
     "MAX_ENRICHMENT_CHARS",
     "fetch_memory_enrichment_real",
     "enrich_cushion_input",
+    "clear_memory_enrichment_cache",
 ]
