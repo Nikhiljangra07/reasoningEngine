@@ -63,15 +63,30 @@ Mode selection is deterministic-but-distributed: same (url, content_hash)
 always picks the same mode (debuggable, reproducible), but different
 URLs land on different modes (cohort diversity for free).
 
-DISAGREEMENT AS SIGNAL
-======================
-When the seven channels disagree strongly (high cross-channel variance),
-the content sits in a Heisenberg zone — the system cannot collapse to a
-verdict because the user's pattern lives at the boundary. Disagreement
-biases the verdict toward DIG or SAVE_FOR_LATER (never SKIP) in every
-mode. Cross-region resonance in the brain works the same way: signals
-that cause conflicting region activations are the ones consciousness
-attends to.
+DISAGREEMENT AS SIGNAL — EMPIRICALLY REVERSED
+=============================================
+The cross-channel std-dev is computed every call and exposed as
+`verdict.disagreement`. The original prior was that high disagreement
+marked the breakthrough zone (channels can't collapse → user's pattern
+lives at the boundary).
+
+The 30-pair adversarial sweep proved the opposite, decisively:
+  - real cross-domain analogies cluster at LOW disagreement (mean
+    0.211, max 0.217) — channels CONVERGE on a real structural pattern
+  - surface-similar non-analogies cluster at HIGH disagreement (mean
+    0.380, max 0.420) — channels FIGHT because the pair is noise some
+    channels are catching and others aren't
+
+So high disagreement is a free, accurate non-match detector. Every
+decider that gates on `disagreement >= DISAGREEMENT_HEISENBERG` routes
+to SAVE_FOR_LATER (never DIG). When channels are fighting, the
+candidate is preserved for the user to inspect but does NOT burn dig
+budget. Low disagreement with partial signal remains the breakthrough
+zone the LOW band surfaces.
+
+This is the doctrine-vs-data correction made on 2026-06-01 after the
+initial Heisenberg-as-DIG rule was shown to be wired backwards against
+its own measured signal.
 
 NON-MAP IS NOT A VETO
 =====================
@@ -133,19 +148,15 @@ ROLE_POSITIVE = 0.5
 MECHANISM_POSITIVE = 0.5
 EVIDENCE_POSITIVE = 0.5
 
-#: DEPRECATED — retained one release cycle for external import safety.
-#: The cheap-channel gate is gone; chaos amp licenses paying for LLM
-#: channels on every non-empty fingerprint.
-EXPENSIVE_CHANNEL_GATE = 2
-DIG_CHANNEL_COUNT = 4
-SAVE_FOR_LATER_MIN = 2
-
-#: Cross-channel-variance threshold above which content enters the
-#: Heisenberg zone and biases toward DIG / SAVE_FOR_LATER even with
-#: weak per-channel positives. Empirically: zero-everything content
-#: scores ~0.0, on-the-nose surface matches score ~0.15-0.25, partial
-#: structural resonances score 0.25-0.45, channels-screaming-different
-#: scores 0.45+.
+#: Cross-channel-variance threshold above which the candidate routes to
+#: SAVE_FOR_LATER (never DIG) — the empirical non-match detector.
+#: Measured 2026-06-01 against the 30-pair adversarial sweep:
+#:   - should-match pairs: min=0.195, mean=0.211, max=0.217
+#:   - should-not-match pairs: min=0.330, mean=0.380, max=0.420
+#: 0.30 cleanly separates the two clusters. High disagreement = channels
+#: fighting = pair is probably surface noise, not structural rhyme.
+#: Preserved as SAVE_FOR_LATER so the user can still inspect; never DIG
+#: because dig budget is finite and would be wasted on a likely non-match.
 DISAGREEMENT_HEISENBERG = 0.30
 
 #: Stochastic-accept floor in `random` mode. When deterministic noise
@@ -720,12 +731,17 @@ def _decide_aggressive(
     disagreement: float,
 ) -> tuple[Decision, str]:
     """High-recall mode. Any positive signal surfaces. Strong single
-    channel OR multi-positive DIGs. Heisenberg zone always DIGs."""
+    channel OR multi-positive DIGs. High channel-disagreement routes to
+    SAVE (empirically: high disagreement = non-match, see DOCTRINE)."""
     pos = scores.positive_count()
-    if disagreement >= DISAGREEMENT_HEISENBERG and pos >= 1:
-        return "dig", (
-            f"aggressive: heisenberg disagreement={disagreement:.2f} "
-            f"with pos={pos} → chaos zone, dig"
+    # Empirical non-match detector — high cross-channel disagreement
+    # means the channels are fighting, which the data shows is the
+    # signature of a surface-noise pair, NOT a breakthrough zone.
+    if disagreement >= DISAGREEMENT_HEISENBERG:
+        return "save_for_later", (
+            f"aggressive: high disagreement={disagreement:.2f} ≥ "
+            f"{DISAGREEMENT_HEISENBERG} — channels fighting, likely "
+            f"non-match (pos={pos}). Preserve as SAVE, do not burn dig."
         )
     if pos >= 2 or scores.mechanism >= 0.6 or scores.non_map >= 1.0:
         return "dig", (
@@ -794,24 +810,46 @@ def _decide_non_map_amplifier(
     scores: ChannelScores,
     disagreement: float,
 ) -> tuple[Decision, str]:
-    """Distortion IS signal. High non_map (real analogy with honest
-    break) AMPLIFIES rather than vetoes. Catches the meaningfully-
-    distorted matches the legacy interpreter's non_map veto suppressed."""
+    """Distortion IS signal — but it needs an ANCHOR.
+
+    Haiku can hallucinate a 'failure mode' for almost anything, so
+    non_map=1.0 alone is not enough. The corroboration rule: non_map=1
+    DIGs only when there is also at least one structural reading
+    (mechanism > 0 OR vector ≥ threshold OR overlap ≥ 1). Pure
+    non_map=1 with zero anchor preserves as SAVE_FOR_LATER — distortion
+    is signal not veto, but it is not promotion either.
+
+    High disagreement routes to SAVE (empirical non-match detector).
+    """
     pos = scores.positive_count()
-    if scores.non_map >= 1.0:
+    has_structural_anchor = (
+        scores.mechanism > 0.0
+        or scores.vector >= VECTOR_THRESHOLD
+        or scores.overlap >= 1
+    )
+    # Heisenberg inversion — high disagreement = non-match, not breakthrough.
+    if disagreement >= DISAGREEMENT_HEISENBERG:
+        return "save_for_later", (
+            f"non_map_amp: high disagreement={disagreement:.2f} ≥ "
+            f"{DISAGREEMENT_HEISENBERG} — channels fighting. "
+            f"Preserve as SAVE (pos={pos}, non_map={scores.non_map:.1f})."
+        )
+    if scores.non_map >= 1.0 and has_structural_anchor:
         return "dig", (
-            f"non_map_amp: non_map=1.0 (meaningful break point found) "
-            f"→ dig regardless of surface (pos={pos})"
+            f"non_map_amp: non_map=1.0 + structural anchor "
+            f"(mech={scores.mechanism:.2f}, vec={scores.vector:.2f}, "
+            f"overlap={scores.overlap}) — real analogy with honest break"
         )
     if pos >= 2 and (scores.mechanism > 0.0 or scores.vector >= VECTOR_THRESHOLD):
         return "dig", (
             f"non_map_amp: pos={pos} with structural anchor "
             f"(mech={scores.mechanism:.2f}, vec={scores.vector:.2f})"
         )
-    if disagreement >= DISAGREEMENT_HEISENBERG or pos >= 1:
+    if pos >= 1 or scores.non_map >= 1.0:
         return "save_for_later", (
-            f"non_map_amp: heisenberg or single positive — preserve "
-            f"(pos={pos}, disagreement={disagreement:.2f})"
+            f"non_map_amp: signal without anchor — preserve "
+            f"(pos={pos}, non_map={scores.non_map:.1f}, "
+            f"structural_anchor={has_structural_anchor})"
         )
     return "skip", "non_map_amp: zero signal across channels"
 
@@ -821,37 +859,74 @@ def _decide_random(
     disagreement: float,
     fingerprint: ContentFingerprint,
 ) -> tuple[Decision, str]:
-    """Stochastic acceptance — the explicit chaos valve. Uses
-    deterministic noise from a separate hash dimension so reproducibility
-    holds. ~25-40% of the time accepts a candidate the other modes
-    would have skipped. Cost in per-agent precision; gain in cohort-
-    level breakthrough recall."""
-    pos = scores.positive_count()
+    """Stochastic acceptance — the explicit chaos valve, released into
+    BREADTH (SAVE_FOR_LATER), not DEPTH (DIG).
 
-    # Noise is deterministic per (url, content_hash) but uncorrelated
-    # with the bias-mode selection seed (different concat order).
+    The chaos-amp doctrine says randomness creates breakthroughs. But
+    the data (random mode sweep precision = 57% at DIG) shows the valve
+    was opened too wide: stochastic DIG promotion was producing
+    coin-flip-quality breakthrough surfaces. The fix:
+
+      - DIG requires pos ≥ 3, OR (pos ≥ 2 AND mechanism ≥ POSITIVE).
+        Bare pos ≥ 2 was the largest random-mode FP contributor.
+      - Stochastic acceptance now releases the candidate into
+        SAVE_FOR_LATER (breadth surfacing), not into DIG.
+      - Mechanism corroboration required for any stochastic DIG.
+      - High disagreement routes early to SAVE (Heisenberg empirical
+        non-match detector).
+
+    Reproducibility preserved: same (url, content_hash) → same
+    decision every time. Different agents fetching different URLs land
+    on different deterministic noise values, so the cohort still
+    spreads across the stochastic envelope.
+    """
+    pos = scores.positive_count()
     noise = (_stable_hash(
         fingerprint.content_hash or "", fingerprint.url or "",
     ) % 1000) / 1000.0
 
-    if pos >= 2 or scores.non_map >= 1.0:
-        return "dig", (
-            f"random: pos={pos}, non_map={scores.non_map:.1f}, "
-            f"noise={noise:.2f} → multi-positive dig"
+    # Heisenberg inversion — high disagreement = non-match, not breakthrough.
+    if disagreement >= DISAGREEMENT_HEISENBERG:
+        return "save_for_later", (
+            f"random: high disagreement={disagreement:.2f} ≥ "
+            f"{DISAGREEMENT_HEISENBERG} — chaos with discipline: "
+            f"preserve, do not dig (pos={pos}, noise={noise:.2f})"
         )
-    if pos >= 1 and noise > RANDOM_DIG_NOISE_FLOOR:
+
+    # Tightened DIG — requires multi-positive convergence OR a 2-positive
+    # case anchored by mechanism. Bare pos≥2 was the FP-pipe; the
+    # mechanism requirement is the discipline that keeps the valve from
+    # being mushy.
+    if pos >= 3 or (pos >= 2 and scores.mechanism >= MECHANISM_POSITIVE):
         return "dig", (
-            f"random: 1 positive + noise={noise:.2f} > "
-            f"{RANDOM_DIG_NOISE_FLOOR:.2f} → stochastic dig"
+            f"random: pos={pos}, mech={scores.mechanism:.2f}, "
+            f"noise={noise:.2f} → multi-positive convergence with structural signal"
         )
-    if pos >= 1 or noise > RANDOM_SAVE_NOISE_FLOOR or disagreement >= DISAGREEMENT_HEISENBERG:
+
+    # Stochastic acceptance now promotes to SAVE_FOR_LATER (breadth),
+    # not to DIG (depth). DIG can still fire from this branch ONLY when
+    # there is a corroborating mechanism — a corroborated stochastic
+    # case is closer to a structural rhyme than a true random catch.
+    if pos >= 1 and noise > RANDOM_DIG_NOISE_FLOOR and scores.mechanism > 0.0:
+        return "dig", (
+            f"random: 1 positive + mech={scores.mechanism:.2f} + "
+            f"noise={noise:.2f} > {RANDOM_DIG_NOISE_FLOOR:.2f} → "
+            f"corroborated stochastic dig"
+        )
+
+    # Any positive signal, OR a stochastic acceptance, OR an honest
+    # non_map distortion → surface as SAVE so the cohort can see it.
+    if (pos >= 1
+            or noise > RANDOM_SAVE_NOISE_FLOOR
+            or scores.non_map >= 1.0):
         return "save_for_later", (
             f"random: pos={pos}, noise={noise:.2f}, "
-            f"disagreement={disagreement:.2f} → preserve"
+            f"non_map={scores.non_map:.1f} → preserve (breadth)"
         )
+
     return "skip", (
         f"random: zero signal even with stochastic floor "
-        f"(noise={noise:.2f}, threshold={RANDOM_SAVE_NOISE_FLOOR:.2f})"
+        f"(pos={pos}, noise={noise:.2f}, threshold={RANDOM_SAVE_NOISE_FLOOR:.2f})"
     )
 
 
@@ -992,9 +1067,9 @@ async def interpret(
 
 __all__ = [
     "VECTOR_THRESHOLD",
-    "EXPENSIVE_CHANNEL_GATE",        # deprecated, retained
-    "DIG_CHANNEL_COUNT",             # deprecated, retained
-    "SAVE_FOR_LATER_MIN",            # deprecated, retained
+    "ROLE_POSITIVE",
+    "MECHANISM_POSITIVE",
+    "EVIDENCE_POSITIVE",
     "DISAGREEMENT_HEISENBERG",
     "RANDOM_DIG_NOISE_FLOOR",
     "RANDOM_SAVE_NOISE_FLOOR",
