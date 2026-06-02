@@ -962,6 +962,263 @@ def _is_valid_fusion(f: MasterFusionReport) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Parallel-seat dedupe — cohort-convergence detection
+# ---------------------------------------------------------------------------
+#
+# Background (audit, 2026-06-02): dry-run #2 produced 13 master fusions
+# that contained 5 near-duplicate pairs across seats — both Opus and GPT
+# independently surfaced the SAME insight under slightly different titles.
+# The exact-title merger only caught byte-identical matches, leaving
+# F1/F8, F2/F9, F3/F13, F5/F12, F6/F7 as parallel fusions.
+#
+# These aren't noise — they're a SIGNAL (cohort convergence is the
+# architecture's strongest hallucination-independent evidence). But
+# user-facing reports should collapse them into one fusion + the
+# convergence label rather than burying the signal in redundancy.
+#
+# Heuristic: pair fusions across seats by max(title_jaccard,
+# citation_jaccard) >= COHORT_CONVERGENCE_THRESHOLD. Greedy bipartite
+# matching, highest-similarity pairs first. Catches both lexical near-
+# duplicates (different title phrasing, same insight) and citation-set
+# near-duplicates (similar phrasing isn't required if both seats are
+# building on the same cards).
+
+import re as _re
+
+COHORT_CONVERGENCE_THRESHOLD = 0.5
+
+_TITLE_STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "is", "are", "of", "in", "on",
+    "at", "to", "for", "with", "by", "as", "that", "this", "these",
+    "those", "be", "been", "not", "only", "if", "when", "where", "while",
+    "into", "from", "than", "then", "so", "do", "does", "did", "has",
+    "have", "had",
+}
+
+
+def _title_tokens(title: str) -> set[str]:
+    """Lowercase, alphabetic tokens minus stop words. The token set is what
+    the cohort-convergence detector uses to measure title overlap."""
+    raw = _re.findall(r"[a-z0-9]+", (title or "").lower())
+    return {t for t in raw if t and t not in _TITLE_STOPWORDS and len(t) > 1}
+
+
+def _jaccard(a: set, b: set) -> float:
+    if not a or not b:
+        return 0.0
+    inter = len(a & b)
+    if inter == 0:
+        return 0.0
+    return inter / len(a | b)
+
+
+def _citation_keys(f: MasterFusionReport) -> set[str]:
+    """The report_id set this fusion cites — used for citation-overlap
+    similarity, independent of which_field tag."""
+    return {c.report_id for c in f.citations if c.report_id}
+
+
+def _cohort_similarity(o: MasterFusionReport, g: MasterFusionReport) -> float:
+    """Combined similarity score: max of title-token Jaccard and citation-
+    set Jaccard. The two channels catch different failure modes —
+    rephrased-title-same-cards (citation channel wins) and
+    different-cards-same-insight (title channel wins)."""
+    title_sim = _jaccard(_title_tokens(o.title), _title_tokens(g.title))
+    cite_sim  = _jaccard(_citation_keys(o), _citation_keys(g))
+    return max(title_sim, cite_sim)
+
+
+def _combine_citations(a: list, b: list) -> list:
+    """Concatenate two citation lists with (report_id, which_field) dedupe."""
+    out = list(a)
+    seen = {(c.report_id, c.which_field) for c in out}
+    for c in b:
+        key = (c.report_id, c.which_field)
+        if key not in seen:
+            out.append(c)
+            seen.add(key)
+    return out
+
+
+def _merge_cohort_pair(
+    o: MasterFusionReport,
+    g: MasterFusionReport,
+) -> MasterFusionReport:
+    """Merge two cross-seat near-duplicate fusions into ONE cohort-
+    convergence fusion. Picks the more substantive claim/reasoning/limit
+    (longer total prose), combines citations with dedupe, sets
+    agreement_status to BOTH_AGREE — the cohort-convergence signal.
+
+    If EITHER input was DISPUTED, the merged fusion stays DISPUTED with
+    empty claim/reasoning/limit (R4 supplied the per-angle prose).
+    """
+    if (o.agreement_status == AgreementStatus.DISPUTED
+            or g.agreement_status == AgreementStatus.DISPUTED):
+        # disputed wins — preserve dispute structure
+        keeper = o if len(o.title) >= len(g.title) else g
+        merged = MasterFusionReport(
+            title=keeper.title,
+            claim="", reasoning="", limit="",
+            citations=_combine_citations(o.citations, g.citations),
+            confidence=o.confidence,
+            agreement_status=AgreementStatus.DISPUTED,
+        )
+        merged.disputed_angles = list(o.disputed_angles or []) + list(g.disputed_angles or [])
+        return merged
+
+    def _score(f: MasterFusionReport) -> int:
+        return len(f.claim) + len(f.reasoning) + len(f.limit)
+
+    keeper, _other = (o, g) if _score(o) >= _score(g) else (g, o)
+    return MasterFusionReport(
+        title=keeper.title,
+        claim=keeper.claim,
+        reasoning=keeper.reasoning,
+        limit=keeper.limit,
+        citations=_combine_citations(o.citations, g.citations),
+        confidence=keeper.confidence,
+        agreement_status=AgreementStatus.BOTH_AGREE,  # cohort convergence
+    )
+
+
+def _dedupe_across_seats(
+    opus_finals: list[MasterFusionReport],
+    gpt_finals:  list[MasterFusionReport],
+    threshold:   float = COHORT_CONVERGENCE_THRESHOLD,
+) -> tuple[list[MasterFusionReport], int]:
+    """Greedy bipartite match across the two seat outputs.
+
+    Returns (merged_list, paired_count). Each output fusion is either:
+      - a merged pair (BOTH_AGREE / DISPUTED) — when one opus and one gpt
+        fusion had max(title_jaccard, citation_jaccard) >= threshold
+      - an unpaired opus fusion (status preserved — SOLO_OPUS / SOLO_GPT
+        labels supplied by the seat's R3, MOSTLY_AGREE_REFINED preserved)
+      - an unpaired gpt fusion (same)
+
+    Pairing is greedy by descending similarity — best matches first, then
+    consume both sides. Each fusion can participate in at most one pair.
+    """
+    # Compute all cross-pair similarities; sort desc
+    candidates: list[tuple[float, int, int]] = []
+    for i, o in enumerate(opus_finals):
+        for j, g in enumerate(gpt_finals):
+            sim = _cohort_similarity(o, g)
+            if sim >= threshold:
+                candidates.append((sim, i, j))
+    candidates.sort(reverse=True)
+
+    used_o: set[int] = set()
+    used_g: set[int] = set()
+    merged: list[MasterFusionReport] = []
+
+    for sim, i, j in candidates:
+        if i in used_o or j in used_g:
+            continue
+        merged.append(_merge_cohort_pair(opus_finals[i], gpt_finals[j]))
+        used_o.add(i)
+        used_g.add(j)
+
+    paired_count = len(merged)
+    # Append unpaired fusions from both sides; seat labels preserved
+    for i, o in enumerate(opus_finals):
+        if i not in used_o:
+            merged.append(o)
+    for j, g in enumerate(gpt_finals):
+        if j not in used_g:
+            merged.append(g)
+
+    return merged, paired_count
+
+
+# ---------------------------------------------------------------------------
+# Field-attribution validator — fixes citation `which_field` slot bugs
+# ---------------------------------------------------------------------------
+#
+# Background (audit, 2026-06-02): Fusion 13 in dry-run #2 had 2 excerpts
+# tagged to the WRONG card field — real verbatim text from the card, but
+# the citation's `which_field` named a different slot (e.g., excerpt is
+# substring of `bridge`, tagged `use`). Cheap to fix: when an excerpt is
+# a verbatim substring of any field on the cited card, the tag should
+# point to THAT field.
+#
+# Importantly, paraphrases (excerpts that aren't a verbatim substring of
+# any field on the card) are LEFT ALONE — they're likely faithful
+# rewordings that preserve load-bearing content, not slot errors.
+
+_CARD_FIELDS = ("spark", "source_shape", "bridge", "use", "limit")
+
+
+def _excerpt_is_in_field(excerpt: str, field_text: str, min_match_len: int = 16) -> bool:
+    """Substring check with a minimum length guard.
+
+    Short snippets (e.g., a single common word) shouldn't trigger
+    re-attribution — too noisy. The guard requires the excerpt itself
+    to be at least `min_match_len` chars before any match counts.
+    """
+    if not excerpt or not field_text:
+        return False
+    if len(excerpt) < min_match_len:
+        return False
+    return excerpt.lower() in field_text.lower()
+
+
+def _fix_citation_field_for(cite: "CardReference", card: ArticulatedCard) -> bool:
+    """If `cite.excerpt` is a verbatim substring of a field on `card`
+    other than the one named in `cite.which_field`, re-attribute the
+    tag to the correct field. Returns True when a fix was applied.
+    """
+    excerpt = cite.excerpt or ""
+    named = (cite.which_field or "").lower()
+    # First check the named field — if it already matches, no fix needed.
+    if named in _CARD_FIELDS:
+        named_text = getattr(card, named, "") or ""
+        if _excerpt_is_in_field(excerpt, named_text):
+            return False
+    # Try the other fields
+    for fld in _CARD_FIELDS:
+        if fld == named:
+            continue
+        other_text = getattr(card, fld, "") or ""
+        if _excerpt_is_in_field(excerpt, other_text):
+            cite.which_field = fld
+            return True
+    # Not a verbatim match anywhere — leave alone (paraphrase)
+    return False
+
+
+def _validate_citation_field_attribution(
+    fusions: list[MasterFusionReport],
+    cards:   list[ArticulatedCard],
+) -> int:
+    """Walk every fusion's citations (and disputed-angle citations) and
+    re-attribute `which_field` when the excerpt is a verbatim substring
+    of a different field on the cited card.
+
+    Returns the number of fixes applied. Pure data-only correction —
+    citation excerpts and other fields are never modified. Excerpts
+    that aren't a verbatim substring of any field are left unchanged
+    (likely paraphrases, not slot errors).
+    """
+    cards_by_id = {c.report_id: c for c in cards}
+    fixed = 0
+    for f in fusions:
+        for cite in f.citations:
+            card = cards_by_id.get(cite.report_id)
+            if card is None:
+                continue
+            if _fix_citation_field_for(cite, card):
+                fixed += 1
+        for angle in f.disputed_angles:
+            for cite in angle.citations:
+                card = cards_by_id.get(cite.report_id)
+                if card is None:
+                    continue
+                if _fix_citation_field_for(cite, card):
+                    fixed += 1
+    return fixed
+
+
+# ---------------------------------------------------------------------------
 # Top-level orchestrator
 # ---------------------------------------------------------------------------
 
@@ -1120,40 +1377,46 @@ async def master_synthesize(
                 f.agreement_status = AgreementStatus.SOLO_GPT
             gpt_finals.append(f)
 
-        # Combine + dedupe by title (case-insensitive). When both seats
-        # produce a fusion with the same title, keep one and upgrade
-        # status to BOTH_AGREE if neither marked DISPUTED.
-        combined: dict[str, MasterFusionReport] = {}
-        for f in opus_finals + gpt_finals:
-            key = f.title.strip().lower()
-            if key not in combined:
-                combined[key] = f
-            else:
-                existing = combined[key]
-                # If either marked disputed, the combined fusion is disputed.
-                if existing.agreement_status == AgreementStatus.DISPUTED or f.agreement_status == AgreementStatus.DISPUTED:
-                    existing.agreement_status = AgreementStatus.DISPUTED
-                    existing.claim = ""; existing.reasoning = ""; existing.limit = ""
-                else:
-                    existing.agreement_status = AgreementStatus.BOTH_AGREE
-                # Merge citations (dedup by (report_id, which_field))
-                seen = {(c.report_id, c.which_field) for c in existing.citations}
-                for c in f.citations:
-                    if (c.report_id, c.which_field) not in seen:
-                        existing.citations.append(c)
-                        seen.add((c.report_id, c.which_field))
-
-        merged_fusions = list(combined.values())
+        # Cross-seat dedupe: pair Opus fusions to GPT fusions that are
+        # cohort-convergent (max of title-token Jaccard or citation-set
+        # Jaccard >= COHORT_CONVERGENCE_THRESHOLD = 0.5). Greedy bipartite
+        # matching, best-similarity pairs consumed first. Each paired
+        # fusion becomes ONE BOTH_AGREE (or DISPUTED) entry with merged
+        # citations; unpaired fusions retain their seat-supplied status.
+        # Fixes the run-#2 dry-run case where 5 near-duplicate pairs
+        # (F1/F8, F2/F9, F3/F13, F5/F12, F6/F7) survived the byte-level
+        # title match and shipped as redundant entries.
+        merged_fusions, cohort_pair_count = _dedupe_across_seats(
+            opus_finals, gpt_finals,
+            threshold=COHORT_CONVERGENCE_THRESHOLD,
+        )
         merged_fusions = [f for f in merged_fusions if _is_valid_fusion(f)]
+
+        # Field-attribution validator — when a citation's excerpt is a
+        # verbatim substring of a DIFFERENT field on the cited card,
+        # re-attribute the `which_field` tag. Paraphrases (excerpts
+        # that aren't a verbatim substring of any field) are left as-is.
+        # Fixes the run-#2 dry-run case where Fusion 13 had 2 excerpts
+        # tagged to wrong fields (real text, wrong slot).
+        field_fixes_applied = _validate_citation_field_attribution(
+            merged_fusions, cards,
+        )
+        if field_fixes_applied:
+            log.info(
+                "master_synth: field-attribution validator re-tagged %d citation(s)",
+                field_fixes_applied,
+            )
 
         pre_r4_disputed = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED)
         pre_r4_agreed   = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.BOTH_AGREE, AgreementStatus.MOSTLY_AGREE_REFINED))
         progress.emit("round_complete", {
             "round": "R3_final",
-            "merged_fusion_count": len(merged_fusions),
-            "agreed":  pre_r4_agreed,
-            "disputed": pre_r4_disputed,
-            "cumulative_cost_usd": round(result.total_cost_usd, 4),
+            "merged_fusion_count":    len(merged_fusions),
+            "agreed":                 pre_r4_agreed,
+            "disputed":               pre_r4_disputed,
+            "cohort_pairs_collapsed": cohort_pair_count,
+            "citation_field_fixes":   field_fixes_applied,
+            "cumulative_cost_usd":    round(result.total_cost_usd, 4),
         })
 
         # ─── R4 — DISPUTED ANGLES (parallel, conditional) ──────────────
