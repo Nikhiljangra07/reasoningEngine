@@ -113,6 +113,63 @@ class Dossier:
                 return c
         return None
 
+    def suppressed_framings(self) -> list[dict]:
+        """Pre-merge framings whose voice was suppressed by the keeper-pick.
+
+        For every master fusion that ran through a cohort-pair merge
+        (BOTH_AGREE / MOSTLY_AGREE_REFINED / DISPUTED with a merged
+        title), the keeper_seat shipped its prose visibly. The OTHER
+        seat's pre-merge framing is preserved on the fusion object as
+        pre_merge_opus / pre_merge_gpt but it's buried in the audit
+        fields — most callers won't surface it. This convenience
+        extracts JUST the suppressed side per fusion so a UI can
+        render an "alternate framing" expander next to the visible
+        claim.
+
+        Returns one entry per fusion where (a) keeper_seat is set
+        and (b) the suppressed seat's snapshot is non-None. Empty list
+        when no suppressions occurred (e.g. all SOLO_* + unpaired
+        with no cross-seat merge). Entry shape:
+
+          {
+            "fusion_title":    "<the merged fusion's title>",
+            "suppressed_seat": "opus" | "gpt",
+            "title":           "<the suppressed pre-merge title>",
+            "claim":           "<the suppressed pre-merge claim>",
+            "reasoning":       "<the suppressed pre-merge reasoning>",
+            "limit":           "<the suppressed pre-merge limit>",
+            "note":            "<plain-text rationale for the UI>",
+          }
+
+        Pure derivation from existing master_synthesis data — no
+        schema change to MasterFusionReport. Empty list when
+        master_synthesis was not run.
+        """
+        out: list[dict] = []
+        if self.master_synthesis is None:
+            return out
+        for f in self.master_synthesis.master_fusions:
+            seat = f.keeper_seat
+            if seat not in ("opus", "gpt"):
+                continue
+            suppressed_seat = "gpt" if seat == "opus" else "opus"
+            snap = f.pre_merge_gpt if suppressed_seat == "gpt" else f.pre_merge_opus
+            if not snap:
+                continue
+            out.append({
+                "fusion_title":    f.title,
+                "suppressed_seat": suppressed_seat,
+                "title":           snap.get("title", ""),
+                "claim":           snap.get("claim", ""),
+                "reasoning":       snap.get("reasoning", ""),
+                "limit":           snap.get("limit", ""),
+                "note": (
+                    "Suppressed by keeper-score; the kept side is in the "
+                    "main fusion above. Same evidence, different framing."
+                ),
+            })
+        return out
+
     def to_dict(self) -> dict:
         """Render as a JSON-safe dict (for the future API endpoint).
 
@@ -167,6 +224,12 @@ class Dossier:
             "master_synthesis": (
                 self.master_synthesis.to_dict() if self.master_synthesis is not None else None
             ),
+            # Fix 7 (audit r4→r5): expose the SUPPRESSED side of every
+            # cohort-pair merge as a top-level convenience field for the
+            # UI's "alternate framing" expander. Pure derivation from
+            # master_synthesis.master_fusions — no schema change to the
+            # underlying MasterFusionReport.
+            "suppressed_framings": self.suppressed_framings(),
         }
 
 

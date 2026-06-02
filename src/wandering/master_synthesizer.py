@@ -125,7 +125,11 @@ SEAT_CONCEPT_ANGLE   = "master_disputed_angle"
 MAX_TOKENS_DRAFT     = 4096
 MAX_TOKENS_CRITIQUE  = 2048
 MAX_TOKENS_FINAL     = 8192
-MAX_TOKENS_ANGLE     = 6144
+# Bumped 6144 → 8192 (audit Fix 5, r4→r5). R4 GPT angles in run #4
+# returned 0 citations on both disputed fusions; the prompt was tightened
+# to require citations (see _ANGLE_INSTRUCTIONS) and the extra headroom
+# absorbs the re-emitted citation blocks without truncation.
+MAX_TOKENS_ANGLE     = 8192
 
 
 # ---------------------------------------------------------------------------
@@ -251,13 +255,16 @@ class MasterFusionReport:
     #: fusion is unpaired (no merge happened) or a SOLO_* outcome.
     pre_merge_opus:   dict | None             = None
     pre_merge_gpt:    dict | None             = None
-    #: When the fusion was produced by a cohort-pair merge, names which
-    #: seat's prose actually shipped as the visible claim/reasoning/limit
-    #: ("opus" or "gpt"). Lets a UX show "Opus claim:" vs "GPT claim:"
-    #: on top of the shipped text, and lets an auditor see the voice
-    #: bias at a glance (Codex audit, run #3: visible claim is still
-    #: keeper-only even with pre-merge snapshots preserved). Empty
-    #: string for unpaired fusions, SOLO_*, and DISPUTED.
+    #: Which seat's prose actually shipped as the visible claim/
+    #: reasoning/limit on this fusion ("opus" or "gpt"). Set for every
+    #: fusion EXCEPT SOLO_OPUS/SOLO_GPT (where the seat is already
+    #: encoded in agreement_status, so populating this would be
+    #: redundant). For paired fusions, picked by `_keeper_score` —
+    #: multi-factor on cards-cited / providers / confidence /
+    #: prose-length. For unpaired BOTH_AGREE / MOSTLY_AGREE_REFINED /
+    #: DISPUTED fusions, populated by `_dedupe_across_seats` as the
+    #: producing seat (audit Fix 4: r4 unpaired MAR shipped with
+    #: keeper_seat='' and pre_merge_* = None).
     keeper_seat:      str                     = ""
     #: Unique agent_ids cited (P01, P02, ...). Set at parse time and
     #: preserved through merges. Distinct from `citation_provider_count`
@@ -333,6 +340,17 @@ class MasterSynthesis:
     #: collapsed (Opus↔Opus + GPT↔GPT) before bipartite. Addresses
     #: Blocker #4 of the run-#3 audit.
     same_seat_pairs_collapsed: int                    = 0
+    #: Hunch-coverage surveillance (Fix 6, audit r4→r5). For each hunch
+    #: extracted from cushion.raw_input.current_map.content, names the
+    #: master-fusion titles whose text (title+claim+reasoning+limit)
+    #: lexically references it. Empty list under a hunch label = the
+    #: hunch was NOT exercised by any fusion this run.
+    #:
+    #: Pure observability — does NOT gate output, trigger regeneration,
+    #: or influence the keeper-pick. Surveillance only. Verified on disk
+    #: in run #4: Butterfly hunch was absent from all 8 master fusions
+    #: and nothing flagged it. This field surfaces that gap.
+    hunch_coverage:            dict[str, list[str]]   = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -360,6 +378,8 @@ class MasterSynthesis:
             "r3_pre_merge_gpt":    list(self.r3_pre_merge_gpt),
             # blocker #4 metric
             "same_seat_pairs_collapsed": self.same_seat_pairs_collapsed,
+            # Fix 6: hunch-coverage surveillance
+            "hunch_coverage": {k: list(v) for k, v in self.hunch_coverage.items()},
         }
 
 
@@ -858,12 +878,22 @@ the angle that fits their problem.
 Do NOT try to anticipate or merge with the other seat's angle. Your
 job is to give YOUR honest read.
 
+CITATIONS ARE MANDATORY ON EVERY ANGLE. An angle without citations
+is just an unfalsifiable assertion — the architecture exists to
+keep every claim grounded in cards the user can audit. If you genuinely
+cannot justify your angle with >= 2 specific report_ids drawn from the
+disputed fusion's citation set (or new ones from the same card pool),
+do not emit the angle — it isn't ready. Empty `citations` will be
+treated as a defect by the orchestrator and the parent fusion's
+citations will be inherited as a best-effort fallback (which leaves
+the angle's reasoning ungrounded; do not let this happen).
+
 For each disputed fusion, return one angle object:
   - title          : copy the fusion's title verbatim
   - claim          : YOUR claim (1-2 sentences)
   - reasoning      : YOUR reasoning (2-4 sentences)
   - limit          : YOUR limit (1-2 sentences; MANDATORY)
-  - citations      : YOUR citations (>= 2)
+  - citations      : YOUR citations (>= 2, MANDATORY)
 
 OUTPUT FORMAT — JSON ARRAY of angle objects:
 
@@ -1221,6 +1251,37 @@ def _max_confidence(a: Confidence, b: Confidence) -> Confidence:
     return a if _CONFIDENCE_ORDER.get(a, 0) >= _CONFIDENCE_ORDER.get(b, 0) else b
 
 
+def _keeper_score(f: MasterFusionReport) -> tuple:
+    """Multi-factor keeper score for cohort-pair merging across seats.
+
+    Replaces the prior prose-length-only rule. Runs #3 and #4 both shipped
+    6/6 keeper_seat='opus' under the old rule because Opus's discursive
+    elaboration unpacked every noun into clauses — it won length even when
+    GPT cited more cards or more providers. The length signal was sampling
+    voice density, not insight density.
+
+    The tuple orders signals by information density first, voice density last:
+
+      1. cards_cited     — count of distinct report_ids in citations
+      2. providers       — count of distinct agent_ids in citations (proxy
+                           for cross-provider grounding; the agent->provider
+                           map isn't available at this layer, so distinct
+                           agent_ids is the closest local signal)
+      3. confidence_rank — HIGH=2, MEDIUM=1, LOW=0
+      4. prose_len       — claim+reasoning+limit length (final tie-breaker)
+
+    Python tuple comparison is lexicographic, so a fusion with 4 cited
+    cards beats one with 3 cited cards regardless of which has longer
+    prose. The voice bias is recovered as the bottom tie-break — used
+    only when the upstream signals all tie.
+    """
+    cards_cited = {c.report_id for c in f.citations if c.report_id}
+    agents      = {c.agent_id  for c in f.citations if c.agent_id}
+    conf_rank   = _CONFIDENCE_ORDER.get(f.confidence, 0)
+    prose_len   = len(f.claim) + len(f.reasoning) + len(f.limit)
+    return (len(cards_cited), len(agents), conf_rank, prose_len)
+
+
 def _merge_cohort_pair(
     o: MasterFusionReport,
     g: MasterFusionReport,
@@ -1242,7 +1303,12 @@ def _merge_cohort_pair(
     if (o.agreement_status == AgreementStatus.DISPUTED
             or g.agreement_status == AgreementStatus.DISPUTED):
         # disputed wins — preserve dispute structure
-        keeper_is_opus = len(o.title) >= len(g.title)
+        # keeper picks the title to display; the per-angle claim/reasoning
+        # for each seat is preserved separately on disputed_angles.
+        # Multi-factor score (cards, providers, confidence, then prose
+        # length) replaces the prior title-length-only rule that was
+        # symptomatic of the run-#3/#4 voice bias.
+        keeper_is_opus = _keeper_score(o) >= _keeper_score(g)
         keeper = o if keeper_is_opus else g
         merged = MasterFusionReport(
             title=keeper.title,
@@ -1257,10 +1323,11 @@ def _merge_cohort_pair(
         merged.disputed_angles = list(o.disputed_angles or []) + list(g.disputed_angles or [])
         return merged
 
-    def _score(f: MasterFusionReport) -> int:
-        return len(f.claim) + len(f.reasoning) + len(f.limit)
-
-    keeper_is_opus = _score(o) >= _score(g)
+    # Multi-factor keeper-score (audit fix r4→r5): cards-cited, distinct-
+    # agent-ids, confidence rank, prose length — in that order. The prior
+    # rule was prose-length-only, which sampled voice density (Opus's
+    # discursive style) instead of information density.
+    keeper_is_opus = _keeper_score(o) >= _keeper_score(g)
     keeper, _other = (o, g) if keeper_is_opus else (g, o)
     return MasterFusionReport(
         title=keeper.title,
@@ -1390,12 +1457,24 @@ def _dedupe_across_seats(
         used_g.add(j)
 
     paired_count = len(merged)
-    # Append unpaired fusions from both sides; seat labels preserved
+    # Append unpaired fusions from both sides; attach pre_merge snapshot
+    # and set keeper_seat so downstream audit can identify each fusion's
+    # provenance. Fix 4 (audit r4): MAR fusions F6+F7 in run #4 shipped
+    # with keeper_seat='' and both pre_merge_* = None — the unpaired
+    # passthrough silently dropped provenance. SOLO_OPUS/SOLO_GPT keep
+    # keeper_seat empty because the seat is already encoded in
+    # agreement_status; setting it again would be redundant.
     for i, o in enumerate(opus_deduped):
         if i not in used_o:
+            o.pre_merge_opus = _seat_snapshot(o)
+            if o.agreement_status not in (AgreementStatus.SOLO_OPUS, AgreementStatus.SOLO_GPT):
+                o.keeper_seat = "opus"
             merged.append(o)
     for j, g in enumerate(gpt_deduped):
         if j not in used_g:
+            g.pre_merge_gpt = _seat_snapshot(g)
+            if g.agreement_status not in (AgreementStatus.SOLO_OPUS, AgreementStatus.SOLO_GPT):
+                g.keeper_seat = "gpt"
             merged.append(g)
 
     return merged, paired_count, same_seat_collapsed
@@ -1487,6 +1566,138 @@ def _validate_citation_field_attribution(
                 if _fix_citation_field_for(cite, card):
                     fixed += 1
     return fixed
+
+
+# ---------------------------------------------------------------------------
+# Hunch-coverage surveillance (Fix 6, audit r4→r5)
+# ---------------------------------------------------------------------------
+#
+# Pure observability — extracts hunch labels from the cushion's CURRENT_MAP
+# block, then scans every master fusion's text for lexical references to
+# each label. Does NOT call the LLM, does NOT alter prompts, does NOT gate
+# output. Surfaces a coverage map the user / dashboard can read post-run.
+#
+# Background (run #4): Nikhil's cushion supplied 4 hunches (Markov chains,
+# butterfly effect, Heisenberg uncertainty, junior+senior scientist
+# hierarchy). One of them — Butterfly — was absent from all 8 master
+# fusions and nothing flagged the omission. The architecture has no
+# round-prompt mechanism that asks "did you exercise the hunches?", so
+# this surveillance is the cheap detection path until a future audit
+# decides whether to wire it into a prompt-level law.
+
+
+_HUNCH_STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "is", "are", "of", "in", "on",
+    "at", "to", "for", "with", "by", "as", "that", "this", "these",
+    "those", "be", "been", "not", "only", "if", "when", "where", "while",
+    "into", "from", "than", "then", "so", "do", "does", "did", "has",
+    "have", "had", "your", "you", "i", "we", "they", "it", "its",
+    "about", "like", "just", "very", "more", "most",
+}
+
+
+def _extract_hunches(cushion: CushionGraph | None) -> list[str]:
+    """Pull hunch labels from cushion.raw_input.current_map.content.
+
+    The Wandering Room UI binds the 'Hunches' field to backend CURRENT_MAP.
+    Expected formats (lenient — covers numbered, bulleted, and
+    blank-line-separated paragraphs):
+
+      1. Markov chains: each step depends on the previous...
+      2. Butterfly effect — tiny inputs cascade...
+      * Heisenberg uncertainty: you can't measure...
+
+    Strategy: split on blank lines OR newline-with-leading-marker, then
+    for each block, take the first line, strip leading bullets/numbers,
+    and take up to the first colon / em-dash / en-dash as the label.
+
+    Returns a list of short, lowercase labels. Empty list when cushion or
+    current_map is missing.
+    """
+    if cushion is None or cushion.raw_input is None:
+        return []
+    text = getattr(cushion.raw_input.current_map, "content", "") or ""
+    if not text.strip():
+        return []
+
+    # First try blank-line block split; if that yields only one block,
+    # also try splitting on bullet/numbered prefixes so single-block
+    # text with inline numbering still extracts multiple hunches.
+    blocks = [b for b in re.split(r"\n\s*\n", text) if b.strip()]
+    if len(blocks) < 2:
+        blocks = [b for b in re.split(r"\n(?=\s*(?:[\-\*]|\d+[\.\)]))", text) if b.strip()]
+
+    labels: list[str] = []
+    for block in blocks:
+        first_line = block.strip().split("\n", 1)[0].strip()
+        # strip leading bullet/number markers like "1.", "2)", "-", "*"
+        first_line = re.sub(r"^[\-\*]+\s*|^\d+[\.\)]\s*", "", first_line).strip()
+        # cut at first colon, em-dash, en-dash, or hyphen-with-space
+        m = re.match(r"^([^:—–]{3,80}?)(?:\s*[:—–]|\s+-\s+|$)", first_line)
+        label = (m.group(1) if m else first_line[:60]).strip().lower()
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
+def _hunch_anchors(label: str) -> list[str]:
+    """Return the set of content-word anchors for a hunch label.
+
+    A fusion is considered to reference the hunch when its text contains
+    ANY of these anchors. Multi-anchor OR matching avoids the
+    "longest word wins" failure mode where the more distinctive term
+    loses to a generic one (e.g. label="heisenberg uncertainty" — the
+    specific name "heisenberg" matters more than the generic noun
+    "uncertainty", but the latter is one character longer).
+
+    Strategy: every non-stopword content word ≥ 5 chars becomes an
+    anchor. Falls back to the whole stripped label when no qualifying
+    word is found.
+    """
+    words = [
+        w for w in re.findall(r"[a-z]{5,}", label.lower())
+        if w not in _HUNCH_STOPWORDS
+    ]
+    if not words:
+        return [label.strip().lower()] if label.strip() else []
+    # Deduplicate while preserving discovery order
+    seen: set[str] = set()
+    out: list[str] = []
+    for w in words:
+        if w not in seen:
+            seen.add(w)
+            out.append(w)
+    return out
+
+
+def _compute_hunch_coverage(
+    cushion: CushionGraph | None,
+    fusions: list[MasterFusionReport],
+) -> dict[str, list[str]]:
+    """For each hunch, list the fusion titles whose text references it.
+
+    Lexical (cheap) matching on title+claim+reasoning+limit, OR-matched
+    against every content-word anchor for the label (so the rarer of
+    "heisenberg" / "uncertainty" still triggers a match when only one
+    appears in the fusion). Returns {hunch_label: [fusion_title, ...]}
+    with the same keys even when a list is empty — empty list under a
+    hunch is the "uncovered" signal.
+    """
+    labels = _extract_hunches(cushion)
+    coverage: dict[str, list[str]] = {l: [] for l in labels}
+    if not labels:
+        return coverage
+    anchors_by_label = {l: _hunch_anchors(l) for l in labels}
+    for f in fusions:
+        haystack = " ".join((f.title, f.claim, f.reasoning, f.limit)).lower()
+        # Include disputed-angle text too — angles carry the real prose on
+        # disputed fusions (parent claim/reasoning/limit are empty strings).
+        for angle in f.disputed_angles:
+            haystack += " " + " ".join((angle.claim, angle.reasoning, angle.limit)).lower()
+        for label, anchors in anchors_by_label.items():
+            if any(a and a in haystack for a in anchors):
+                coverage[label].append(f.title)
+    return coverage
 
 
 # ---------------------------------------------------------------------------
@@ -1776,12 +1987,25 @@ async def master_synthesize(
                 title = str(raw.get("title", "")).strip().lower()
                 by_title.setdefault(title, []).append(a)
 
+            inherited_citations_count = 0
             for f in disputed:
                 key = f.title.strip().lower()
-                f.disputed_angles = by_title.get(key, [])
+                angles = by_title.get(key, [])
+                # Inherit parent fusion citations on any angle that came back
+                # citation-empty. Fix 5 (audit r4): GPT R4 angles in run #4
+                # returned 0 citations on both disputed fusions despite the
+                # prompt — the inherit fallback keeps the angle from being
+                # ungrounded. Counted in surveillance so a regression on the
+                # prompt-side instruction shows up in /tmp logs.
+                for angle in angles:
+                    if not angle.citations and f.citations:
+                        angle.citations = list(f.citations)
+                        inherited_citations_count += 1
+                f.disputed_angles = angles
             progress.emit("round_complete", {
                 "round": "R4_angles",
                 "angles_attached": sum(len(f.disputed_angles) for f in disputed),
+                "angles_with_inherited_citations": inherited_citations_count,
                 "cumulative_cost_usd": round(result.total_cost_usd, 4),
             })
 
@@ -1791,6 +2015,13 @@ async def master_synthesize(
         #   caller-supplied agent_provider_map; 0 when unavailable).
         for f in merged_fusions:
             _compute_citation_counts(f, agent_provider_map)
+
+        # Hunch-coverage surveillance (Fix 6, audit r4→r5). Pure
+        # observability — does not gate output or regenerate. Logs which
+        # hunches the user supplied got exercised by at least one master
+        # fusion and which were ignored. Run #4 inspiration: Butterfly
+        # hunch absent from all 8 fusions, nothing flagged it.
+        result.hunch_coverage = _compute_hunch_coverage(cushion, merged_fusions)
 
         # Final counts — Blocker #2: split agreement_count into
         # per-status fields. The legacy aggregates (dispute_count,
@@ -1821,6 +2052,11 @@ async def master_synthesize(
             "agreement_count":            result.agreement_count,
             "solo_count":                 result.solo_count,
             "same_seat_pairs_collapsed":  result.same_seat_pairs_collapsed,
+            # Fix 6: surveillance summary — count of hunches uncovered
+            # (i.e. exercised by zero fusions) so the progress log surfaces
+            # the gap without dumping the full coverage map.
+            "hunches_total":              len(result.hunch_coverage),
+            "hunches_uncovered":          sum(1 for v in result.hunch_coverage.values() if not v),
             "total_cost_usd":             round(result.total_cost_usd, 4),
             "rounds_completed":           list(result.rounds_completed),
         })

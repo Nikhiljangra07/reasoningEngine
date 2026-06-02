@@ -353,17 +353,20 @@ async def synthesize_dossier(
         return SynthesisMap()
 
     user_message = build_synthesis_user_message(anchor_summary, cards)
+    # max_tokens=12288: at LLMClient default 4096, dossiers with 25+ cards
+    # truncated mid-JSON. The parser silently returned an empty SynthesisMap
+    # (run #4: synthesis_map shipped EMPTY with all 5 lists at len=0).
+    # 12288 absorbs full structured output without ever brushing the cap
+    # at observed dossier sizes.
     response: LLMResponse = await client.call(
         system_prompt=compose_system_prompt(_SYNTHESIS_SYSTEM_PROMPT, mode="dossier_synthesis"),
         user_message=user_message,
         domain=SYNTHESIS_DOMAIN,
         concept=SYNTHESIS_CONCEPT,
+        max_tokens=12288,
     )
 
-    if not response.success:
-        log.warning("synthesis LLM call failed: %s", response.error)
-        # Fallback: return an empty map but still preserve top_insights
-        # by listing HIGH-confidence cards in order. The user gets SOMETHING.
+    def _confidence_ordered_fallback() -> SynthesisMap:
         fallback = SynthesisMap()
         fallback.top_insights = [
             c.report_id for c in cards if c.confidence == Confidence.HIGH
@@ -372,7 +375,28 @@ async def synthesize_dossier(
         ]
         return fallback
 
-    return parse_synthesis_response(response.content)
+    if not response.success:
+        log.warning("synthesis LLM call failed: %s", response.error)
+        return _confidence_ordered_fallback()
+
+    parsed = parse_synthesis_response(response.content)
+    # Truncation/parse-failure detection: parse_synthesis_response returns an
+    # empty SynthesisMap when JSON is unterminated or malformed (its fallback
+    # path is silent — see line 273). If every collection is empty AND we had
+    # input cards, the parse almost certainly failed silently. Degrade to the
+    # confidence-ordered fallback so the dossier is never shipped with a
+    # completely empty synthesis_map when we had cards to organize.
+    if (not parsed.top_insights and not parsed.clusters
+            and not parsed.contradictions and not parsed.opportunity_paths
+            and not parsed.open_questions
+            and not parsed.recommended_next_direction.strip()):
+        log.warning(
+            "synthesis returned empty map despite %d cards (likely truncation "
+            "or parse failure); falling back to confidence-ordered top_insights",
+            len(cards),
+        )
+        return _confidence_ordered_fallback()
+    return parsed
 
 
 __all__ = [
