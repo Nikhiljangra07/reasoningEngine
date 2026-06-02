@@ -251,6 +251,14 @@ class MasterFusionReport:
     #: fusion is unpaired (no merge happened) or a SOLO_* outcome.
     pre_merge_opus:   dict | None             = None
     pre_merge_gpt:    dict | None             = None
+    #: When the fusion was produced by a cohort-pair merge, names which
+    #: seat's prose actually shipped as the visible claim/reasoning/limit
+    #: ("opus" or "gpt"). Lets a UX show "Opus claim:" vs "GPT claim:"
+    #: on top of the shipped text, and lets an auditor see the voice
+    #: bias at a glance (Codex audit, run #3: visible claim is still
+    #: keeper-only even with pre-merge snapshots preserved). Empty
+    #: string for unpaired fusions, SOLO_*, and DISPUTED.
+    keeper_seat:      str                     = ""
     #: Unique agent_ids cited (P01, P02, ...). Set at parse time and
     #: preserved through merges. Distinct from `citation_provider_count`
     #: because the same provider can occupy multiple slots (e.g. run #3
@@ -275,6 +283,7 @@ class MasterFusionReport:
             "disputed_angles":  [a.to_dict() for a in self.disputed_angles],
             "pre_merge_opus":   self.pre_merge_opus,
             "pre_merge_gpt":    self.pre_merge_gpt,
+            "keeper_seat":      self.keeper_seat,
             "citation_agent_count":    self.citation_agent_count,
             "citation_provider_count": self.citation_provider_count,
         }
@@ -1233,7 +1242,8 @@ def _merge_cohort_pair(
     if (o.agreement_status == AgreementStatus.DISPUTED
             or g.agreement_status == AgreementStatus.DISPUTED):
         # disputed wins — preserve dispute structure
-        keeper = o if len(o.title) >= len(g.title) else g
+        keeper_is_opus = len(o.title) >= len(g.title)
+        keeper = o if keeper_is_opus else g
         merged = MasterFusionReport(
             title=keeper.title,
             claim="", reasoning="", limit="",
@@ -1242,6 +1252,7 @@ def _merge_cohort_pair(
             agreement_status=AgreementStatus.DISPUTED,
             pre_merge_opus=o_snap,
             pre_merge_gpt=g_snap,
+            keeper_seat="opus" if keeper_is_opus else "gpt",
         )
         merged.disputed_angles = list(o.disputed_angles or []) + list(g.disputed_angles or [])
         return merged
@@ -1249,7 +1260,8 @@ def _merge_cohort_pair(
     def _score(f: MasterFusionReport) -> int:
         return len(f.claim) + len(f.reasoning) + len(f.limit)
 
-    keeper, _other = (o, g) if _score(o) >= _score(g) else (g, o)
+    keeper_is_opus = _score(o) >= _score(g)
+    keeper, _other = (o, g) if keeper_is_opus else (g, o)
     return MasterFusionReport(
         title=keeper.title,
         claim=keeper.claim,
@@ -1260,6 +1272,7 @@ def _merge_cohort_pair(
         agreement_status=AgreementStatus.BOTH_AGREE,  # cohort convergence
         pre_merge_opus=o_snap,
         pre_merge_gpt=g_snap,
+        keeper_seat="opus" if keeper_is_opus else "gpt",
     )
 
 
