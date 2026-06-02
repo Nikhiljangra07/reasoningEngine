@@ -220,6 +220,15 @@ async def _run_match(
                 fp, cushion, client=client,
                 session_state=interpreter_state,
             )
+            # Q5 run-#2-followup: surface bias_mode at INFO so per-call
+            # JSONL audit + Railway logs can prove the 5 bias modes
+            # diversified across the wander instead of collapsing to
+            # one mode. Without this, run #2's bias-mode prediction (P3)
+            # only had circumstantial evidence; run #3 makes it provable.
+            log.info(
+                "interpreter verdict bias_mode=%s decision=%s url=%s",
+                verdict.bias_mode, verdict.decision, url or "<no-url>",
+            )
             # Mark the fingerprint as seen so the novelty channel on
             # subsequent agents in the same wander has accumulated
             # history to consult. Without this the novelty score stays

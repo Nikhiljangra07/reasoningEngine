@@ -167,6 +167,16 @@ PRICING: dict[str, tuple[float, float]] = {
     "deepseek/deepseek-v4-pro":        (1.74,  3.48),   # post-promo (May 31, 2026)
     "deepseek/deepseek-v4-flash":      (0.14,  0.28),
 
+    # xAI (Grok) — confirmed against console.x.ai/models dashboard 2026-06-02.
+    # 4.20-non-reasoning is the workhorse choice for the wander agent layer:
+    # latest generation (4.20 family), direct response (no chain-of-thought
+    # latency penalty), 1M context, 1,800 RPM headroom for 10-agent parallelism.
+    # The reasoning, multi-agent, and build-0.1 variants on the dashboard
+    # are deliberately NOT registered — reasoning is too slow for divergent
+    # generation, multi-agent has a 450 RPM bottleneck (flagship-tier),
+    # build-0.1 carries preview-version risk.
+    "xai/grok-4.20-0309-non-reasoning": (1.25,  2.50),
+
     # Embedding models (output_cost = 0 — embeddings return vectors, not tokens)
     "openai/text-embedding-3-small":   (0.02,  0.00),
     "openai/text-embedding-3-large":   (0.13,  0.00),
