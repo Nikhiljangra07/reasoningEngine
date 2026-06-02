@@ -1,0 +1,1272 @@
+"""
+Master Synthesizer — the "senior scientist" layer above the agent reports.
+
+PURPOSE
+-------
+The Wandering Room's agent layer surfaces N raw ExplorationReports
+(typically 15-30 per session, each one a structural bridge an agent
+found while wandering). The existing `articulate.py` + `synthesis.py`
+turn those reports into ArticulatedCards plus a SynthesisMap
+(clusters, contradictions, opportunity paths). That's the dossier.
+
+The MASTER SYNTHESIZER sits one layer above the dossier. Its job is
+to read everything together and produce 3-5 MASTER FUSION REPORTS —
+cross-card fusions that bridge what no single card could bridge alone.
+
+Two frontier models work this layer as COLLEAGUES, not contestants:
+
+  - Anthropic Opus 4.6   ("anthropic_seat")
+  - OpenAI    GPT-5.4    ("openai_seat")
+
+They draft independently (R1), critique each other's drafts (R2),
+finalize their joint conclusions (R3), and — only when they genuinely
+disagree on a specific fusion — produce two angled versions of THAT
+fusion side-by-side so the user picks the angle that fits (R4). When
+they agree, the fusion ships as ONE merged report with citations drawn
+from both. They do NOT average each other's outputs — averaging
+recreates the very smartness-layer collapse the Wandering Room exists
+to escape.
+
+DOCTRINE
+--------
+Every claim in a master fusion MUST trace to >= 2 ArticulatedCards
+(`citation discipline B`). A "fusion" of one card is not a fusion;
+it's an amplification. If a draft can't ground its claim in two cards,
+the synthesizer either drops it or downgrades to a "single-card
+amplification" tag — never invents a citation.
+
+Hallucination concentrates here. Constraints that suppress it:
+
+  - Strict citation grounding (every fusion carries its CardReference list)
+  - Honest LIMIT field (Law 7 — where the fusion breaks; non-empty required)
+  - Confidence labels are NOT inflated; honest "low" is allowed
+  - LOW-band cards are NOT filtered out at input (Law 3 — Heisenberg zone
+    breakthroughs come from low-confidence material the synthesizer fuses)
+  - Disputed fusions preserve BOTH angles — no smoothed middle
+
+UX COMMUNICATIVENESS
+--------------------
+This layer is slow by design (5-8 minutes wall-clock, 4 rounds of
+asyncio.gather'd parallel LLM calls). The user is told what the
+synthesizer is doing in real-time via `MasterSynthesisProgress`
+callbacks — "drafting candidate fusions", "models critiquing each
+other's drafts", "drilling into disputed angles" — so the wait feels
+like watching a brain work, not a black box hang. Meanwhile the user
+can browse the existing dossier cards (already returned by build_dossier);
+the master fusion is an ADDITIVE final artifact, not a blocking gate.
+
+HARD COST CAP
+-------------
+A session-level dollar ceiling is enforced after every LLM call. When
+the running total would exceed `cost_ceiling_usd`, subsequent calls
+raise `MasterSynthesisBudgetExceeded`. The orchestration catches this
+and returns whatever partial result was assembled so far — partial >
+nothing. The default ceiling is $8.00 (the test-phase budget Nikhil
+set; raise for production once the prompts settle).
+
+ISOLATION
+---------
+Imports: dossier types + LLMClient + provider_map for pricing + stdlib.
+Does NOT import call_tracker (the AgentScopedLLMClient pattern is for
+the agent layer; this module talks to LLMClient directly with explicit
+model= per call). Does NOT import runtime (this layer runs AFTER
+run_wandering_session has fully returned).
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import re
+import time
+from dataclasses import asdict, dataclass, field
+from enum import Enum
+from typing import Awaitable, Callable
+
+from src.identity import compose_system_prompt
+from src.llm.client import LLMClient, LLMResponse
+from src.llm.provider_map import get_pricing
+from src.wandering.articulate import ArticulatedCard
+from src.wandering.cushion import CushionGraph
+from src.wandering.report import Confidence
+from src.wandering.synthesis import SynthesisMap
+
+
+log = logging.getLogger("constellax.wandering.master_synthesizer")
+
+
+# ---------------------------------------------------------------------------
+# Model slug pinning — explicit, not via resolve_model()
+# ---------------------------------------------------------------------------
+OPUS_SEAT_MODEL = "anthropic/claude-opus-4-6"
+GPT_SEAT_MODEL  = "openai/gpt-5.4"
+
+#: Domain/concept used when calling client.call. They're internal —
+#: provider_map.resolve_model is bypassed via the explicit `model=` kwarg.
+#: The (domain, concept) tuple still flows into the observability log so
+#: per-round attribution is visible.
+SEAT_DOMAIN          = "master_synthesizer"
+SEAT_CONCEPT_DRAFT   = "master_draft"
+SEAT_CONCEPT_CRITIQUE = "master_critique"
+SEAT_CONCEPT_FINAL   = "master_final"
+SEAT_CONCEPT_ANGLE   = "master_disputed_angle"
+
+#: Per-round output-token caps. Drafted from the first dry-run on
+#: run #2's 23 reports (2026-06-02) where R3 calls truncated at the
+#: LLMClient default 4096 cap — both Opus and GPT-5.4 wanted to emit
+#: more than 4096 tokens of structured JSON for 5+ final fusions.
+#:
+#: R1 (draft)    — moderate; each seat produces 3-5 fusion objects
+#: R2 (critique) — light; each seat emits one annotation per other-draft
+#: R3 (final)    — HEAVIEST; merges drafts + critique into final fusions,
+#:                  needs headroom for full reasoning + limit + citations
+#: R4 (angles)   — heavy; per-disputed-fusion full angled writeup
+MAX_TOKENS_DRAFT     = 4096
+MAX_TOKENS_CRITIQUE  = 2048
+MAX_TOKENS_FINAL     = 8192
+MAX_TOKENS_ANGLE     = 6144
+
+
+# ---------------------------------------------------------------------------
+# Hard cost cap
+# ---------------------------------------------------------------------------
+
+DEFAULT_COST_CEILING_USD = 8.00
+
+
+class MasterSynthesisBudgetExceeded(Exception):
+    """Raised when the cumulative spend would exceed `cost_ceiling_usd`.
+
+    The orchestrator catches this and returns the partial result so far
+    instead of crashing — partial output > none, especially in the
+    testing phase where the cap is intentionally tight.
+    """
+
+
+def _call_cost_usd(model_slug: str, response: LLMResponse) -> float:
+    """Compute USD spend for one LLMResponse using provider_map pricing.
+
+    Pricing is (input $/M, output $/M). Falls back to FALLBACK_PRICING
+    (Sonnet-tier) when the slug isn't registered — conservative
+    (overestimates) so the cap fires safely on unregistered models.
+    """
+    in_price, out_price = get_pricing(model_slug)
+    in_cost  = (response.input_tokens  or 0) / 1_000_000 * in_price
+    out_cost = (response.output_tokens or 0) / 1_000_000 * out_price
+    return in_cost + out_cost
+
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
+
+
+class Seat(str, Enum):
+    """Which model produced a draft / critique / angle."""
+    OPUS  = "opus"
+    GPT   = "gpt"
+
+
+class AgreementStatus(str, Enum):
+    """How the two models converged on a given fusion.
+
+      BOTH_AGREE          — both seats independently produced the same fusion
+      MOSTLY_AGREE_REFINED — one seat proposed, the other refined; final merged
+      DISPUTED            — both seats produced incompatible takes; angles preserved
+      SOLO_OPUS           — only Opus surfaced this fusion; GPT didn't push back
+      SOLO_GPT            — only GPT surfaced this fusion; Opus didn't push back
+    """
+    BOTH_AGREE          = "both_agree"
+    MOSTLY_AGREE_REFINED = "mostly_agree_refined"
+    DISPUTED            = "disputed"
+    SOLO_OPUS           = "solo_opus"
+    SOLO_GPT            = "solo_gpt"
+
+
+class CritiqueAnnotation(str, Enum):
+    """R2 critique values one seat applies to the other's drafts."""
+    AGREE     = "agree"
+    REFINE    = "refine"
+    DISAGREE  = "disagree"
+
+
+@dataclass
+class CardReference:
+    """A pointer from a master fusion back to one source ArticulatedCard.
+
+    `which_field` is the card section the fusion is drawing from —
+    "spark", "bridge", "limit", "source_shape", or "use" — so the user
+    can read the source card and verify the fusion's grounding.
+    """
+    report_id:    str
+    agent_id:     str
+    which_field:  str   # spark | source_shape | bridge | use | limit
+    excerpt:      str   # short quote from the card; max ~120 chars
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class DisputedAngle:
+    """One seat's take on a DISPUTED fusion. Two of these compose a
+    disputed master fusion — the user picks the angle that fits."""
+    seat:        Seat
+    claim:       str   # the synthesized insight (1-2 sentences)
+    reasoning:   str   # how the fusion holds (2-4 sentences)
+    limit:       str   # where this angle's framing breaks (Law 7; non-empty)
+    citations:   list[CardReference] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "seat":       self.seat.value,
+            "claim":      self.claim,
+            "reasoning":  self.reasoning,
+            "limit":      self.limit,
+            "citations":  [c.to_dict() for c in self.citations],
+        }
+
+
+@dataclass
+class MasterFusionReport:
+    """One cross-card fusion produced by the master synthesizer layer.
+
+    The fusion is the "senior scientist" output — a bridge between
+    findings the user could not see by reading any single agent report.
+    """
+    title:            str                       # one-line description
+    claim:            str                       # the insight; empty when DISPUTED
+    reasoning:        str                       # how the fusion holds; empty when DISPUTED
+    limit:            str                       # where the fusion breaks (Law 7); empty when DISPUTED
+    citations:        list[CardReference]       # cards this fusion cites; >= 2 for valid fusion
+    confidence:       Confidence
+    agreement_status: AgreementStatus
+    #: Populated ONLY when agreement_status == DISPUTED. Empty otherwise.
+    disputed_angles:  list[DisputedAngle] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "title":            self.title,
+            "claim":            self.claim,
+            "reasoning":        self.reasoning,
+            "limit":            self.limit,
+            "citations":        [c.to_dict() for c in self.citations],
+            "confidence":       self.confidence.value,
+            "agreement_status": self.agreement_status.value,
+            "disputed_angles":  [a.to_dict() for a in self.disputed_angles],
+        }
+
+
+@dataclass
+class MasterSynthesis:
+    """Container the master synthesizer returns. Holds the fusion list
+    plus cost/round telemetry the caller can surface in the UX."""
+    master_fusions:        list[MasterFusionReport]   = field(default_factory=list)
+    total_cost_usd:        float                      = 0.0
+    cost_ceiling_usd:      float                      = DEFAULT_COST_CEILING_USD
+    rounds_completed:      list[str]                  = field(default_factory=list)
+    truncated_by_budget:   bool                       = False
+    truncation_reason:     str                        = ""
+    dispute_count:         int                        = 0
+    agreement_count:       int                        = 0
+    solo_count:            int                        = 0
+    #: Per-call audit — each entry: {seat, round, model, in_tok, out_tok, cost_usd, ms, ok}
+    call_log:              list[dict]                 = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "master_fusions":      [f.to_dict() for f in self.master_fusions],
+            "total_cost_usd":      round(self.total_cost_usd, 4),
+            "cost_ceiling_usd":    self.cost_ceiling_usd,
+            "rounds_completed":    list(self.rounds_completed),
+            "truncated_by_budget": self.truncated_by_budget,
+            "truncation_reason":   self.truncation_reason,
+            "dispute_count":       self.dispute_count,
+            "agreement_count":     self.agreement_count,
+            "solo_count":          self.solo_count,
+            "call_log":            list(self.call_log),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Progress emission — keeps the UX communicative during the slow rounds
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class MasterSynthesisProgress:
+    """Live progress reference for an in-flight master synthesis.
+
+    Pass an instance to `master_synthesize(progress=...)`. The orchestrator
+    calls these methods at round boundaries. Default implementation is a
+    no-op — callers that want UX feedback subclass and override, or just
+    set the `on_event` callback to a `print` / logger / SSE stream.
+
+    Per Nikhil's framing: the synthesizer must SHOW it's actively working,
+    not return a black-box result 5 minutes later. The user sees:
+      "drafting candidate fusions (Opus + GPT)..."
+      "models critiquing each other's drafts (3 from Opus, 4 from GPT)..."
+      "finalizing — 2 agreed, 1 disputed..."
+      "drilling into 1 disputed angle..."
+      "complete — 4 master fusions ready."
+    These map to events; the caller decides how to render them.
+    """
+    on_event: Callable[[str, dict], None] | None = None
+    events:   list[dict] = field(default_factory=list)
+
+    def emit(self, name: str, payload: dict | None = None) -> None:
+        payload = payload or {}
+        entry = {"name": name, "ts": time.time(), **payload}
+        self.events.append(entry)
+        log.info("[master_synth] %s %s", name, payload)
+        if self.on_event is not None:
+            try:
+                self.on_event(name, payload)
+            except Exception as e:  # pragma: no cover — UX hook must not crash the loop
+                log.warning("progress on_event raised (ignored): %s", e)
+
+
+# ---------------------------------------------------------------------------
+# LLM-call helper with cost-cap enforcement
+# ---------------------------------------------------------------------------
+
+
+async def _call_with_budget(
+    *,
+    client:        LLMClient,
+    system_prompt: str,
+    user_message:  str,
+    domain:        str,
+    concept:       str,
+    seat:          Seat,
+    model_slug:    str,
+    round_name:    str,
+    result:        MasterSynthesis,
+    max_tokens:    int | None = None,
+) -> LLMResponse:
+    """Make one LLM call, record cost, raise if cap would be exceeded.
+
+    Cost is checked AFTER the call (we can't predict spend exactly
+    pre-call), so it's possible to slightly overshoot on the call that
+    breaches the cap. The truncation logic uses partial results — the
+    over-cap call's output is still preserved.
+
+    `max_tokens` overrides LLMClient.MAX_OUTPUT_TOKENS so R3/R4 calls
+    can emit longer JSON. Without this override, R3 outputs truncate at
+    the 4096-default cap and the parser sees malformed JSON.
+    """
+    response: LLMResponse = await client.call(
+        system_prompt=system_prompt,
+        user_message=user_message,
+        domain=domain,
+        concept=concept,
+        model=model_slug,
+        max_tokens=max_tokens,
+    )
+    cost_usd = _call_cost_usd(model_slug, response)
+    result.total_cost_usd += cost_usd
+    result.call_log.append({
+        "seat":     seat.value,
+        "round":    round_name,
+        "model":    model_slug,
+        "in_tok":   response.input_tokens,
+        "out_tok":  response.output_tokens,
+        "cost_usd": round(cost_usd, 4),
+        "ms":       round(response.latency_ms or 0.0, 1),
+        "ok":       response.success,
+        "err":      (response.error or "")[:200] if not response.success else "",
+    })
+
+    if result.total_cost_usd > result.cost_ceiling_usd:
+        result.truncated_by_budget = True
+        result.truncation_reason = (
+            f"cumulative spend ${result.total_cost_usd:.2f} exceeds "
+            f"ceiling ${result.cost_ceiling_usd:.2f} after seat={seat.value} "
+            f"round={round_name}"
+        )
+        log.warning("master_synth budget exceeded: %s", result.truncation_reason)
+        raise MasterSynthesisBudgetExceeded(result.truncation_reason)
+
+    return response
+
+
+# ---------------------------------------------------------------------------
+# JSON extraction (defensive — frontier models sometimes wrap in prose)
+# ---------------------------------------------------------------------------
+
+
+def _strip_code_fences(text: str) -> str:
+    fenced = re.match(r"^\s*```(?:json)?\s*\n(.*)\n```\s*$", text, re.DOTALL)
+    return fenced.group(1).strip() if fenced else text.strip()
+
+
+def _extract_json(text: str) -> str:
+    """Strict-extract one balanced JSON object/array.
+
+    Commits to whichever opener appears FIRST (after fence-strip). If
+    the text starts with '[' (or '[' appears before '{'), we walk an
+    array; if '{' comes first, we walk an object. Mixing modes is a
+    bug — when the model emits an array but the array is truncated,
+    we must let _parse_json_safely fall through to the truncation-
+    recovery path rather than silently extracting the first inner
+    object as if it were the whole response.
+    """
+    text = _strip_code_fences(text)
+    bracket_pos = text.find("[")
+    brace_pos   = text.find("{")
+    # Choose the opener that appears first (and exists)
+    if bracket_pos == -1 and brace_pos == -1:
+        raise ValueError("no JSON object/array found in response")
+    if bracket_pos != -1 and (brace_pos == -1 or bracket_pos < brace_pos):
+        opener, closer, start = "[", "]", bracket_pos
+    else:
+        opener, closer, start = "{", "}", brace_pos
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\":
+            escape = True
+            continue
+        if c == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if c == opener:
+            depth += 1
+        elif c == closer:
+            depth -= 1
+            if depth == 0:
+                return text[start: i + 1]
+    # fell off end — unterminated
+    raise ValueError(f"unterminated JSON {opener}...{closer} in response")
+
+
+def _recover_objects_from_truncated_array(text: str) -> list:
+    """Recover complete top-level JSON objects from an array body that
+    may be truncated (e.g. R3 hit max_tokens mid-fusion-object).
+
+    Strategy: find the first '[' (or skip preamble), then walk forward
+    extracting balanced `{...}` blocks one at a time. Stop on the first
+    block that fails to parse (the truncated one). Returns the list of
+    parseable objects.
+
+    This is the fallback used when `_extract_json` fails because the
+    array's closing `]` is missing. Without it, a single truncated
+    fusion at the tail discards every fusion that came before it.
+    """
+    text = _strip_code_fences(text)
+    start = text.find("[")
+    if start < 0:
+        # No array — maybe a bare object (truncated). Try to recover one.
+        obj_start = text.find("{")
+        if obj_start < 0:
+            return []
+        recovered = _extract_first_balanced_block(text, obj_start)
+        if recovered:
+            try:
+                return [json.loads(recovered)]
+            except (ValueError, json.JSONDecodeError):
+                return []
+        return []
+
+    out: list = []
+    cursor = start + 1
+    while cursor < len(text):
+        # Skip whitespace, commas
+        while cursor < len(text) and text[cursor] in " \t\r\n,":
+            cursor += 1
+        if cursor >= len(text):
+            break
+        if text[cursor] == "]":  # clean close
+            break
+        if text[cursor] != "{":
+            # Stray character before next object — bail; cannot recover further
+            break
+        block = _extract_first_balanced_block(text, cursor)
+        if block is None:
+            break  # truncated — stop here
+        try:
+            parsed = json.loads(block)
+        except (ValueError, json.JSONDecodeError):
+            break  # malformed inside complete braces — stop
+        out.append(parsed)
+        cursor += len(block)
+    return out
+
+
+def _extract_first_balanced_block(text: str, start: int) -> str | None:
+    """Return the substring `text[start:end+1]` that contains one balanced
+    `{...}` block, or None if the block is unterminated (truncation).
+    Assumes `text[start] == '{'`."""
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\":
+            escape = True
+            continue
+        if c == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start: i + 1]
+    return None  # unterminated
+
+
+def _parse_json_safely(raw: str, default):
+    """Defensive JSON parser used for every master-synth round.
+
+    Order of attempts:
+      1. Strict extraction via `_extract_json` (full balanced object/array).
+      2. Fallback to `_recover_objects_from_truncated_array` — pulls out
+         every complete top-level `{...}` block from the array body even
+         when the closing `]` is missing (R3/R4 output truncation case).
+
+    Returns `default` only when BOTH attempts fail. The fallback path is
+    load-bearing: without it, a single truncated fusion at the array tail
+    discards every complete fusion that preceded it.
+    """
+    try:
+        return json.loads(_extract_json(raw))
+    except (ValueError, json.JSONDecodeError) as e:
+        # Strict parse failed; try to salvage complete objects from the
+        # array body if the call was probably truncated.
+        recovered = _recover_objects_from_truncated_array(raw)
+        if recovered:
+            log.warning(
+                "master_synth JSON strict-parse failed (%s); recovered %d objects from truncated array",
+                e, len(recovered),
+            )
+            return recovered
+        log.warning("master_synth JSON parse failed: %s (raw[:200]=%r)", e, raw[:200])
+        return default
+
+
+# ---------------------------------------------------------------------------
+# Prompt fragments — the doctrine is in the prompts; do not soften
+# ---------------------------------------------------------------------------
+
+
+_DOCTRINE_PREAMBLE = """\
+You are one seat of a two-seat master synthesizer for Constellax's
+Wandering Room. The other seat is being run in parallel by a different
+frontier model from a different provider. You are colleagues working
+on the same problem, not contestants competing for the best output.
+
+Your job: produce MASTER FUSION REPORTS that bridge what no single
+agent's ArticulatedCard could bridge alone. A fusion fuses >= 2 cards.
+A single-card "fusion" is not a fusion — it is an amplification of
+one card and does not earn the master tier.
+
+CRITICAL CONSTRAINTS — break any of these and the output is rejected:
+
+  1. THE INSIGHT HAPPENS IN THE USER'S HEAD. You do NOT deliver a
+     conclusion or a recommendation. You surface a bridge — a fusion
+     across cards that the user could not see by reading them
+     individually. Frame claims as "these cards converge on…", not
+     "you should…".
+
+  2. EVERY CLAIM TRACES TO >= 2 CARDS. Cite specific report_ids and
+     which field of the card you are drawing from (spark / source_shape
+     / bridge / use / limit). If you cannot ground a claim in two
+     cards, drop the fusion. Do not invent citations.
+
+  3. THE LIMIT FIELD IS MANDATORY. Every fusion must articulate where
+     it breaks — what context invalidates it, where the analogy stops
+     mapping. A fusion without a limit is dishonest. Empty limit → reject.
+
+  4. HONEST DOUBT > PERFORMATIVE CONFIDENCE. If a fusion is fragile,
+     label it "low" confidence. Inflated confidence is a worse failure
+     than weak signal.
+
+  5. LOW-CONFIDENCE CARDS ARE NOT FILTERED. They are the Heisenberg
+     zone — breakthroughs often emerge from low-confidence material
+     when fused with higher-confidence cards. Read them. Use them.
+
+  6. NO AVERAGE. When you and the other seat disagree on a fusion,
+     do NOT smooth toward a middle. Disagreement is signal. The
+     orchestrator will preserve both angles for the user.
+"""
+
+
+_DRAFT_INSTRUCTIONS = """\
+ROUND 1 — DRAFT.
+
+Read the cushion (user's pursuit / vision / unfinished threads) and
+ALL the articulated cards + the existing synthesis-map context.
+Identify 3-5 candidate master fusions: cross-card connections that
+bridge multiple cards into one structural insight.
+
+For each candidate fusion, return:
+  - title          : one-line description (<= 80 chars)
+  - claim          : the synthesized insight (1-2 sentences)
+  - reasoning      : how the fusion holds together (2-4 sentences)
+  - limit          : where the fusion breaks (1-2 sentences; MANDATORY)
+  - citations      : >= 2 entries, each with report_id, agent_id,
+                     which_field (spark|source_shape|bridge|use|limit),
+                     and a short excerpt (<= 120 chars)
+  - confidence     : "low" | "medium" | "high"
+
+OUTPUT FORMAT — return a JSON ARRAY of fusion objects. No prose
+preamble. No code fences. Just the JSON array:
+
+[
+  {
+    "title": "...",
+    "claim": "...",
+    "reasoning": "...",
+    "limit": "...",
+    "citations": [
+      {"report_id": "...", "agent_id": "...", "which_field": "bridge", "excerpt": "..."},
+      {"report_id": "...", "agent_id": "...", "which_field": "limit",  "excerpt": "..."}
+    ],
+    "confidence": "medium"
+  },
+  ...
+]
+"""
+
+
+_CRITIQUE_INSTRUCTIONS = """\
+ROUND 2 — CRITIQUE THE OTHER SEAT'S DRAFTS.
+
+Below are draft fusions from the other seat. For each draft, decide
+whether you AGREE, want to REFINE, or DISAGREE — and write the reason
+in 2-3 sentences. This is colleague-to-colleague review, not adversarial
+debate. You are NOT trying to "win"; you are flagging where you see
+the fusion differently.
+
+For each draft you read, return one critique object:
+  - draft_index    : the index of the draft in the input list
+  - annotation     : "agree" | "refine" | "disagree"
+  - reason         : 2-3 sentences explaining your judgment
+                     (if "refine", say WHAT to refine specifically)
+                     (if "disagree", say what the OTHER fusion would
+                      look like from your read — title + claim sketch)
+
+OUTPUT FORMAT — JSON ARRAY of critique objects. Just the array:
+
+[
+  {"draft_index": 0, "annotation": "agree", "reason": "..."},
+  {"draft_index": 1, "annotation": "refine", "reason": "the framing is..."},
+  {"draft_index": 2, "annotation": "disagree", "reason": "I read these cards as..."},
+  ...
+]
+"""
+
+
+_FINAL_INSTRUCTIONS = """\
+ROUND 3 — FINAL FUSIONS.
+
+You now have:
+  - Your own R1 drafts (below as YOUR DRAFTS)
+  - The other seat's R2 critique of YOUR drafts (below as CRITIQUE)
+  - The other seat's R1 drafts (below as OTHER SEAT DRAFTS) and your
+    OWN critique of them you produced moments ago (CITED BELOW)
+
+Produce the FINAL set of master fusions — your honest synthesis
+incorporating the other seat's input where appropriate. For each
+final fusion, ALSO set the `agreement_status` field:
+
+  - "both_agree"          : your fusion and the other seat's fusion
+                            converge on the same insight, citations
+                            roughly overlap, and you agree on the limit.
+  - "mostly_agree_refined": the other seat refined your draft and you
+                            accepted some of the refinement, OR you
+                            refined theirs and they accepted.
+  - "disputed"            : you and the other seat read the same cards
+                            but reach incompatible conclusions. Mark
+                            DISPUTED and SET claim/reasoning/limit to
+                            EMPTY STRINGS — round 4 will produce the
+                            two angled versions separately.
+  - "solo_opus" or
+    "solo_gpt"            : only ONE of you surfaced this fusion and
+                            the other did not push back. (Use the seat
+                            value that matches the seat producing the
+                            output — your job is to label which seat
+                            you are.)
+
+Same citation discipline as R1: >= 2 cards per fusion, every claim
+grounded, limit mandatory unless agreement_status == "disputed".
+
+OUTPUT FORMAT — JSON ARRAY of final fusion objects:
+
+[
+  {
+    "title": "...",
+    "claim": "...",                    // empty string if disputed
+    "reasoning": "...",                // empty string if disputed
+    "limit": "...",                    // empty string if disputed
+    "citations": [...],
+    "confidence": "low|medium|high",
+    "agreement_status": "both_agree|mostly_agree_refined|disputed|solo_opus|solo_gpt"
+  },
+  ...
+]
+"""
+
+
+_ANGLE_INSTRUCTIONS = """\
+ROUND 4 — DISPUTED ANGLES.
+
+One or more fusions came out DISPUTED in round 3 — you and the other
+seat read the same cards but reached incompatible conclusions. For
+EACH disputed fusion below, produce YOUR OWN angled version: how
+YOU see this fusion. The other seat is doing the same in parallel.
+Both angles will be shown to the user side-by-side; the user picks
+the angle that fits their problem.
+
+Do NOT try to anticipate or merge with the other seat's angle. Your
+job is to give YOUR honest read.
+
+For each disputed fusion, return one angle object:
+  - title          : copy the fusion's title verbatim
+  - claim          : YOUR claim (1-2 sentences)
+  - reasoning      : YOUR reasoning (2-4 sentences)
+  - limit          : YOUR limit (1-2 sentences; MANDATORY)
+  - citations      : YOUR citations (>= 2)
+
+OUTPUT FORMAT — JSON ARRAY of angle objects:
+
+[
+  {
+    "title": "...",
+    "claim": "...",
+    "reasoning": "...",
+    "limit": "...",
+    "citations": [...]
+  },
+  ...
+]
+"""
+
+
+# ---------------------------------------------------------------------------
+# Payload builders
+# ---------------------------------------------------------------------------
+
+
+def _format_cushion(cushion: CushionGraph | None) -> str:
+    if cushion is None or cushion.raw_input is None:
+        return "(no cushion provided)"
+    inp = cushion.raw_input
+    blocks = [
+        "# USER'S PURSUIT",   inp.problem.content,
+        "\n# USER'S VISION",  getattr(inp.vision, "content", "") or "(none)",
+        "\n# UNFINISHED THREADS / HUNCHES", getattr(inp.current_map, "content", "") or "(none)",
+        f"\n# CUSHION CONSTELLATION ({cushion.constellation_size} nodes across 3 layers)",
+        "## actual:    " + ", ".join(cushion.actual.nodes),
+        "## essence:   " + ", ".join(cushion.essence.nodes),
+        "## mechanism: " + ", ".join(cushion.mechanism.nodes),
+    ]
+    return "\n".join(blocks)
+
+
+def _format_card(c: ArticulatedCard) -> str:
+    return (
+        f"## Card {c.report_id} [{c.confidence.value}] agent={c.agent_id} domain={c.domain}\n"
+        f"  Spark:        {c.spark}\n"
+        f"  Source Shape: {c.source_shape}\n"
+        f"  Bridge:       {c.bridge}\n"
+        f"  Use:          {c.use}\n"
+        f"  Limit:        {c.limit}\n"
+        f"  Match:        {c.confidence_detail or '(n/a)'}"
+    )
+
+
+def _format_synthesis_map(smap: SynthesisMap | None) -> str:
+    if smap is None:
+        return "(no synthesis map)"
+    parts = [
+        "# EXISTING SYNTHESIS MAP (single-pass Sonnet — your input, not your output)",
+        f"  top_insights: {smap.top_insights}",
+        f"  clusters: {[{'label': c.label, 'cards': c.card_ids} for c in smap.clusters]}",
+        f"  contradictions: {[{'desc': c.description, 'cards': c.card_ids} for c in smap.contradictions]}",
+        f"  opportunity_paths: {[{'desc': o.description, 'cards': o.supporting_card_ids} for o in smap.opportunity_paths]}",
+        f"  open_questions: {smap.open_questions}",
+        f"  recommended_next_direction: {smap.recommended_next_direction}",
+    ]
+    return "\n".join(parts)
+
+
+def _build_draft_payload(
+    cushion: CushionGraph | None,
+    cards:   list[ArticulatedCard],
+    smap:    SynthesisMap | None,
+) -> str:
+    blocks = [
+        _format_cushion(cushion),
+        _format_synthesis_map(smap),
+        f"\n# ALL ARTICULATED CARDS ({len(cards)} total)",
+    ]
+    for c in cards:
+        blocks.append("\n" + _format_card(c))
+    blocks.append("\n# YOUR TASK")
+    blocks.append(_DRAFT_INSTRUCTIONS)
+    return "\n".join(blocks)
+
+
+def _build_critique_payload(
+    cushion:       CushionGraph | None,
+    cards:         list[ArticulatedCard],
+    other_drafts:  list[dict],
+) -> str:
+    other_drafts_json = json.dumps(other_drafts, indent=2, ensure_ascii=False)
+    blocks = [
+        _format_cushion(cushion),
+        f"\n# ALL ARTICULATED CARDS ({len(cards)} total — for citation cross-check)",
+    ]
+    for c in cards:
+        blocks.append("\n" + _format_card(c))
+    blocks.append("\n# OTHER SEAT'S DRAFTS")
+    blocks.append(other_drafts_json)
+    blocks.append("\n# YOUR TASK")
+    blocks.append(_CRITIQUE_INSTRUCTIONS)
+    return "\n".join(blocks)
+
+
+def _build_final_payload(
+    cushion:        CushionGraph | None,
+    cards:          list[ArticulatedCard],
+    my_drafts:      list[dict],
+    critique_of_me: list[dict],
+    other_drafts:   list[dict],
+    my_critique:    list[dict],
+    seat:           Seat,
+) -> str:
+    blocks = [
+        _format_cushion(cushion),
+        f"\n# ALL ARTICULATED CARDS ({len(cards)} total)",
+    ]
+    for c in cards:
+        blocks.append("\n" + _format_card(c))
+    blocks.append("\n# YOUR DRAFTS (round 1)")
+    blocks.append(json.dumps(my_drafts, indent=2, ensure_ascii=False))
+    blocks.append("\n# OTHER SEAT'S CRITIQUE OF YOUR DRAFTS")
+    blocks.append(json.dumps(critique_of_me, indent=2, ensure_ascii=False))
+    blocks.append("\n# OTHER SEAT'S DRAFTS")
+    blocks.append(json.dumps(other_drafts, indent=2, ensure_ascii=False))
+    blocks.append("\n# YOUR CRITIQUE OF THE OTHER SEAT'S DRAFTS")
+    blocks.append(json.dumps(my_critique, indent=2, ensure_ascii=False))
+    blocks.append(f"\n# YOUR SEAT: {seat.value}")
+    blocks.append("\n# YOUR TASK")
+    blocks.append(_FINAL_INSTRUCTIONS)
+    return "\n".join(blocks)
+
+
+def _build_angle_payload(
+    cushion:           CushionGraph | None,
+    cards:             list[ArticulatedCard],
+    disputed_fusions:  list[dict],
+    seat:              Seat,
+) -> str:
+    blocks = [
+        _format_cushion(cushion),
+        f"\n# ALL ARTICULATED CARDS ({len(cards)} total)",
+    ]
+    for c in cards:
+        blocks.append("\n" + _format_card(c))
+    blocks.append("\n# DISPUTED FUSIONS")
+    blocks.append(json.dumps(disputed_fusions, indent=2, ensure_ascii=False))
+    blocks.append(f"\n# YOUR SEAT: {seat.value}")
+    blocks.append("\n# YOUR TASK")
+    blocks.append(_ANGLE_INSTRUCTIONS)
+    return "\n".join(blocks)
+
+
+# ---------------------------------------------------------------------------
+# Parsers — convert raw JSON into typed objects with citation validation
+# ---------------------------------------------------------------------------
+
+
+def _parse_citations(raw_list) -> list[CardReference]:
+    out: list[CardReference] = []
+    if not isinstance(raw_list, list):
+        return out
+    for c in raw_list:
+        if not isinstance(c, dict):
+            continue
+        rid = str(c.get("report_id", "")).strip()
+        aid = str(c.get("agent_id", "")).strip()
+        fld = str(c.get("which_field", "")).strip().lower()
+        exc = str(c.get("excerpt", "")).strip()
+        if not (rid and exc):
+            continue
+        out.append(CardReference(
+            report_id=rid, agent_id=aid, which_field=fld, excerpt=exc[:200],
+        ))
+    return out
+
+
+def _coerce_confidence(raw) -> Confidence:
+    try:
+        return Confidence(str(raw).strip().lower())
+    except (ValueError, TypeError):
+        return Confidence.LOW
+
+
+def _coerce_agreement(raw) -> AgreementStatus:
+    try:
+        return AgreementStatus(str(raw).strip().lower())
+    except (ValueError, TypeError):
+        return AgreementStatus.SOLO_OPUS   # safe default; orchestrator may rewrite
+
+
+def _parse_final_fusion(raw) -> MasterFusionReport | None:
+    if not isinstance(raw, dict):
+        return None
+    citations = _parse_citations(raw.get("citations", []))
+    title = str(raw.get("title", "")).strip()
+    agreement = _coerce_agreement(raw.get("agreement_status", "solo_opus"))
+    if not title:
+        return None
+    return MasterFusionReport(
+        title=title,
+        claim=str(raw.get("claim", "")).strip(),
+        reasoning=str(raw.get("reasoning", "")).strip(),
+        limit=str(raw.get("limit", "")).strip(),
+        citations=citations,
+        confidence=_coerce_confidence(raw.get("confidence", "low")),
+        agreement_status=agreement,
+    )
+
+
+def _is_valid_fusion(f: MasterFusionReport) -> bool:
+    """Citation discipline B: >= 2 citations per fusion. Limit mandatory
+    except when DISPUTED (Round 4 supplies the per-angle limit instead)."""
+    if len(f.citations) < 2:
+        return False
+    if f.agreement_status != AgreementStatus.DISPUTED:
+        if not f.limit.strip():
+            return False
+        if not f.claim.strip():
+            return False
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Top-level orchestrator
+# ---------------------------------------------------------------------------
+
+
+async def master_synthesize(
+    *,
+    cushion:          CushionGraph | None,
+    cards:            list[ArticulatedCard],
+    synthesis_map:    SynthesisMap | None,
+    client:           LLMClient,
+    progress:         MasterSynthesisProgress | None = None,
+    cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
+    opus_model:       str = OPUS_SEAT_MODEL,
+    gpt_model:        str = GPT_SEAT_MODEL,
+) -> MasterSynthesis:
+    """Produce master fusion reports from a dossier's articulated cards.
+
+    Pipeline:
+      R1 (parallel) — both seats draft 3-5 candidate fusions
+      R2 (parallel) — each seat critiques the OTHER's drafts
+      R3 (parallel) — each seat produces FINAL fusions w/ agreement_status
+      R4 (parallel, conditional) — disputed fusions: each seat writes
+         its own angle; orchestrator zips angles into MasterFusionReport.disputed_angles
+
+    Budget enforcement: every LLM call is cost-checked AFTER it returns.
+    If cumulative spend exceeds `cost_ceiling_usd`, the orchestrator
+    catches MasterSynthesisBudgetExceeded and returns whatever was
+    assembled so far. Partial > nothing.
+
+    Empty input → empty result (no LLM calls fired).
+    """
+    result = MasterSynthesis(cost_ceiling_usd=cost_ceiling_usd)
+    progress = progress or MasterSynthesisProgress()
+
+    if not cards:
+        progress.emit("empty_input", {"reason": "no cards provided"})
+        return result
+
+    progress.emit("starting", {
+        "card_count":       len(cards),
+        "cost_ceiling_usd": cost_ceiling_usd,
+        "opus_model":       opus_model,
+        "gpt_model":        gpt_model,
+    })
+
+    system = compose_system_prompt(_DOCTRINE_PREAMBLE, mode="master_synthesizer")
+    draft_payload = _build_draft_payload(cushion, cards, synthesis_map)
+
+    try:
+        # ─── R1 — DRAFT (parallel) ──────────────────────────────────────
+        progress.emit("round_started", {"round": "R1_draft", "seats": ["opus", "gpt"]})
+        opus_draft_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=draft_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_DRAFT,
+            seat=Seat.OPUS, model_slug=opus_model, round_name="R1_draft",
+            result=result, max_tokens=MAX_TOKENS_DRAFT,
+        ))
+        gpt_draft_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=draft_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_DRAFT,
+            seat=Seat.GPT, model_slug=gpt_model, round_name="R1_draft",
+            result=result, max_tokens=MAX_TOKENS_DRAFT,
+        ))
+        opus_draft_resp, gpt_draft_resp = await asyncio.gather(opus_draft_task, gpt_draft_task)
+        opus_drafts = _parse_json_safely(opus_draft_resp.content, default=[])
+        gpt_drafts  = _parse_json_safely(gpt_draft_resp.content,  default=[])
+        if not isinstance(opus_drafts, list): opus_drafts = []
+        if not isinstance(gpt_drafts,  list): gpt_drafts  = []
+        result.rounds_completed.append("R1_draft")
+        progress.emit("round_complete", {
+            "round": "R1_draft", "opus_count": len(opus_drafts), "gpt_count": len(gpt_drafts),
+            "cumulative_cost_usd": round(result.total_cost_usd, 4),
+        })
+
+        # ─── R2 — CRITIQUE (parallel) ───────────────────────────────────
+        progress.emit("round_started", {"round": "R2_critique"})
+        opus_critique_payload = _build_critique_payload(cushion, cards, gpt_drafts)
+        gpt_critique_payload  = _build_critique_payload(cushion, cards, opus_drafts)
+
+        opus_critique_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=opus_critique_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_CRITIQUE,
+            seat=Seat.OPUS, model_slug=opus_model, round_name="R2_critique",
+            result=result, max_tokens=MAX_TOKENS_CRITIQUE,
+        ))
+        gpt_critique_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=gpt_critique_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_CRITIQUE,
+            seat=Seat.GPT, model_slug=gpt_model, round_name="R2_critique",
+            result=result, max_tokens=MAX_TOKENS_CRITIQUE,
+        ))
+        opus_critique_resp, gpt_critique_resp = await asyncio.gather(
+            opus_critique_task, gpt_critique_task,
+        )
+        opus_critique = _parse_json_safely(opus_critique_resp.content, default=[])  # Opus's notes on GPT's drafts
+        gpt_critique  = _parse_json_safely(gpt_critique_resp.content,  default=[])  # GPT's notes on Opus's drafts
+        if not isinstance(opus_critique, list): opus_critique = []
+        if not isinstance(gpt_critique,  list): gpt_critique  = []
+        result.rounds_completed.append("R2_critique")
+        progress.emit("round_complete", {
+            "round": "R2_critique",
+            "opus_annotations": len(opus_critique),
+            "gpt_annotations":  len(gpt_critique),
+            "cumulative_cost_usd": round(result.total_cost_usd, 4),
+        })
+
+        # ─── R3 — FINAL (parallel) ──────────────────────────────────────
+        progress.emit("round_started", {"round": "R3_final"})
+        opus_final_payload = _build_final_payload(
+            cushion, cards,
+            my_drafts=opus_drafts, critique_of_me=gpt_critique,
+            other_drafts=gpt_drafts, my_critique=opus_critique,
+            seat=Seat.OPUS,
+        )
+        gpt_final_payload = _build_final_payload(
+            cushion, cards,
+            my_drafts=gpt_drafts, critique_of_me=opus_critique,
+            other_drafts=opus_drafts, my_critique=gpt_critique,
+            seat=Seat.GPT,
+        )
+        opus_final_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=opus_final_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_FINAL,
+            seat=Seat.OPUS, model_slug=opus_model, round_name="R3_final",
+            result=result, max_tokens=MAX_TOKENS_FINAL,
+        ))
+        gpt_final_task = asyncio.create_task(_call_with_budget(
+            client=client, system_prompt=system, user_message=gpt_final_payload,
+            domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_FINAL,
+            seat=Seat.GPT, model_slug=gpt_model, round_name="R3_final",
+            result=result, max_tokens=MAX_TOKENS_FINAL,
+        ))
+        opus_final_resp, gpt_final_resp = await asyncio.gather(opus_final_task, gpt_final_task)
+
+        opus_finals_raw = _parse_json_safely(opus_final_resp.content, default=[])
+        gpt_finals_raw  = _parse_json_safely(gpt_final_resp.content,  default=[])
+        if not isinstance(opus_finals_raw, list): opus_finals_raw = []
+        if not isinstance(gpt_finals_raw,  list): gpt_finals_raw  = []
+        result.rounds_completed.append("R3_final")
+
+        # Parse + label seats correctly. If R3 said "solo_opus" but it
+        # came from the GPT seat's call, rewrite to solo_gpt (the model
+        # mislabeled itself). Same for the reverse.
+        opus_finals: list[MasterFusionReport] = []
+        gpt_finals:  list[MasterFusionReport] = []
+        for raw in opus_finals_raw:
+            f = _parse_final_fusion(raw)
+            if f is None: continue
+            if f.agreement_status == AgreementStatus.SOLO_GPT:
+                f.agreement_status = AgreementStatus.SOLO_OPUS  # came from Opus seat
+            opus_finals.append(f)
+        for raw in gpt_finals_raw:
+            f = _parse_final_fusion(raw)
+            if f is None: continue
+            if f.agreement_status == AgreementStatus.SOLO_OPUS:
+                f.agreement_status = AgreementStatus.SOLO_GPT
+            gpt_finals.append(f)
+
+        # Combine + dedupe by title (case-insensitive). When both seats
+        # produce a fusion with the same title, keep one and upgrade
+        # status to BOTH_AGREE if neither marked DISPUTED.
+        combined: dict[str, MasterFusionReport] = {}
+        for f in opus_finals + gpt_finals:
+            key = f.title.strip().lower()
+            if key not in combined:
+                combined[key] = f
+            else:
+                existing = combined[key]
+                # If either marked disputed, the combined fusion is disputed.
+                if existing.agreement_status == AgreementStatus.DISPUTED or f.agreement_status == AgreementStatus.DISPUTED:
+                    existing.agreement_status = AgreementStatus.DISPUTED
+                    existing.claim = ""; existing.reasoning = ""; existing.limit = ""
+                else:
+                    existing.agreement_status = AgreementStatus.BOTH_AGREE
+                # Merge citations (dedup by (report_id, which_field))
+                seen = {(c.report_id, c.which_field) for c in existing.citations}
+                for c in f.citations:
+                    if (c.report_id, c.which_field) not in seen:
+                        existing.citations.append(c)
+                        seen.add((c.report_id, c.which_field))
+
+        merged_fusions = list(combined.values())
+        merged_fusions = [f for f in merged_fusions if _is_valid_fusion(f)]
+
+        pre_r4_disputed = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED)
+        pre_r4_agreed   = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.BOTH_AGREE, AgreementStatus.MOSTLY_AGREE_REFINED))
+        progress.emit("round_complete", {
+            "round": "R3_final",
+            "merged_fusion_count": len(merged_fusions),
+            "agreed":  pre_r4_agreed,
+            "disputed": pre_r4_disputed,
+            "cumulative_cost_usd": round(result.total_cost_usd, 4),
+        })
+
+        # ─── R4 — DISPUTED ANGLES (parallel, conditional) ──────────────
+        disputed = [f for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED]
+        if disputed:
+            progress.emit("round_started", {"round": "R4_angles", "disputed_count": len(disputed)})
+            disputed_payload_objs = [
+                {"title": f.title, "citations": [c.to_dict() for c in f.citations]}
+                for f in disputed
+            ]
+            opus_angle_payload = _build_angle_payload(cushion, cards, disputed_payload_objs, Seat.OPUS)
+            gpt_angle_payload  = _build_angle_payload(cushion, cards, disputed_payload_objs, Seat.GPT)
+
+            opus_angle_task = asyncio.create_task(_call_with_budget(
+                client=client, system_prompt=system, user_message=opus_angle_payload,
+                domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_ANGLE,
+                seat=Seat.OPUS, model_slug=opus_model, round_name="R4_angles",
+                result=result, max_tokens=MAX_TOKENS_ANGLE,
+            ))
+            gpt_angle_task = asyncio.create_task(_call_with_budget(
+                client=client, system_prompt=system, user_message=gpt_angle_payload,
+                domain=SEAT_DOMAIN, concept=SEAT_CONCEPT_ANGLE,
+                seat=Seat.GPT, model_slug=gpt_model, round_name="R4_angles",
+                result=result, max_tokens=MAX_TOKENS_ANGLE,
+            ))
+            opus_angle_resp, gpt_angle_resp = await asyncio.gather(
+                opus_angle_task, gpt_angle_task,
+            )
+            opus_angles_raw = _parse_json_safely(opus_angle_resp.content, default=[])
+            gpt_angles_raw  = _parse_json_safely(gpt_angle_resp.content,  default=[])
+            if not isinstance(opus_angles_raw, list): opus_angles_raw = []
+            if not isinstance(gpt_angles_raw,  list): gpt_angles_raw  = []
+            result.rounds_completed.append("R4_angles")
+
+            # Attach each angle to its disputed fusion by title match
+            def _angle_from_raw(raw, seat: Seat) -> DisputedAngle | None:
+                if not isinstance(raw, dict): return None
+                return DisputedAngle(
+                    seat=seat,
+                    claim=str(raw.get("claim", "")).strip(),
+                    reasoning=str(raw.get("reasoning", "")).strip(),
+                    limit=str(raw.get("limit", "")).strip(),
+                    citations=_parse_citations(raw.get("citations", [])),
+                )
+
+            by_title: dict[str, list[DisputedAngle]] = {}
+            for raw in opus_angles_raw:
+                a = _angle_from_raw(raw, Seat.OPUS)
+                if a is None: continue
+                title = str(raw.get("title", "")).strip().lower()
+                by_title.setdefault(title, []).append(a)
+            for raw in gpt_angles_raw:
+                a = _angle_from_raw(raw, Seat.GPT)
+                if a is None: continue
+                title = str(raw.get("title", "")).strip().lower()
+                by_title.setdefault(title, []).append(a)
+
+            for f in disputed:
+                key = f.title.strip().lower()
+                f.disputed_angles = by_title.get(key, [])
+            progress.emit("round_complete", {
+                "round": "R4_angles",
+                "angles_attached": sum(len(f.disputed_angles) for f in disputed),
+                "cumulative_cost_usd": round(result.total_cost_usd, 4),
+            })
+
+        # Final counts
+        result.master_fusions = merged_fusions
+        result.dispute_count   = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED)
+        result.agreement_count = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.BOTH_AGREE, AgreementStatus.MOSTLY_AGREE_REFINED))
+        result.solo_count      = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.SOLO_OPUS, AgreementStatus.SOLO_GPT))
+
+        progress.emit("complete", {
+            "fusion_count":         len(merged_fusions),
+            "dispute_count":        result.dispute_count,
+            "agreement_count":      result.agreement_count,
+            "solo_count":           result.solo_count,
+            "total_cost_usd":       round(result.total_cost_usd, 4),
+            "rounds_completed":     list(result.rounds_completed),
+        })
+
+    except MasterSynthesisBudgetExceeded:
+        # Whatever we assembled before the cap is preserved on `result`.
+        # The orchestrator's truncated_by_budget flag is already set by
+        # _call_with_budget. Surface the truncation in progress emission.
+        progress.emit("truncated_by_budget", {
+            "rounds_completed":  list(result.rounds_completed),
+            "fusions_so_far":    len(result.master_fusions),
+            "total_cost_usd":    round(result.total_cost_usd, 4),
+            "ceiling_usd":       result.cost_ceiling_usd,
+            "reason":            result.truncation_reason,
+        })
+
+    except Exception as e:
+        log.exception("master_synthesize: unhandled error")
+        progress.emit("error", {"message": str(e)[:200]})
+        # Don't re-raise — return what we have so callers can render partial.
+
+    return result
+
+
+__all__ = [
+    "OPUS_SEAT_MODEL",
+    "GPT_SEAT_MODEL",
+    "DEFAULT_COST_CEILING_USD",
+    "MasterSynthesisBudgetExceeded",
+    "Seat",
+    "AgreementStatus",
+    "CritiqueAnnotation",
+    "CardReference",
+    "DisputedAngle",
+    "MasterFusionReport",
+    "MasterSynthesis",
+    "MasterSynthesisProgress",
+    "master_synthesize",
+]

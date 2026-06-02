@@ -146,9 +146,17 @@ PRICING: dict[str, tuple[float, float]] = {
     # Anthropic (cost-conscious tier — Opus 4.7 intentionally excluded)
     "anthropic/claude-sonnet-4-6":     (3.00, 15.00),
     "anthropic/claude-haiku-4-5":      (1.00,  5.00),
+    # Opus 4.6 is reserved exclusively for the master_synthesizer layer
+    # (Wandering Room "senior scientist" seat). Per-call cost dominates;
+    # used only on aggregated dossier input, never on per-report work.
+    "anthropic/claude-opus-4-6":       (15.00, 75.00),
 
     # OpenAI (GPT-5.5 intentionally excluded — too expensive)
     "openai/gpt-5.4-nano":             (0.10,  0.40),
+    # GPT-5.4 flagship — second master_synthesizer seat, paired with
+    # Opus 4.6 for cross-provider collaborative critique. Workhorse
+    # GPT calls during the wander stay on gpt-5.4-nano.
+    "openai/gpt-5.4":                  (2.50, 10.00),
 
     # Google
     "google/gemini-2.5-pro":           (1.25, 10.00),

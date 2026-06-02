@@ -119,6 +119,20 @@ CONTROL_PLANE_SITES: tuple[ExemptSite, ...] = (
             "tagging + per-call audit, not prompt construction."
         ),
     ),
+    ExemptSite(
+        file="src/wandering/master_synthesizer.py",
+        prompt_name="system_prompt",
+        reason=(
+            "master_synthesizer._call_with_budget() — pure passthrough "
+            "helper that wraps client.call with cost-cap enforcement + "
+            "per-call audit. The composed doctrine header lives at the "
+            "single master_synthesize() call site where "
+            "compose_system_prompt(_DOCTRINE_PREAMBLE, mode='master_synthesizer') "
+            "runs once and is forwarded into every round. Composing "
+            "inside this helper would double-wrap on every R1/R2/R3/R4 "
+            "call across both seats."
+        ),
+    ),
 )
 
 

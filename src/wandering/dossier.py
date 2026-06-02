@@ -28,6 +28,12 @@ from src.identity.disciplines.opportunity_capture import Opening, test as opport
 from src.identity.singular_path import Goal
 from src.wandering.articulate import ArticulatedCard, articulate_report
 from src.wandering.cushion import CushionGraph
+from src.wandering.master_synthesizer import (
+    DEFAULT_COST_CEILING_USD,
+    MasterSynthesis,
+    MasterSynthesisProgress,
+    master_synthesize,
+)
 from src.wandering.report import Confidence, ExplorationReport
 from src.wandering.runtime import SessionResult, WanderingMode
 from src.wandering.synthesis import SynthesisMap, synthesize_dossier
@@ -91,6 +97,11 @@ class Dossier:
     medium: ConfidenceBand = field(default_factory=lambda: ConfidenceBand(Confidence.MEDIUM))
     low: ConfidenceBand = field(default_factory=lambda: ConfidenceBand(Confidence.LOW))
     synthesis: SynthesisMap = field(default_factory=SynthesisMap)
+    # Master fusion layer — optional, populated only when build_dossier
+    # was invoked with run_master_synthesizer=True (the slow, expensive
+    # path; ~5-8 min wall-clock + ~$5-7 cost). None when skipped so
+    # frontends can branch on presence rather than emptiness.
+    master_synthesis: MasterSynthesis | None = None
 
     def all_cards(self) -> list[ArticulatedCard]:
         """All cards across all bands in canonical order."""
@@ -153,6 +164,9 @@ class Dossier:
                 "recommended_next_direction": self.synthesis.recommended_next_direction,
                 "what_would_change_the_verdict": self.synthesis.what_would_change_the_verdict,
             },
+            "master_synthesis": (
+                self.master_synthesis.to_dict() if self.master_synthesis is not None else None
+            ),
         }
 
 
@@ -164,17 +178,34 @@ class Dossier:
 async def build_dossier(
     session: SessionResult,
     client,  # LLMClient — not typed to keep imports minimal
+    *,
+    run_master_synthesizer: bool = False,
+    master_synth_cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
+    master_synth_progress: MasterSynthesisProgress | None = None,
 ) -> Dossier:
     """Build the final Dossier from a completed SessionResult.
 
     Pipeline:
       1. Articulate every report → ArticulatedCard
-      2. Synthesize all cards → SynthesisMap
+      2. Synthesize all cards → SynthesisMap (existing single-pass layer)
       3. Sort cards into confidence bands
       4. Assemble Dossier with metadata
+      5. [optional, off by default] Run the master synthesizer on top of
+         the assembled dossier — Opus 4.6 + GPT-5.4 collaborative critique
+         producing 3-5 cross-card master fusion reports with disputed
+         angles preserved when the seats genuinely disagree.
 
-    This is the public entry point of the wandering pipeline. The future
-    API endpoint will call run_wandering_session() then build_dossier().
+    Master synthesis is OFF by default so existing callers (API
+    endpoint, /tmp/live_wander.py pre-run-#3) get the existing dossier
+    shape unchanged. Pass `run_master_synthesizer=True` to opt in. The
+    additional spend is bounded by `master_synth_cost_ceiling_usd`
+    (default $8 — Nikhil's test-phase ceiling, raise for production).
+
+    Progress emission: pass a MasterSynthesisProgress instance via
+    `master_synth_progress` to receive per-round events (drafting,
+    critiquing, finalizing, drilling-into-disputes, complete). When
+    omitted, the synthesizer creates an internal one that logs to
+    `constellax.wandering.master_synthesizer` at INFO level.
     """
     # Step 1: articulate each report
     cards: list[ArticulatedCard] = []
@@ -285,13 +316,28 @@ async def build_dossier(
         completed_at=session.ended_at or time.time(),
     )
 
-    return Dossier(
+    dossier = Dossier(
         metadata=metadata,
         high=high_band,
         medium=medium_band,
         low=low_band,
         synthesis=synthesis_map,
     )
+
+    # Step 5 (optional): master synthesizer — collaborative Opus + GPT
+    # cross-card fusion. Runs ONLY when opted in; off by default to
+    # preserve the existing API endpoint shape.
+    if run_master_synthesizer:
+        dossier.master_synthesis = await master_synthesize(
+            cushion=session.cushion,
+            cards=dossier.all_cards(),
+            synthesis_map=synthesis_map,
+            client=client,
+            progress=master_synth_progress,
+            cost_ceiling_usd=master_synth_cost_ceiling_usd,
+        )
+
+    return dossier
 
 
 __all__ = [

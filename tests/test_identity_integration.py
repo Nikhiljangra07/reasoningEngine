@@ -526,22 +526,24 @@ def test_speech_clarifier_wires_gate():
     assert "_regen_clarification" in source
 
 
-@test("D3 CONTROL_PLANE_SITES has exactly the five expected entries")
+@test("D3 CONTROL_PLANE_SITES has exactly the six expected entries")
 def test_exempt_registry_shape():
     """The exempt registry's shape is part of the architectural
     contract. Adding a new entry is fine — it must be a real
     control-plane site with a real reason. Removing an entry without
-    wrapping the underlying call is not — SP2 catches that. This test
-    locks the registry at five entries (router/triage/visualizer/
-    critique + the call_tracker.py passthrough wrapper added with the
-    run-#2 prep on chaos-amp) so accidental drift is caught here too.
+    wrapping the underlying call is not — SP2 catches that. The
+    registry is currently locked at SIX entries:
 
-    `src/wandering/call_tracker.py` is exempt because
-    AgentScopedLLMClient.call() is a pure passthrough — it forwards the
-    upstream-composed `system_prompt` to LLMClient.call verbatim. The
-    actual identity composition happens at the upstream call site
-    (_run_dig_iteration, score_mechanism, score_non_map). Composing
-    again inside the wrapper would double-wrap the doctrine header.
+      - router / triage / visualizer / critique  (control-plane gates)
+      - call_tracker.py  (passthrough wrapper for the agent layer)
+      - master_synthesizer.py  (passthrough wrapper for the master
+        synthesizer's cost-cap helper; doctrine header is composed once
+        at the master_synthesize entry point and forwarded into every
+        R1/R2/R3/R4 call across both seats)
+
+    Both passthrough wrappers (call_tracker.py and master_synthesizer.py)
+    forward an already-composed system_prompt verbatim; composing again
+    inside them would double-wrap the doctrine header on every call.
     """
     by_file = sorted(s.file for s in CONTROL_PLANE_SITES)
     assert by_file == sorted([
@@ -550,6 +552,7 @@ def test_exempt_registry_shape():
         "src/llm/visualizer.py",
         "src/wandering/call_tracker.py",
         "src/wandering/critique.py",
+        "src/wandering/master_synthesizer.py",
     ]), by_file
 
 
