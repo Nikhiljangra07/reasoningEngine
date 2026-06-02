@@ -244,6 +244,24 @@ class MasterFusionReport:
     agreement_status: AgreementStatus
     #: Populated ONLY when agreement_status == DISPUTED. Empty otherwise.
     disputed_angles:  list[DisputedAngle] = field(default_factory=list)
+    #: When the fusion is the result of a cohort-pair merge, these
+    #: snapshots preserve EACH seat's pre-merge claim/reasoning/limit/
+    #: confidence so the user can audit which framing actually shipped
+    #: vs which was suppressed by `_merge_cohort_pair`. None when the
+    #: fusion is unpaired (no merge happened) or a SOLO_* outcome.
+    pre_merge_opus:   dict | None             = None
+    pre_merge_gpt:    dict | None             = None
+    #: Unique agent_ids cited (P01, P02, ...). Set at parse time and
+    #: preserved through merges. Distinct from `citation_provider_count`
+    #: because the same provider can occupy multiple slots (e.g. run #3
+    #: had two DeepSeek slots P01 + P02).
+    citation_agent_count:    int = 0
+    #: Unique providers cited (deepseek, anthropic, openai, google, xai).
+    #: Resolved via the agent→provider map passed into master_synthesize.
+    #: Stays 0 when no map was supplied — `master_synthesize` always
+    #: passes one when run via `build_dossier`, so this should be > 0
+    #: in real runs.
+    citation_provider_count: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -255,6 +273,10 @@ class MasterFusionReport:
             "confidence":       self.confidence.value,
             "agreement_status": self.agreement_status.value,
             "disputed_angles":  [a.to_dict() for a in self.disputed_angles],
+            "pre_merge_opus":   self.pre_merge_opus,
+            "pre_merge_gpt":    self.pre_merge_gpt,
+            "citation_agent_count":    self.citation_agent_count,
+            "citation_provider_count": self.citation_provider_count,
         }
 
 
@@ -268,11 +290,40 @@ class MasterSynthesis:
     rounds_completed:      list[str]                  = field(default_factory=list)
     truncated_by_budget:   bool                       = False
     truncation_reason:     str                        = ""
+    #: Per-status counts (post-merge, post-R4). The pre-existing
+    #: `dispute_count` / `agreement_count` / `solo_count` aggregates
+    #: are kept for backwards-compatibility but are now derived from
+    #: these five fields — never set them directly.
+    both_agree_count:           int                   = 0
+    mostly_agree_refined_count: int                   = 0
+    solo_opus_count:            int                   = 0
+    solo_gpt_count:             int                   = 0
+    disputed_count:             int                   = 0
+    #: Legacy aggregate fields. Kept so older readers (the dry-run
+    #: scripts under /tmp) don't break. Derived from the per-status
+    #: counts above; do not write to them directly.
     dispute_count:         int                        = 0
     agreement_count:       int                        = 0
     solo_count:            int                        = 0
     #: Per-call audit — each entry: {seat, round, model, in_tok, out_tok, cost_usd, ms, ok}
     call_log:              list[dict]                 = field(default_factory=list)
+    #: R2 critique TEXT (each seat's full annotation list). Each entry is
+    #: a {draft_index, annotation, reason} object as returned by the seat.
+    #: Persisted so a downstream auditor can answer "was the critique
+    #: rubber-stamped or substantive?" from artifacts alone — addresses
+    #: Blocker #1 of the run-#3 audit.
+    r2_critique_opus:      list                       = field(default_factory=list)
+    r2_critique_gpt:       list                       = field(default_factory=list)
+    #: R3 pre-merge per-seat fusion lists (Opus and GPT each emitted
+    #: this many fusions BEFORE _dedupe_across_seats collapsed cohort
+    #: pairs). Same Blocker #1: the merged result alone hides the
+    #: per-seat counts and pre-merge framing.
+    r3_pre_merge_opus:     list[dict]                 = field(default_factory=list)
+    r3_pre_merge_gpt:      list[dict]                 = field(default_factory=list)
+    #: Within-seat dedupe metric — count of same-seat near-duplicates
+    #: collapsed (Opus↔Opus + GPT↔GPT) before bipartite. Addresses
+    #: Blocker #4 of the run-#3 audit.
+    same_seat_pairs_collapsed: int                    = 0
 
     def to_dict(self) -> dict:
         return {
@@ -282,10 +333,24 @@ class MasterSynthesis:
             "rounds_completed":    list(self.rounds_completed),
             "truncated_by_budget": self.truncated_by_budget,
             "truncation_reason":   self.truncation_reason,
+            # per-status (canonical)
+            "both_agree_count":           self.both_agree_count,
+            "mostly_agree_refined_count": self.mostly_agree_refined_count,
+            "solo_opus_count":            self.solo_opus_count,
+            "solo_gpt_count":             self.solo_gpt_count,
+            "disputed_count":             self.disputed_count,
+            # legacy aggregates (deprecated; derived from per-status above)
             "dispute_count":       self.dispute_count,
             "agreement_count":     self.agreement_count,
             "solo_count":          self.solo_count,
             "call_log":            list(self.call_log),
+            # blocker #1: preserve R2 + R3 raw artifacts
+            "r2_critique_opus":    list(self.r2_critique_opus),
+            "r2_critique_gpt":     list(self.r2_critique_gpt),
+            "r3_pre_merge_opus":   list(self.r3_pre_merge_opus),
+            "r3_pre_merge_gpt":    list(self.r3_pre_merge_gpt),
+            # blocker #4 metric
+            "same_seat_pairs_collapsed": self.same_seat_pairs_collapsed,
         }
 
 
@@ -647,11 +712,37 @@ preamble. No code fences. Just the JSON array:
 _CRITIQUE_INSTRUCTIONS = """\
 ROUND 2 — CRITIQUE THE OTHER SEAT'S DRAFTS.
 
-Below are draft fusions from the other seat. For each draft, decide
-whether you AGREE, want to REFINE, or DISAGREE — and write the reason
-in 2-3 sentences. This is colleague-to-colleague review, not adversarial
-debate. You are NOT trying to "win"; you are flagging where you see
-the fusion differently.
+Below are draft fusions from the other seat. Your job: find real
+disagreements. This is collegial review AND substantive challenge —
+you and the other seat trained on different corpora, so genuine
+divergences exist. Surface them. Do NOT default to agreement.
+
+For each draft, decide AGREE / REFINE / DISAGREE. Calibration target:
+
+  - "agree"    : you would have drafted this fusion yourself with the
+                 same citations and the same limit. Use SPARINGLY —
+                 a 5-of-5 "agree" pass is a smell that you are not
+                 reading critically. If everything looks fine, find
+                 the weakest link and at minimum "refine" it.
+
+  - "refine"   : the insight is broadly right but the framing,
+                 citation set, or limit needs work. Say WHAT to
+                 refine specifically (which citation is weak, what
+                 the limit misses, where the claim overreaches).
+
+  - "disagree" : you read the same cards but reach a different
+                 conclusion. Sketch the FUSION YOU WOULD WRITE
+                 instead — title + claim seed + which citations
+                 you'd swap or add. Use this when the other seat's
+                 reading is plausible but not the strongest reading
+                 of the evidence.
+
+Honest disagreements are what make the cross-seat architecture
+work. If you genuinely have no critique on a draft, say so
+explicitly in the `reason` field (a short note like "I would
+have written this; nothing to refine" is acceptable). But do
+not blanket-agree — that erases the very signal the architecture
+is built to capture.
 
 For each draft you read, return one critique object:
   - draft_index    : the index of the draft in the input list
@@ -683,19 +774,41 @@ You now have:
 
 Produce the FINAL set of master fusions — your honest synthesis
 incorporating the other seat's input where appropriate. For each
-final fusion, ALSO set the `agreement_status` field:
+final fusion, ALSO set the `agreement_status` field. Calibrate
+strictly — over-claiming "both_agree" erases the cross-seat signal
+that the architecture exists to capture.
 
-  - "both_agree"          : your fusion and the other seat's fusion
-                            converge on the same insight, citations
-                            roughly overlap, and you agree on the limit.
-  - "mostly_agree_refined": the other seat refined your draft and you
-                            accepted some of the refinement, OR you
-                            refined theirs and they accepted.
+  - "both_agree"          : STRICT. Use only when (a) the other seat
+                            drafted the SAME structural insight,
+                            (b) your citation sets substantially
+                            overlap (3+ shared report_ids OR the
+                            titles share a clear majority of content
+                            words), AND (c) you both name the same
+                            failure mode in `limit`. If ANY of those
+                            three is borderline, downgrade to
+                            "mostly_agree_refined".
+
+  - "mostly_agree_refined": DEFAULT for ANY refinement. Use this
+                            when the other seat refined your draft
+                            and you accepted some of the refinement,
+                            OR you refined theirs and they accepted,
+                            OR you both reached similar claims but
+                            via different citation paths. This label
+                            is honest — over-using "both_agree" when
+                            the truth is "mostly agree, with edits"
+                            is the failure mode to avoid.
+
   - "disputed"            : you and the other seat read the same cards
                             but reach incompatible conclusions. Mark
                             DISPUTED and SET claim/reasoning/limit to
                             EMPTY STRINGS — round 4 will produce the
-                            two angled versions separately.
+                            two angled versions separately. Use this
+                            when the architecture's signature feature
+                            (preserve genuine disagreement) is the
+                            right call. If your R2 critique landed
+                            on "disagree" for a draft and you still
+                            disagree, "disputed" is the correct label.
+
   - "solo_opus" or
     "solo_gpt"            : only ONE of you surfaced this fusion and
                             the other did not push back. (Use the seat
@@ -961,6 +1074,31 @@ def _is_valid_fusion(f: MasterFusionReport) -> bool:
     return True
 
 
+def _compute_citation_counts(
+    f: MasterFusionReport,
+    agent_provider_map: dict[str, str] | None,
+) -> None:
+    """Populate `citation_agent_count` and `citation_provider_count`
+    on the fusion in place. Run-#3 audit polish: distinguishes fusions
+    that genuinely span multiple providers from those resting on a
+    single provider's reports even when several agent_ids appear.
+
+    `agent_provider_map` is the caller-supplied {agent_id -> provider}
+    map; when None, provider_count stays 0 (agent_count still works).
+    """
+    seen_agents:    set[str] = set()
+    seen_providers: set[str] = set()
+    for c in f.citations:
+        aid = (c.agent_id or "").strip()
+        if not aid: continue
+        seen_agents.add(aid)
+        if agent_provider_map:
+            prov = agent_provider_map.get(aid)
+            if prov: seen_providers.add(prov)
+    f.citation_agent_count    = len(seen_agents)
+    f.citation_provider_count = len(seen_providers)
+
+
 # ---------------------------------------------------------------------------
 # Parallel-seat dedupe — cohort-convergence detection
 # ---------------------------------------------------------------------------
@@ -985,7 +1123,11 @@ def _is_valid_fusion(f: MasterFusionReport) -> bool:
 
 import re as _re
 
-COHORT_CONVERGENCE_THRESHOLD = 0.5
+# Tightened from 0.5 after the run-#3 audit (2026-06-02). F1/F3 hit
+# citation Jaccard = exactly 0.50 — a 2-of-4 citation overlap is too
+# loose for a cross-seat agreement label meant to carry convergence
+# weight. 0.6 requires a clear majority overlap.
+COHORT_CONVERGENCE_THRESHOLD = 0.6
 
 _TITLE_STOPWORDS = {
     "the", "a", "an", "and", "or", "but", "is", "are", "of", "in", "on",
@@ -1040,18 +1182,54 @@ def _combine_citations(a: list, b: list) -> list:
     return out
 
 
+def _seat_snapshot(f: MasterFusionReport) -> dict:
+    """Frozen, JSON-safe snapshot of a fusion's pre-merge state. Used by
+    `_merge_cohort_pair` to preserve EACH seat's framing on the merged
+    output so the user-facing artifact can show what was suppressed by
+    the keeper-pick. Addresses Blocker #3 of the run-#3 audit (the
+    keeper-bias problem: Opus 5620 R3 tok vs GPT 3270 tok meant every
+    BOTH_AGREE was structurally Opus-voiced)."""
+    return {
+        "title":            f.title,
+        "claim":            f.claim,
+        "reasoning":        f.reasoning,
+        "limit":            f.limit,
+        "confidence":       f.confidence.value,
+        "agreement_status": f.agreement_status.value,
+        "citations":        [c.to_dict() for c in f.citations],
+    }
+
+
+_CONFIDENCE_ORDER = {
+    Confidence.LOW:    0,
+    Confidence.MEDIUM: 1,
+    Confidence.HIGH:   2,
+}
+
+
+def _max_confidence(a: Confidence, b: Confidence) -> Confidence:
+    """Return the higher-confidence of two grades. Tie → first arg."""
+    return a if _CONFIDENCE_ORDER.get(a, 0) >= _CONFIDENCE_ORDER.get(b, 0) else b
+
+
 def _merge_cohort_pair(
     o: MasterFusionReport,
     g: MasterFusionReport,
 ) -> MasterFusionReport:
     """Merge two cross-seat near-duplicate fusions into ONE cohort-
     convergence fusion. Picks the more substantive claim/reasoning/limit
-    (longer total prose), combines citations with dedupe, sets
-    agreement_status to BOTH_AGREE — the cohort-convergence signal.
+    (longer total prose) AS THE PRIMARY SHIPPED text, but ALSO records
+    BOTH seats' pre-merge snapshots on the result so the suppressed
+    framing survives for audit. Combines citations with dedupe, sets
+    agreement_status to BOTH_AGREE (the cohort-convergence signal), and
+    takes `max(confidence)` rather than keeper's confidence.
 
     If EITHER input was DISPUTED, the merged fusion stays DISPUTED with
     empty claim/reasoning/limit (R4 supplied the per-angle prose).
     """
+    o_snap = _seat_snapshot(o)
+    g_snap = _seat_snapshot(g)
+
     if (o.agreement_status == AgreementStatus.DISPUTED
             or g.agreement_status == AgreementStatus.DISPUTED):
         # disputed wins — preserve dispute structure
@@ -1060,8 +1238,10 @@ def _merge_cohort_pair(
             title=keeper.title,
             claim="", reasoning="", limit="",
             citations=_combine_citations(o.citations, g.citations),
-            confidence=o.confidence,
+            confidence=_max_confidence(o.confidence, g.confidence),
             agreement_status=AgreementStatus.DISPUTED,
+            pre_merge_opus=o_snap,
+            pre_merge_gpt=g_snap,
         )
         merged.disputed_angles = list(o.disputed_angles or []) + list(g.disputed_angles or [])
         return merged
@@ -1076,21 +1256,92 @@ def _merge_cohort_pair(
         reasoning=keeper.reasoning,
         limit=keeper.limit,
         citations=_combine_citations(o.citations, g.citations),
-        confidence=keeper.confidence,
+        confidence=_max_confidence(o.confidence, g.confidence),
         agreement_status=AgreementStatus.BOTH_AGREE,  # cohort convergence
+        pre_merge_opus=o_snap,
+        pre_merge_gpt=g_snap,
     )
+
+
+def _dedupe_within_seat(
+    fusions: list[MasterFusionReport],
+    threshold: float = COHORT_CONVERGENCE_THRESHOLD,
+) -> tuple[list[MasterFusionReport], int]:
+    """Pre-pass: collapse same-seat near-duplicates BEFORE bipartite
+    cross-seat matching. Addresses Blocker #4 of the run-#3 audit
+    (F1/F3 within Opus seat hit Jaccard=0.50 — the bipartite-only
+    dedupe missed them because they were both Opus outputs, not
+    cross-seat). Greedy by descending similarity. Keeper wins by
+    (longer total prose, ties broken by max confidence). The dropped
+    fusion's citations are merged into the keeper so no citation
+    is lost; agreement_status of the keeper is preserved (the dropped
+    fusion's status is discarded since both came from the same seat).
+    Returns (kept_fusions, collapsed_count).
+    """
+    n = len(fusions)
+    if n < 2:
+        return list(fusions), 0
+
+    # Compute pairwise similarities; only keep pairs above threshold
+    candidates: list[tuple[float, int, int]] = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            sim = _cohort_similarity(fusions[i], fusions[j])
+            if sim >= threshold:
+                candidates.append((sim, i, j))
+    candidates.sort(reverse=True)
+
+    # Walk candidates greedily; mark the LOSER (shorter prose, lower
+    # confidence on tie) as dropped, fold its citations into the keeper.
+    dropped: set[int] = set()
+    fusions_mut = list(fusions)
+    collapsed = 0
+    for sim, i, j in candidates:
+        if i in dropped or j in dropped:
+            continue
+        def _score(f: MasterFusionReport) -> int:
+            return len(f.claim) + len(f.reasoning) + len(f.limit)
+        s_i, s_j = _score(fusions_mut[i]), _score(fusions_mut[j])
+        if s_i == s_j:
+            # tie-break: max confidence wins
+            keeper_idx, loser_idx = (i, j) if _CONFIDENCE_ORDER.get(
+                fusions_mut[i].confidence, 0,
+            ) >= _CONFIDENCE_ORDER.get(fusions_mut[j].confidence, 0) else (j, i)
+        else:
+            keeper_idx, loser_idx = (i, j) if s_i >= s_j else (j, i)
+        # Merge loser's citations into keeper; keeper title/claim/etc
+        # are preserved as-is (same seat — we're not bridging frames).
+        keeper = fusions_mut[keeper_idx]
+        loser  = fusions_mut[loser_idx]
+        fusions_mut[keeper_idx] = MasterFusionReport(
+            title=keeper.title,
+            claim=keeper.claim,
+            reasoning=keeper.reasoning,
+            limit=keeper.limit,
+            citations=_combine_citations(keeper.citations, loser.citations),
+            confidence=_max_confidence(keeper.confidence, loser.confidence),
+            agreement_status=keeper.agreement_status,
+            disputed_angles=list(keeper.disputed_angles or []),
+        )
+        dropped.add(loser_idx)
+        collapsed += 1
+
+    kept = [f for i, f in enumerate(fusions_mut) if i not in dropped]
+    return kept, collapsed
 
 
 def _dedupe_across_seats(
     opus_finals: list[MasterFusionReport],
     gpt_finals:  list[MasterFusionReport],
     threshold:   float = COHORT_CONVERGENCE_THRESHOLD,
-) -> tuple[list[MasterFusionReport], int]:
-    """Greedy bipartite match across the two seat outputs.
+) -> tuple[list[MasterFusionReport], int, int]:
+    """Greedy bipartite match across the two seat outputs, AFTER a
+    same-seat dedupe pre-pass on each side.
 
-    Returns (merged_list, paired_count). Each output fusion is either:
-      - a merged pair (BOTH_AGREE / DISPUTED) — when one opus and one gpt
-        fusion had max(title_jaccard, citation_jaccard) >= threshold
+    Returns (merged_list, cross_seat_paired_count, same_seat_collapsed_count).
+    Each output fusion is either:
+      - a merged cross-seat pair (BOTH_AGREE / DISPUTED) — when one opus
+        and one gpt fusion had max(title_jaccard, citation_jaccard) >= threshold
       - an unpaired opus fusion (status preserved — SOLO_OPUS / SOLO_GPT
         labels supplied by the seat's R3, MOSTLY_AGREE_REFINED preserved)
       - an unpaired gpt fusion (same)
@@ -1098,10 +1349,17 @@ def _dedupe_across_seats(
     Pairing is greedy by descending similarity — best matches first, then
     consume both sides. Each fusion can participate in at most one pair.
     """
+    # Pre-pass: collapse within-seat near-duplicates first. Blocker #4
+    # of the run-#3 audit — F1/F3 (both Opus-side) were near-duplicates
+    # the bipartite-only dedupe missed.
+    opus_deduped, opus_collapsed = _dedupe_within_seat(opus_finals, threshold)
+    gpt_deduped,  gpt_collapsed  = _dedupe_within_seat(gpt_finals,  threshold)
+    same_seat_collapsed = opus_collapsed + gpt_collapsed
+
     # Compute all cross-pair similarities; sort desc
     candidates: list[tuple[float, int, int]] = []
-    for i, o in enumerate(opus_finals):
-        for j, g in enumerate(gpt_finals):
+    for i, o in enumerate(opus_deduped):
+        for j, g in enumerate(gpt_deduped):
             sim = _cohort_similarity(o, g)
             if sim >= threshold:
                 candidates.append((sim, i, j))
@@ -1114,20 +1372,20 @@ def _dedupe_across_seats(
     for sim, i, j in candidates:
         if i in used_o or j in used_g:
             continue
-        merged.append(_merge_cohort_pair(opus_finals[i], gpt_finals[j]))
+        merged.append(_merge_cohort_pair(opus_deduped[i], gpt_deduped[j]))
         used_o.add(i)
         used_g.add(j)
 
     paired_count = len(merged)
     # Append unpaired fusions from both sides; seat labels preserved
-    for i, o in enumerate(opus_finals):
+    for i, o in enumerate(opus_deduped):
         if i not in used_o:
             merged.append(o)
-    for j, g in enumerate(gpt_finals):
+    for j, g in enumerate(gpt_deduped):
         if j not in used_g:
             merged.append(g)
 
-    return merged, paired_count
+    return merged, paired_count, same_seat_collapsed
 
 
 # ---------------------------------------------------------------------------
@@ -1233,6 +1491,7 @@ async def master_synthesize(
     cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
     opus_model:       str = OPUS_SEAT_MODEL,
     gpt_model:        str = GPT_SEAT_MODEL,
+    agent_provider_map: dict[str, str] | None = None,
 ) -> MasterSynthesis:
     """Produce master fusion reports from a dossier's articulated cards.
 
@@ -1318,10 +1577,26 @@ async def master_synthesize(
         if not isinstance(opus_critique, list): opus_critique = []
         if not isinstance(gpt_critique,  list): gpt_critique  = []
         result.rounds_completed.append("R2_critique")
+        # Blocker #1: persist R2 critique BODIES (not just counts) so a
+        # downstream auditor can answer "was the critique rubber-stamped
+        # or substantive?" from the artifact alone.
+        result.r2_critique_opus = list(opus_critique)
+        result.r2_critique_gpt  = list(gpt_critique)
+        # Quick distribution counts emit so progress consumers see the
+        # agree/refine/disagree shape inline without parsing the body.
+        def _ann_dist(crit_list: list) -> dict[str, int]:
+            d: dict[str, int] = {"agree": 0, "refine": 0, "disagree": 0, "other": 0}
+            for c in crit_list:
+                if not isinstance(c, dict): continue
+                ann = str(c.get("annotation", "")).lower().strip()
+                d[ann if ann in d else "other"] += 1
+            return d
         progress.emit("round_complete", {
             "round": "R2_critique",
             "opus_annotations": len(opus_critique),
             "gpt_annotations":  len(gpt_critique),
+            "opus_annotation_dist": _ann_dist(opus_critique),
+            "gpt_annotation_dist":  _ann_dist(gpt_critique),
             "cumulative_cost_usd": round(result.total_cost_usd, 4),
         })
 
@@ -1377,19 +1652,26 @@ async def master_synthesize(
                 f.agreement_status = AgreementStatus.SOLO_GPT
             gpt_finals.append(f)
 
+        # Blocker #1: persist R3 pre-merge per-seat fusion lists BEFORE
+        # _dedupe_across_seats collapses cohort pairs. Without this, the
+        # merged result alone hides which seat said what.
+        result.r3_pre_merge_opus = [f.to_dict() for f in opus_finals]
+        result.r3_pre_merge_gpt  = [f.to_dict() for f in gpt_finals]
+
         # Cross-seat dedupe: pair Opus fusions to GPT fusions that are
         # cohort-convergent (max of title-token Jaccard or citation-set
-        # Jaccard >= COHORT_CONVERGENCE_THRESHOLD = 0.5). Greedy bipartite
-        # matching, best-similarity pairs consumed first. Each paired
-        # fusion becomes ONE BOTH_AGREE (or DISPUTED) entry with merged
-        # citations; unpaired fusions retain their seat-supplied status.
-        # Fixes the run-#2 dry-run case where 5 near-duplicate pairs
-        # (F1/F8, F2/F9, F3/F13, F5/F12, F6/F7) survived the byte-level
-        # title match and shipped as redundant entries.
-        merged_fusions, cohort_pair_count = _dedupe_across_seats(
+        # Jaccard >= COHORT_CONVERGENCE_THRESHOLD). Run-#3 audit tightened
+        # threshold 0.5 → 0.6 and added a within-seat pre-pass to catch
+        # same-seat near-duplicates the bipartite-only logic missed
+        # (Blocker #4: F1/F3 in run #3 were both Opus-side, Jaccard=0.5).
+        # Greedy by descending similarity; each fusion participates in
+        # at most one pair. Unpaired fusions retain their seat-supplied
+        # status (SOLO_OPUS / SOLO_GPT / MOSTLY_AGREE_REFINED preserved).
+        merged_fusions, cohort_pair_count, same_seat_collapsed = _dedupe_across_seats(
             opus_finals, gpt_finals,
             threshold=COHORT_CONVERGENCE_THRESHOLD,
         )
+        result.same_seat_pairs_collapsed = same_seat_collapsed
         merged_fusions = [f for f in merged_fusions if _is_valid_fusion(f)]
 
         # Field-attribution validator — when a citation's excerpt is a
@@ -1411,12 +1693,19 @@ async def master_synthesize(
         pre_r4_agreed   = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.BOTH_AGREE, AgreementStatus.MOSTLY_AGREE_REFINED))
         progress.emit("round_complete", {
             "round": "R3_final",
-            "merged_fusion_count":    len(merged_fusions),
-            "agreed":                 pre_r4_agreed,
-            "disputed":               pre_r4_disputed,
-            "cohort_pairs_collapsed": cohort_pair_count,
-            "citation_field_fixes":   field_fixes_applied,
-            "cumulative_cost_usd":    round(result.total_cost_usd, 4),
+            "merged_fusion_count":          len(merged_fusions),
+            "agreed":                       pre_r4_agreed,
+            "disputed":                     pre_r4_disputed,
+            # Per-seat pre-merge counts so progress consumers don't have
+            # to re-parse the result JSON to know what each seat emitted.
+            "opus_r3_count":                len(opus_finals_raw),
+            "gpt_r3_count":                 len(gpt_finals_raw),
+            "opus_r3_parsed":               len(opus_finals),
+            "gpt_r3_parsed":                len(gpt_finals),
+            "cohort_pairs_collapsed":       cohort_pair_count,
+            "same_seat_pairs_collapsed":    same_seat_collapsed,
+            "citation_field_fixes":         field_fixes_applied,
+            "cumulative_cost_usd":          round(result.total_cost_usd, 4),
         })
 
         # ─── R4 — DISPUTED ANGLES (parallel, conditional) ──────────────
@@ -1483,19 +1772,44 @@ async def master_synthesize(
                 "cumulative_cost_usd": round(result.total_cost_usd, 4),
             })
 
-        # Final counts
+        # Populate citation counts on every fusion (run-#3 polish).
+        # citation_agent_count = unique agent_ids cited.
+        # citation_provider_count = unique providers cited (needs the
+        #   caller-supplied agent_provider_map; 0 when unavailable).
+        for f in merged_fusions:
+            _compute_citation_counts(f, agent_provider_map)
+
+        # Final counts — Blocker #2: split agreement_count into
+        # per-status fields. The legacy aggregates (dispute_count,
+        # agreement_count, solo_count) are still emitted but are now
+        # DERIVED from the per-status fields so callers can choose.
         result.master_fusions = merged_fusions
-        result.dispute_count   = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED)
-        result.agreement_count = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.BOTH_AGREE, AgreementStatus.MOSTLY_AGREE_REFINED))
-        result.solo_count      = sum(1 for f in merged_fusions if f.agreement_status in (AgreementStatus.SOLO_OPUS, AgreementStatus.SOLO_GPT))
+        result.both_agree_count            = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.BOTH_AGREE)
+        result.mostly_agree_refined_count  = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.MOSTLY_AGREE_REFINED)
+        result.solo_opus_count             = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.SOLO_OPUS)
+        result.solo_gpt_count              = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.SOLO_GPT)
+        result.disputed_count              = sum(1 for f in merged_fusions if f.agreement_status == AgreementStatus.DISPUTED)
+        # Legacy aggregates (still set for backwards compat with old
+        # readers like the /tmp/master_synth_dry_run.py harness).
+        result.dispute_count   = result.disputed_count
+        result.agreement_count = result.both_agree_count + result.mostly_agree_refined_count
+        result.solo_count      = result.solo_opus_count + result.solo_gpt_count
 
         progress.emit("complete", {
-            "fusion_count":         len(merged_fusions),
-            "dispute_count":        result.dispute_count,
-            "agreement_count":      result.agreement_count,
-            "solo_count":           result.solo_count,
-            "total_cost_usd":       round(result.total_cost_usd, 4),
-            "rounds_completed":     list(result.rounds_completed),
+            "fusion_count":               len(merged_fusions),
+            # per-status (canonical)
+            "both_agree_count":           result.both_agree_count,
+            "mostly_agree_refined_count": result.mostly_agree_refined_count,
+            "solo_opus_count":            result.solo_opus_count,
+            "solo_gpt_count":             result.solo_gpt_count,
+            "disputed_count":             result.disputed_count,
+            # legacy aggregates (deprecated)
+            "dispute_count":              result.dispute_count,
+            "agreement_count":            result.agreement_count,
+            "solo_count":                 result.solo_count,
+            "same_seat_pairs_collapsed":  result.same_seat_pairs_collapsed,
+            "total_cost_usd":             round(result.total_cost_usd, 4),
+            "rounds_completed":           list(result.rounds_completed),
         })
 
     except MasterSynthesisBudgetExceeded:

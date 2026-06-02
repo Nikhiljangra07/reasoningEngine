@@ -182,6 +182,9 @@ async def build_dossier(
     run_master_synthesizer: bool = False,
     master_synth_cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
     master_synth_progress: MasterSynthesisProgress | None = None,
+    master_synth_opus_model: str | None = None,
+    master_synth_gpt_model:  str | None = None,
+    master_synth_agent_provider_map: dict[str, str] | None = None,
 ) -> Dossier:
     """Build the final Dossier from a completed SessionResult.
 
@@ -328,6 +331,9 @@ async def build_dossier(
     # cross-card fusion. Runs ONLY when opted in; off by default to
     # preserve the existing API endpoint shape.
     if run_master_synthesizer:
+        from src.wandering.master_synthesizer import (
+            OPUS_SEAT_MODEL, GPT_SEAT_MODEL,
+        )
         dossier.master_synthesis = await master_synthesize(
             cushion=session.cushion,
             cards=dossier.all_cards(),
@@ -335,6 +341,9 @@ async def build_dossier(
             client=client,
             progress=master_synth_progress,
             cost_ceiling_usd=master_synth_cost_ceiling_usd,
+            opus_model=master_synth_opus_model or OPUS_SEAT_MODEL,
+            gpt_model=master_synth_gpt_model  or GPT_SEAT_MODEL,
+            agent_provider_map=master_synth_agent_provider_map,
         )
 
     return dossier
