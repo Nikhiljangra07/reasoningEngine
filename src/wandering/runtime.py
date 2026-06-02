@@ -37,7 +37,9 @@ from src.wandering.agent import (
     run_agent,
     stub_fetcher,
 )
+from src.wandering.call_tracker import AgentScopedLLMClient, CallTracker
 from src.wandering.cushion import CushionGraph
+from src.wandering import interpreter as _interpreter
 from src.wandering.report import ExplorationReport
 from src.wandering.session_state import SessionState
 from src.wandering.trace import DecisionTrace
@@ -249,6 +251,13 @@ class WanderingConfig:
     model_mix: tuple[str, ...] | None = None
     session_token_cap: int = 1_000_000  # hard ceiling — session won't blow past this
     session_id: str = ""
+    # Per-call audit log destination. When non-empty, every LLM call made
+    # via the wander's AgentScopedLLMClient wrappers is appended (one
+    # JSON object per line, flushed per record) to this path. Empty/None
+    # → in-memory tracking only (still surfaced in SessionResult.call_tracker_summary).
+    # Wired April–June 2026 to fix the silent model_slug-dead bug that
+    # collapsed run #1's "2×DeepSeek + 4×Haiku" cohort into a monoculture.
+    call_log_path: str | None = None
 
     def resolved(self) -> tuple[int, float, int, tuple[str, ...]]:
         """Return (agents, time_seconds, tokens_per_agent, model_mix) with
@@ -290,6 +299,20 @@ class SessionResult:
     elapsed_seconds: float = 0.0
     ended_at: float = 0.0
     session_state: SessionState | None = None
+    # Per-call telemetry recorded across every LLM call in the wander.
+    # `call_tracker` is the full record list (kept on the object so callers
+    # can rebuild jsonl etc.); `call_tracker_summary` is the compact dict
+    # shape (counts, latency p50/p95, model-actually-used breakdown) that
+    # tools like /tmp/live_wander.py copy into their result JSON.
+    # Both are None for legacy callers that didn't go through
+    # run_wandering_session's tracker creation path. See call_tracker.py.
+    call_tracker: CallTracker | None = None
+    call_tracker_summary: dict[str, Any] = field(default_factory=dict)
+    # Snapshot of the interpreter's per-session novelty memory. Stored
+    # for forensic analysis — lets a reader confirm the novelty channel
+    # actually accumulated content hashes across the run rather than
+    # collapsing to constant-1.0 like it did in run #1.
+    interpreter_session_state: _interpreter.SessionState | None = None
 
     def report_count(self) -> int:
         return len(self.reports)
@@ -327,8 +350,15 @@ async def _run_multi_pendulum(
     fetcher: FetchFn,
     clock: Callable[[], float],
     progress: "WanderingProgress | None" = None,
+    tracker: CallTracker | None = None,
+    interpreter_state: _interpreter.SessionState | None = None,
 ) -> SessionResult:
-    """N agents in parallel, no sub-agents. The default mode."""
+    """N agents in parallel, no sub-agents. The default mode.
+
+    `tracker` and `interpreter_state` are created at the public entry
+    point (`run_wandering_session`) and threaded through so a single
+    audit log + novelty memory cover the whole wander.
+    """
     num_agents, time_secs, tokens_each, model_mix = config.resolved()
     models = assign_models(num_agents, model_mix)
 
@@ -340,6 +370,23 @@ async def _run_multi_pendulum(
     # WANDERING_ROOM_DECISIONS.md D8 (dedup) and D9 (follow-on).
     session_state = SessionState(session_id=session_id)
 
+    # Interpreter SessionState — fixes the run-#1 bug where the novelty
+    # channel always returned 1.0 because nothing constructed one of
+    # these. Now: one instance per wander, marked-seen by `_run_match`
+    # after each verdict so subsequent agents see prior content hashes.
+    if interpreter_state is None:
+        interpreter_state = _interpreter.SessionState()
+
+    # CallTracker — fixes the run-#1 bug where the wander completed but
+    # the extraction script read non-existent fields and lost every
+    # per-call detail. Always created so SessionResult.call_tracker_summary
+    # is populated; jsonl streaming only when `config.call_log_path` is set.
+    if tracker is None:
+        tracker = CallTracker(
+            session_id=session_id,
+            jsonl_path=config.call_log_path or None,
+        )
+
     agents = [
         AgentState(
             agent_id=f"P{i + 1:02d}",
@@ -350,8 +397,27 @@ async def _run_multi_pendulum(
             ),
             model_slug=models[i],
             session_state=session_state,
+            interpreter_state=interpreter_state,
         )
         for i in range(num_agents)
+    ]
+
+    # Per-agent client wrappers: every LLM call inside `run_agent(...)`
+    # (dig prose, interpreter judges, critique, link scoring) routes
+    # through AgentScopedLLMClient, which (a) forces `model=` to the
+    # agent's configured model_slug when no explicit override was
+    # passed, and (b) records the call into `tracker`. This is what
+    # makes the "2×DeepSeek + 4×Haiku" config actually mean something
+    # at the API layer — without it, every call collapses to whatever
+    # provider_map.resolve_model(domain, concept) returns.
+    scoped_clients = [
+        AgentScopedLLMClient(
+            base=client,
+            tracker=tracker,
+            agent_id=a.agent_id,
+            default_model=a.model_slug,
+        )
+        for a in agents
     ]
 
     # Register with the live progress handle if the caller supplied one.
@@ -362,7 +428,10 @@ async def _run_multi_pendulum(
 
     # Parallel run. Each agent runs independently — no shared state.
     results = await asyncio.gather(
-        *[run_agent(a, client=client, fetcher=fetcher, clock=clock) for a in agents],
+        *[
+            run_agent(a, client=sc, fetcher=fetcher, clock=clock)
+            for a, sc in zip(agents, scoped_clients)
+        ],
         return_exceptions=True,
     )
 
@@ -390,6 +459,9 @@ async def _run_multi_pendulum(
         elapsed_seconds=elapsed,
         ended_at=clock(),
         session_state=session_state,
+        call_tracker=tracker,
+        call_tracker_summary=tracker.summary(),
+        interpreter_session_state=interpreter_state,
     )
 
 
@@ -400,6 +472,8 @@ async def _run_triple_pendulum(
     fetcher: FetchFn,
     clock: Callable[[], float],
     progress: "WanderingProgress | None" = None,
+    tracker: CallTracker | None = None,
+    interpreter_state: _interpreter.SessionState | None = None,
 ) -> SessionResult:
     """One chain of N sub-agents, sequential.
 
@@ -433,6 +507,13 @@ async def _run_triple_pendulum(
     # run one-after-another, each agent's visited URLs and queued
     # follow-ons benefit the next agent in the chain.
     session_state = SessionState(session_id=session_id)
+    if interpreter_state is None:
+        interpreter_state = _interpreter.SessionState()
+    if tracker is None:
+        tracker = CallTracker(
+            session_id=session_id,
+            jsonl_path=config.call_log_path or None,
+        )
 
     reports: list[ExplorationReport] = []
     traces: list[DecisionTrace] = []
@@ -464,13 +545,20 @@ async def _run_triple_pendulum(
             ),
             model_slug=models[i],
             session_state=session_state,
+            interpreter_state=interpreter_state,
         )
         # Register THIS sequentially-spawned agent before it runs, so
         # an abort fired mid-chain reads the right cumulative_tokens
         # value off the currently-active agent.
         if progress is not None:
             progress.register(agent)
-        result = await run_agent(agent, client=client, fetcher=fetcher, clock=clock)
+        scoped_client = AgentScopedLLMClient(
+            base=client,
+            tracker=tracker,
+            agent_id=agent.agent_id,
+            default_model=agent.model_slug,
+        )
+        result = await run_agent(agent, client=scoped_client, fetcher=fetcher, clock=clock)
         reports.extend(result.reports)
         traces.append(result.trace)
         total_tokens += result.cumulative_tokens
@@ -495,6 +583,9 @@ async def _run_triple_pendulum(
         elapsed_seconds=elapsed,
         ended_at=clock(),
         session_state=session_state,
+        call_tracker=tracker,
+        call_tracker_summary=tracker.summary(),
+        interpreter_session_state=interpreter_state,
     )
 
 
@@ -505,6 +596,8 @@ async def _run_absolute_chaos(
     fetcher: FetchFn,
     clock: Callable[[], float],
     progress: "WanderingProgress | None" = None,
+    tracker: CallTracker | None = None,
+    interpreter_state: _interpreter.SessionState | None = None,
 ) -> SessionResult:
     """N parallel agents, each may spawn sub-agents on HIGH match.
 
@@ -520,8 +613,20 @@ async def _run_absolute_chaos(
     """
     # First, run the root agents like multi-pendulum. The progress
     # handle (if supplied) accumulates root agents AND sub-agents — see
-    # the spawn block below for sub-agent registration.
-    session = await _run_multi_pendulum(cushion, config, client, fetcher, clock, progress)
+    # the spawn block below for sub-agent registration. The tracker
+    # and interpreter_state created here flow through so absolute-chaos
+    # sub-agents also contribute to the same audit log + novelty memory.
+    if tracker is None:
+        tracker = CallTracker(
+            session_id=config.session_id or f"wsess-{uuid.uuid4().hex[:8]}",
+            jsonl_path=config.call_log_path or None,
+        )
+    if interpreter_state is None:
+        interpreter_state = _interpreter.SessionState()
+    session = await _run_multi_pendulum(
+        cushion, config, client, fetcher, clock, progress,
+        tracker=tracker, interpreter_state=interpreter_state,
+    )
 
     # Lazy import to avoid circulars.
     from src.wandering.subagent import (
@@ -600,6 +705,9 @@ async def _run_absolute_chaos(
             outcome.subagent_id, parent_id, len(outcome.reports),
         )
 
+    # Refresh the summary now that sub-agent calls have flowed through.
+    if session.call_tracker is not None:
+        session.call_tracker_summary = session.call_tracker.summary()
     session.ended_at = clock()
     return session
 
@@ -617,6 +725,8 @@ async def run_wandering_session(
     fetcher: FetchFn = stub_fetcher,
     clock: Callable[[], float] = time.time,
     progress: "WanderingProgress | None" = None,
+    tracker: CallTracker | None = None,
+    interpreter_state: _interpreter.SessionState | None = None,
 ) -> SessionResult:
     """Top-level entry: run one Wandering Room session and return all
     reports + traces.
@@ -629,6 +739,12 @@ async def run_wandering_session(
     spawned agent registers itself there as it's created, giving the
     caller a live read on cumulative_tokens for the abort/refund path.
     When None, the wander runs exactly as before.
+
+    `tracker` and `interpreter_state`: optional shared instances so a
+    caller can correlate per-call audit / novelty memory across multiple
+    wanders (or across cushion-compose + wander). When None (default),
+    the runtime constructs fresh instances per wander; `config.call_log_path`
+    controls whether the tracker streams to disk.
     """
     if config.mode == WanderingMode.TRIPLE_PENDULUM:
         runner = _run_triple_pendulum
@@ -637,7 +753,21 @@ async def run_wandering_session(
     else:
         runner = _run_multi_pendulum
 
-    return await runner(cushion, config, client, fetcher, clock, progress)
+    result = await runner(
+        cushion, config, client, fetcher, clock, progress,
+        tracker=tracker, interpreter_state=interpreter_state,
+    )
+
+    # If we own the tracker file handle (created internally), close it now
+    # so the jsonl is flushed and fd is released. External-tracker callers
+    # are responsible for their own close().
+    if tracker is None and result.call_tracker is not None:
+        try:
+            result.call_tracker.close()
+        except Exception:  # pragma: no cover — defensive
+            log.warning("call_tracker.close() raised; ignoring")
+
+    return result
 
 
 __all__ = [

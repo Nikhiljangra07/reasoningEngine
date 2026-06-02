@@ -106,6 +106,19 @@ CONTROL_PLANE_SITES: tuple[ExemptSite, ...] = (
             "logic, never reaches the user."
         ),
     ),
+    ExemptSite(
+        file="src/wandering/call_tracker.py",
+        prompt_name="system_prompt",
+        reason=(
+            "AgentScopedLLMClient.call() — pure passthrough wrapper "
+            "that forwards the system_prompt parameter verbatim to "
+            "the base LLMClient.call. Identity composition happens at "
+            "the upstream call site (e.g. _run_dig_iteration, "
+            "score_mechanism, score_non_map); composing here would "
+            "double-wrap the doctrine header. The wrapper's job is "
+            "tagging + per-call audit, not prompt construction."
+        ),
+    ),
 )
 
 

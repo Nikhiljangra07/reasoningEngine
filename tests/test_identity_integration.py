@@ -526,19 +526,29 @@ def test_speech_clarifier_wires_gate():
     assert "_regen_clarification" in source
 
 
-@test("D3 CONTROL_PLANE_SITES has exactly the four expected entries")
+@test("D3 CONTROL_PLANE_SITES has exactly the five expected entries")
 def test_exempt_registry_shape():
     """The exempt registry's shape is part of the architectural
     contract. Adding a new entry is fine — it must be a real
     control-plane site with a real reason. Removing an entry without
     wrapping the underlying call is not — SP2 catches that. This test
-    locks the registry at four entries (router/triage/visualizer/
-    critique) so accidental drift is caught here too."""
+    locks the registry at five entries (router/triage/visualizer/
+    critique + the call_tracker.py passthrough wrapper added with the
+    run-#2 prep on chaos-amp) so accidental drift is caught here too.
+
+    `src/wandering/call_tracker.py` is exempt because
+    AgentScopedLLMClient.call() is a pure passthrough — it forwards the
+    upstream-composed `system_prompt` to LLMClient.call verbatim. The
+    actual identity composition happens at the upstream call site
+    (_run_dig_iteration, score_mechanism, score_non_map). Composing
+    again inside the wrapper would double-wrap the doctrine header.
+    """
     by_file = sorted(s.file for s in CONTROL_PLANE_SITES)
     assert by_file == sorted([
         "src/llm/router.py",
         "src/llm/triage.py",
         "src/llm/visualizer.py",
+        "src/wandering/call_tracker.py",
         "src/wandering/critique.py",
     ]), by_file
 

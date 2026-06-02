@@ -220,6 +220,18 @@ async def _run_match(
                 fp, cushion, client=client,
                 session_state=interpreter_state,
             )
+            # Mark the fingerprint as seen so the novelty channel on
+            # subsequent agents in the same wander has accumulated
+            # history to consult. Without this the novelty score stays
+            # at constant 1.0 for the whole run and pollutes the
+            # disagreement variance. Per the interpreter's own
+            # docstring, mark_seen runs AFTER the verdict — never
+            # before, otherwise the calling content would self-suppress.
+            if interpreter_state is not None:
+                try:
+                    interpreter_state.mark_seen(fp)
+                except Exception as _e:  # pragma: no cover — defensive
+                    log.debug("interpreter_state.mark_seen failed: %s", _e)
             return _verdict_to_match_result(verdict, cushion)
         except Exception as e:
             log.warning("interpreter path failed, falling back to legacy: %s", e)
@@ -336,6 +348,16 @@ class AgentState:
     # are spawned, so every agent in the same session sees the same
     # visited_urls / followon_queue. None for legacy single-agent tests.
     session_state: "SessionState | None" = None
+
+    # Per-wander interpreter novelty memory (separate from the runtime
+    # SessionState above). The interpreter's `score_novelty` channel
+    # consults this to detect content the wander already saw, and the
+    # agent's _run_match marks each fingerprint as seen AFTER the
+    # verdict. Without this wiring (the run-#1 state), the novelty
+    # channel returned constant 1.0 and added pure noise to the
+    # disagreement signal. None for legacy callers that don't go
+    # through the runtime's tracker creation path.
+    interpreter_state: "_interpreter.SessionState | None" = None
 
     def __post_init__(self) -> None:
         if not self.trace.agent_id:
@@ -631,6 +653,7 @@ async def _maybe_tier2_escalate(
         client=client,
         domain_hint=upgraded.domain_hint,
         url=upgraded.url,
+        interpreter_state=state.interpreter_state,
     )
     # Never regress: if richer body produced fewer matches, keep tier-1.
     if new_match.total_matched_nodes < match.total_matched_nodes:
@@ -878,13 +901,16 @@ async def run_agent(
         # CONSTELLAX_USE_INTERPRETER=1, this runs the 7-channel
         # interpreter (fingerprint -> vector/overlap/role/mech/non-map
         # /evidence/novelty -> verdict). Default off keeps legacy
-        # single-LLM matcher.
+        # single-LLM matcher. `state.interpreter_state` carries the
+        # wander's novelty memory so subsequent matches see prior
+        # fingerprints (constant-1.0 noise fix).
         match = await _run_match(
             cushion=state.cushion,
             content=f"{fetched.title}\n\n{fetched.body}",
             client=client,
             domain_hint=fetched.domain_hint,
             url=fetched.url,
+            interpreter_state=state.interpreter_state,
         )
         state.trace.append(TraceStep(
             step_id=0,
