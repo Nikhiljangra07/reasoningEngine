@@ -52,7 +52,7 @@ from src.wandering.persistence import (
 )
 from src.wandering.fetcher import (
     _build_query_for_domain,
-    _stitch_hits,
+    _stitch_from_hit,
 )
 from src.wandering.agent import AgentState, AgentBudget
 from src.bridge.web_search import SearchHit, SearchResult
@@ -298,15 +298,15 @@ def test_query_no_domain():
     assert q == "anchor"
 
 
-@test("3.3 _stitch_hits returns explanatory body when no hits")
+@test("3.3 _stitch_from_hit returns explanatory body when no hits")
 def test_stitch_no_hits():
     result = SearchResult(query="test", provider="test")
-    title, url, body = _stitch_hits(result)
+    title, url, body = _stitch_from_hit(result, 0)
     assert "no results" in body.lower()
     assert url == ""
 
 
-@test("3.4 _stitch_hits combines multiple hits with separator")
+@test("3.4 _stitch_from_hit combines multiple hits with separator")
 def test_stitch_multiple_hits():
     result = SearchResult(
         query="jazz",
@@ -316,7 +316,7 @@ def test_stitch_multiple_hits():
             SearchHit(title="B", url="http://b.com", snippet="snippet B"),
         ],
     )
-    title, url, body = _stitch_hits(result)
+    title, url, body = _stitch_from_hit(result, 0)
     assert title == "A"
     assert url == "http://a.com"
     assert "snippet A" in body
@@ -544,7 +544,7 @@ async def test_enrich_respects_existing():
 # ===========================================================================
 
 
-@test("8.1 routes.get_router returns a FastAPI APIRouter with 4 routes")
+@test("8.1 routes.get_router returns a FastAPI APIRouter with 9 routes")
 def test_router_shape():
     from src.wandering.routes import get_router
     router = get_router()
@@ -554,9 +554,14 @@ def test_router_shape():
     assert "/session" in paths
     assert "/session/{session_id}" in paths
     assert "/session/{session_id}/dig-deeper" in paths
+    assert "/session/{session_id}/memo" in paths
+    assert "/session/{session_id}/status" in paths
+    assert "/session/{session_id}/abort" in paths
+    assert "/session/{session_id}/continue" in paths
+    assert "/sessions" in paths
 
 
-@test("8.2 router mounted on server.py exposes all four /api/v2/wandering paths")
+@test("8.2 router mounted on server.py exposes all /api/v2/wandering paths")
 def test_server_mount():
     # Lazy import to avoid module init in other tests
     import server
@@ -565,6 +570,11 @@ def test_server_mount():
     assert "/api/v2/wandering/session" in server_paths
     assert "/api/v2/wandering/session/{session_id}" in server_paths
     assert "/api/v2/wandering/session/{session_id}/dig-deeper" in server_paths
+    assert "/api/v2/wandering/session/{session_id}/memo" in server_paths
+    assert "/api/v2/wandering/session/{session_id}/status" in server_paths
+    assert "/api/v2/wandering/session/{session_id}/abort" in server_paths
+    assert "/api/v2/wandering/session/{session_id}/continue" in server_paths
+    assert "/api/v2/wandering/sessions" in server_paths
 
 
 # ===========================================================================

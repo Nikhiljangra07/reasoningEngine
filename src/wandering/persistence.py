@@ -25,7 +25,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol
 
-from src.wandering.cushion import CushionGraph
+from src.wandering.cushion import CushionGraph, make_cushion_node_id
 from src.wandering.report import ExplorationReport
 from src.wandering.runtime import SessionResult, WanderingMode
 from src.wandering.trace import DecisionTrace, DiscardedClue, DiscardKind
@@ -85,6 +85,45 @@ class WanderingStore(Protocol):
         """
         ...
 
+    # --- F5: JobState mirror for server-restart durability ---
+
+    async def save_job_state(self, state: dict[str, Any]) -> bool:
+        """Mirror a JobState (as a JSON-able dict) to persistent storage.
+
+        Called by jobs.py on every lifecycle transition. Best-effort —
+        failures must NEVER crash the in-process job. The in-process
+        registry remains the source of truth for the running app; this
+        mirror exists only to survive server restarts.
+        """
+        ...
+
+    async def get_job_state(self, session_id: str) -> dict[str, Any] | None:
+        """Look up a persisted JobState by session_id. Returns None when
+        no state was ever mirrored. Used by `/status` as fallback when
+        the in-process registry is empty (post-restart)."""
+        ...
+
+    async def list_running_jobs(self) -> list[dict[str, Any]]:
+        """Return all JobStates currently in `running` status. Run at
+        server startup to detect jobs that were interrupted by the prior
+        process's exit — those are transitioned to `failed` with reason
+        `server_restart_during_wander`."""
+        ...
+
+    async def sessions_metadata(
+        self, user_id: str, limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """Return a metadata payload per session for the sidebar list.
+
+        Each dict has at minimum:
+          session_id, mode, pursuit, completed_at, report_count,
+          total_tokens_spent
+
+        Reverse-chronological. This is the F3+F7-unified read path —
+        backs the new GET /api/v2/wandering/sessions route.
+        """
+        ...
+
 
 # ---------------------------------------------------------------------------
 # Serialization helpers — used by both backends
@@ -119,11 +158,42 @@ def session_to_json(session: SessionResult) -> str:
     return json.dumps(raw, default=_default)
 
 
+def _layer_to_dict(layer: Any) -> dict[str, Any]:
+    """Serialize a CushionLayer to its persisted dict form.
+
+    Backward-compatible: every payload still has `name`, `nodes`
+    (list[str]), and `summary`. Constellation Interpreter (2026-06-01)
+    adds an optional `node_records` array carrying the dual-artifact
+    metadata per node — text + embedding_text + search_queries + role.
+
+    Embeddings are NOT persisted in this JSON blob. They live in the
+    `:CushionNode` Neo4j nodes (vector-indexed), so the session JSON
+    stays small (~30KB cushion) instead of bloated (~100KB with all
+    vectors inline). The cushion structure is reconstructable from JSON
+    alone; the vector channel is reconstructed by querying Neo4j when
+    the new matcher actually needs it.
+    """
+    payload: dict[str, Any] = {
+        "name":    layer.name,
+        "nodes":   list(layer.nodes),
+        "summary": layer.summary,
+    }
+    if layer.node_records is not None:
+        records_out: list[dict[str, Any]] = []
+        for rec in layer.node_records:
+            d = rec.to_dict()
+            # Drop the embedding — it lives in Neo4j, not the session JSON.
+            d["embedding"] = None
+            records_out.append(d)
+        payload["node_records"] = records_out
+    return payload
+
+
 def _cushion_to_dict(cushion: CushionGraph) -> dict[str, Any]:
     return {
-        "actual": {"name": "actual", "nodes": list(cushion.actual.nodes), "summary": cushion.actual.summary},
-        "essence": {"name": "essence", "nodes": list(cushion.essence.nodes), "summary": cushion.essence.summary},
-        "mechanism": {"name": "mechanism", "nodes": list(cushion.mechanism.nodes), "summary": cushion.mechanism.summary},
+        "actual":    _layer_to_dict(cushion.actual),
+        "essence":   _layer_to_dict(cushion.essence),
+        "mechanism": _layer_to_dict(cushion.mechanism),
         "raw_input": {
             "problem": cushion.raw_input.problem.content,
             "context": cushion.raw_input.context.content,
@@ -245,6 +315,8 @@ class InMemoryWanderingStore:
         self._sessions_by_user: dict[str, list[str]] = {}  # user_id → session_ids (newest first)
         self._discarded_by_user: dict[str, list[tuple[str, DiscardedClue]]] = {}  # user_id → [(session_id, clue)]
         self._reports_by_session: dict[str, list[ExplorationReport]] = {}
+        # F5 — JobState mirror. dict keyed by session_id.
+        self._jobs: dict[str, dict[str, Any]] = {}
 
     async def save_session(self, user_id: str | None, session: SessionResult) -> bool:
         try:
@@ -318,6 +390,45 @@ class InMemoryWanderingStore:
                 break
         return out
 
+    # --- F5: JobState mirror ---
+
+    async def save_job_state(self, state: dict[str, Any]) -> bool:
+        sid = state.get("session_id")
+        if not sid:
+            return False
+        self._jobs[sid] = dict(state)
+        return True
+
+    async def get_job_state(self, session_id: str) -> dict[str, Any] | None:
+        entry = self._jobs.get(session_id)
+        return dict(entry) if entry is not None else None
+
+    async def list_running_jobs(self) -> list[dict[str, Any]]:
+        return [
+            dict(entry) for entry in self._jobs.values()
+            if entry.get("status") == "running"
+        ]
+
+    # --- F3+F7: sidebar metadata ---
+
+    async def sessions_metadata(
+        self, user_id: str, limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for sid in self._sessions_by_user.get(user_id, [])[:limit]:
+            sess = self._sessions.get(sid)
+            if sess is None:
+                continue
+            out.append({
+                "session_id":         sid,
+                "mode":               sess.mode.value,
+                "pursuit":            sess.cushion.raw_input.problem.content,
+                "completed_at":       sess.ended_at,
+                "report_count":       sess.report_count(),
+                "total_tokens_spent": sess.total_tokens_spent,
+            })
+        return out
+
 
 # ---------------------------------------------------------------------------
 # Neo4j backend — production
@@ -337,6 +448,12 @@ CREATE INDEX wandering_report_id IF NOT EXISTS
 
 CREATE INDEX wandering_discard_user_classification IF NOT EXISTS
   FOR (d:WanderingDiscardedClue) ON (d.user_id, d.classification);
+
+CREATE INDEX wandering_job_session_id IF NOT EXISTS
+  FOR (j:WanderingJob) ON (j.session_id);
+
+CREATE INDEX wandering_job_status IF NOT EXISTS
+  FOR (j:WanderingJob) ON (j.status);
 """.strip()
 
 
@@ -436,7 +553,72 @@ class Neo4jWanderingStore:
                 except Exception as e:
                     log.debug("save_discarded_clue_node failed: %s", e)
 
+        # Constellation Interpreter (2026-06-01) — persist cushion nodes
+        # as side-indexed (:CushionNode) entries with their embeddings,
+        # ready for the multi-channel matcher's vector channel. Failures
+        # here don't fail the session save; the structural cushion
+        # already lives in payload_json above.
+        try:
+            await self._save_cushion_nodes(session.session_id, session.cushion)
+        except Exception as e:
+            log.warning("save_cushion_nodes failed for %s: %s",
+                        session.session_id, e)
+
         return True
+
+    async def _save_cushion_nodes(self, session_id: str, cushion: CushionGraph) -> None:
+        """Upsert each CushionNode to Neo4j with its embedding.
+
+        Constellation Interpreter (2026-06-01). Each (:CushionNode) is
+        linked to its (:WanderingSession) by [:HAS_CUSHION_NODE]. The
+        node's `embedding` property feeds the cushion_node_embedding_idx
+        vector index, which the multi-channel matcher queries against
+        content fingerprints.
+
+        Ids are regenerated with the real session_id at write time so
+        the same session running twice MERGEs idempotently rather than
+        duplicating. The in-memory CushionGraph keeps its ephemeral ids
+        — the persisted ones are session-scoped and authoritative for
+        Neo4j round-trips.
+
+        All nodes are written in ONE Cypher via UNWIND to avoid N
+        round-trips for an N-node cushion. Layers without node_records
+        (cushions composed before the upgrade, or synthetic test
+        fixtures) are skipped silently.
+        """
+        rows: list[dict[str, Any]] = []
+        for layer in cushion.layers():
+            records = layer.node_records
+            if not records:
+                continue
+            for rec in records:
+                persisted_id = make_cushion_node_id(session_id, layer.name, rec.text)
+                rows.append({
+                    "id":             persisted_id,
+                    "layer":          layer.name,
+                    "text":           rec.text,
+                    "embedding_text": rec.embedding_text or rec.text,
+                    "search_queries": list(rec.search_queries),
+                    "embedding":      rec.embedding,  # list[float] | None
+                })
+
+        if not rows:
+            return
+
+        cypher = """
+        MATCH (s:WanderingSession {session_id: $session_id})
+        UNWIND $rows AS row
+        MERGE (n:CushionNode {id: row.id})
+        SET n.session_id     = $session_id,
+            n.layer          = row.layer,
+            n.text           = row.text,
+            n.embedding_text = row.embedding_text,
+            n.search_queries = row.search_queries,
+            n.embedding      = row.embedding
+        MERGE (s)-[:HAS_CUSHION_NODE]->(n)
+        """
+        async with self._driver.session(database=self._database) as sess:
+            await sess.run(cypher, session_id=session_id, rows=rows)
 
     async def _save_report_node(self, session_id: str, report: ExplorationReport) -> None:
         cypher = """
@@ -605,6 +787,164 @@ class Neo4jWanderingStore:
                 out.append(_discarded_clue_from_dict(d))
             except Exception:
                 continue
+        return out
+
+    # ---- F5: JobState mirror to Neo4j ----
+
+    async def save_job_state(self, state: dict[str, Any]) -> bool:
+        """Upsert a :WanderingJob node mirroring the in-process JobState.
+
+        Lossless via `payload_json`. Indexed by session_id + status so
+        the startup sweep can find all "running" jobs from a prior PID
+        in one query.
+        """
+        sid = state.get("session_id")
+        if not sid:
+            return False
+
+        # Best-effort schema bootstrap. We don't await on every call —
+        # the flag in init_schema ensures it runs at most once per
+        # process. Failures here log + soft-fail.
+        try:
+            await self.init_schema()
+        except Exception as e:
+            log.debug("init_schema during save_job_state: %s", e)
+
+        try:
+            payload = json.dumps(state)
+        except Exception as e:
+            log.warning("save_job_state: payload serialise failed: %s", e)
+            return False
+
+        cypher = """
+        MERGE (j:WanderingJob {session_id: $session_id})
+        SET j.job_id       = $job_id,
+            j.user_id      = $user_id,
+            j.status       = $status,
+            j.started_at   = $started_at,
+            j.completed_at = $completed_at,
+            j.payload_json = $payload_json
+        """
+        try:
+            async with self._driver.session(database=self._database) as sess:
+                await sess.run(
+                    cypher,
+                    session_id   = sid,
+                    job_id       = state.get("job_id", ""),
+                    user_id      = state.get("user_id") or "guest",
+                    status       = state.get("status", "running"),
+                    started_at   = state.get("started_at", 0.0),
+                    completed_at = state.get("completed_at"),  # None for running
+                    payload_json = payload,
+                )
+            return True
+        except Exception as e:
+            log.warning("Neo4jWanderingStore.save_job_state failed: %s", e)
+            return False
+
+    async def get_job_state(self, session_id: str) -> dict[str, Any] | None:
+        cypher = """
+        MATCH (j:WanderingJob {session_id: $session_id})
+        RETURN j.payload_json AS payload_json
+        """
+        try:
+            async with self._driver.session(database=self._database) as sess:
+                result = await sess.run(cypher, session_id=session_id)
+                row = await result.single()
+            if not row:
+                return None
+            raw = row.get("payload_json")
+            if not raw:
+                return None
+            return json.loads(raw)
+        except Exception as e:
+            log.warning("Neo4jWanderingStore.get_job_state failed: %s", e)
+            return None
+
+    async def list_running_jobs(self) -> list[dict[str, Any]]:
+        cypher = """
+        MATCH (j:WanderingJob)
+        WHERE j.status = "running"
+        RETURN j.payload_json AS payload_json
+        """
+        try:
+            async with self._driver.session(database=self._database) as sess:
+                result = await sess.run(cypher)
+                rows = await result.data()
+        except Exception as e:
+            log.warning("Neo4jWanderingStore.list_running_jobs failed: %s", e)
+            return []
+
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            raw = row.get("payload_json")
+            if not raw:
+                continue
+            try:
+                out.append(json.loads(raw))
+            except Exception:
+                continue
+        return out
+
+    # ---- F3+F7: sidebar metadata ----
+
+    async def sessions_metadata(
+        self, user_id: str, limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """Pull the per-session metadata needed by the sidebar list.
+
+        Reads the indexed scalar fields on :WanderingSession (no
+        payload_json deserialise), plus an aggregate count of
+        :CONTAINS->:WanderingReport for the dossier card count. Returns
+        an empty list on any error — caller falls back gracefully.
+        """
+        cypher = """
+        MATCH (u:User {user_id: $user_id})-[:RAN]->(s:WanderingSession)
+        OPTIONAL MATCH (s)-[:CONTAINS]->(r:WanderingReport)
+        WITH s, count(r) AS report_count
+        RETURN s.session_id         AS session_id,
+               s.mode               AS mode,
+               s.completed_at       AS completed_at,
+               s.total_tokens_spent AS total_tokens_spent,
+               s.payload_json       AS payload_json,
+               report_count
+        ORDER BY s.completed_at DESC
+        LIMIT $limit
+        """
+        try:
+            async with self._driver.session(database=self._database) as sess:
+                result = await sess.run(cypher, user_id=user_id, limit=limit)
+                rows = await result.data()
+        except Exception as e:
+            log.warning("Neo4jWanderingStore.sessions_metadata failed: %s", e)
+            return []
+
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            # Pull the pursuit out of the lossless payload_json — cheaper
+            # to materialise from the existing payload than to add a
+            # dedicated scalar field on every save.
+            pursuit = ""
+            raw_payload = row.get("payload_json")
+            if raw_payload:
+                try:
+                    payload = json.loads(raw_payload)
+                    pursuit = (
+                        payload.get("cushion", {})
+                               .get("raw_input", {})
+                               .get("problem", "")
+                    ) or ""
+                except Exception:
+                    pursuit = ""
+
+            out.append({
+                "session_id":         row.get("session_id", ""),
+                "mode":               row.get("mode", ""),
+                "pursuit":            pursuit,
+                "completed_at":       row.get("completed_at"),
+                "report_count":       int(row.get("report_count", 0) or 0),
+                "total_tokens_spent": int(row.get("total_tokens_spent", 0) or 0),
+            })
         return out
 
 

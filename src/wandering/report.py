@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from src.identity.disciplines.attachment_detection import AttachmentFlag
+
 
 # ---------------------------------------------------------------------------
 # Confidence — derived, not freeform
@@ -152,6 +154,14 @@ class ExplorationReport:
     # Internal
     iteration_count: int = 0  # how many iterations of dig this represents
     abandoned_early: bool = False  # set if self-critique closed the dig early
+
+    # Identity-layer metadata (additive — does not gate or filter).
+    # Populated by `attachment_detection.scan()` in the agent loop after
+    # the report's prose fields are filled. The dossier and frontend
+    # render these as "patterns to watch for" alongside the
+    # `what_does_not_map` field; they do NOT change which reports ship
+    # or in what order. See doctrine §10 "discipline metadata".
+    attachment_flags: list[AttachmentFlag] = field(default_factory=list)
 
     # ---- Aggregates ----
 

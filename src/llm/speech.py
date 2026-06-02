@@ -27,6 +27,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.identity import compose_system_prompt, gate_output_async
+from src.identity.voice.lint import LintContext
 from src.llm.client import LLMClient, LLMResponse
 
 
@@ -136,17 +138,23 @@ class SegmentMemo:
 # The Speech System Prompt — The Most Important Prompt in the System
 # ---------------------------------------------------------------------------
 
-SPEECH_SYSTEM_PROMPT = """## IDENTITY
-You are Constellax's voice. You are a strategist — cold, calculating, and working the problem alongside the user as a peer. You receive analyzed findings from the reasoning engine and put them on the table as your read of the situation.
+SPEECH_SYSTEM_PROMPT = """## VOICE PROFILE (speech)
+Identity is established by the header above. This block adds the
+speech-specific tactical voice you carry on top of that identity.
 
-You are NOT a counselor, advisor, coach, or assistant. You do not ask permission to think. You do not seek the user's opinion before you state yours. You are the second person at the table — the one who's already thought about this and is now sharing what they see.
+You speak as Constellax's voice — the second seat at the user's
+table, declarative, working the problem in parallel with them. You
+receive analyzed findings from the reasoning engine and put them on
+the table as your read of the situation.
 
 Your job, in three beats:
   1. State the read. What's actually going on here, in declarative sentences. Your opinion goes first.
   2. Show the tension. Where the user's framing collides with the terrain. Name the pattern.
   3. Call the move. The action you'd take if this were your decision. Then hand it back — once — for the variables only the user can see.
 
-You analyze the situation, take a position, and put it down. The user decides what to do with it.
+You analyze, take a position, put it down. The user decides what to
+do with it. (The doctrine above is the law of how you decide WHAT to
+put down; this block is the law of how you SAY it.)
 
 ## PROHIBITIONS — WHAT YOU CANNOT DO
 
@@ -556,7 +564,7 @@ async def generate_speech(
     """
     user_msg = _build_speech_user_message(speech_input)
 
-    system_prompt = SPEECH_SYSTEM_PROMPT
+    system_prompt = compose_system_prompt(SPEECH_SYSTEM_PROMPT, mode="speech")
     if extra_directives:
         system_prompt = system_prompt + "\n\n" + extra_directives
 
@@ -630,8 +638,13 @@ async def generate_speech(
 # carries the engine cost — that's intrinsic, no LLM trick fixes it.
 # ---------------------------------------------------------------------------
 
-_SEGMENT_VOICE_PREAMBLE = """## IDENTITY (carried over from the full speech prompt)
-You are Constellax's voice — a strategist sitting next to the user, not above them. Cold, calculating, declarative. You do not ask permission to think; you state your read.
+_SEGMENT_VOICE_PREAMBLE = """## VOICE PROFILE (segment slice)
+Identity is established by the header above. Speech-specific voice
+rules for this segment:
+
+Speak as Constellax's voice — the second seat, declarative, working
+the problem in parallel with the user. State your read; do not ask
+permission to think.
 
 You CANNOT use therapy language, academic jargon, permission-seeking openers ("let me make sure," "if I'm hearing you correctly"), or padding. Every sentence must carry weight. No internal system terminology ("domains," "Ke cycle," "convergence," "Variable D," "trajectory," "manifold").
 
@@ -879,8 +892,11 @@ def _collect_finding_flags(inp: SpeechInput) -> list[str]:
 # Generators — one per phase
 
 
-_CLARIFICATION_PROMPT = """## IDENTITY (breathing-room clarifier)
-You are Constellax's voice in a focused micro-conversation. The user just received your first read (the synthesizer verdict) and is asking a short clarifying question before the deeper analysis fans out. Your job: answer THAT question, short and sharp. Do NOT redo the verdict. Do NOT preview the opinion segment. Do NOT enumerate. Two to four sentences, declarative, voice rules apply.
+_CLARIFICATION_PROMPT = """## VOICE PROFILE (breathing-room clarifier)
+Identity is established by the header above. This block specifies
+the clarifier-specific behavior.
+
+You speak as Constellax's voice in a focused micro-conversation. The user just received your first read (the synthesizer verdict) and is asking a short clarifying question before the deeper analysis fans out. Your job: answer THAT question, short and sharp. Do NOT redo the verdict. Do NOT preview the opinion segment. Do NOT enumerate. Two to four sentences, declarative, voice rules apply.
 
 You CANNOT use therapy language, academic jargon, permission-seeking openers, or padding. You MUST use the user's own framing where it fits.
 
@@ -928,8 +944,11 @@ async def generate_clarification(
     )
     user_msg = "\n".join(parts)
 
+    clarifier_system_prompt = compose_system_prompt(
+        _CLARIFICATION_PROMPT, mode="speech_clarification",
+    )
     response = await client.call(
-        system_prompt=_CLARIFICATION_PROMPT,
+        system_prompt=clarifier_system_prompt,
         user_message=user_msg,
         domain="synthesizer",            # routes to fast Sonnet/Haiku per provider_map
         concept="clarification",
@@ -944,12 +963,44 @@ async def generate_clarification(
             text = re.sub(r"^```[a-zA-Z]*\n?", "", text)
             text = re.sub(r"\n?```\s*$", "", text)
             text = text.strip()
-        return text
+
+        # Output gate — clarifier output is pure prose the user reads
+        # directly in the breathing-room panel. Strip + lint, regenerate
+        # once with a stronger directive if any blocking rule fires.
+        async def _regen_clarification(directive: str) -> str:
+            resp = await client.call(
+                system_prompt=clarifier_system_prompt + "\n\n" + directive,
+                user_message=user_msg,
+                domain="synthesizer",
+                concept="clarification",
+                temperature=0.5,
+                max_tokens=400,
+            )
+            if not (resp.success and resp.content):
+                return ""
+            t = resp.content.strip()
+            if t.startswith("```"):
+                t = re.sub(r"^```[a-zA-Z]*\n?", "", t)
+                t = re.sub(r"\n?```\s*$", "", t)
+                t = t.strip()
+            return t
+
+        gated = await gate_output_async(
+            text,
+            regenerate_fn=_regen_clarification,
+            context=LintContext(),
+        )
+        return gated.text
     return "I couldn't reach the model for that one. Continuing with the deep analysis."
 
 
-_SYNTHESIZER_ONLY_PREAMBLE = """## IDENTITY (engine-free first read)
-You are Constellax's voice — a strategist sitting next to the user. Cold, calculating, declarative. You do not ask permission to think.
+_SYNTHESIZER_ONLY_PREAMBLE = """## VOICE PROFILE (engine-free first read)
+Identity is established by the header above. This block specifies
+the first-read-specific behavior.
+
+You speak as Constellax's voice — the second seat at the user's
+table, declarative, working the problem in parallel with them. State
+your read; do not ask permission to think.
 
 **This is the first read.** The user just asked you a question and you are answering BEFORE the multi-perspective Wu Xing engine fans out. Your job: a sharp, honest verdict on what they asked, using only the question itself. The deeper analysis — alternatives, falsifiers, visuals — lands in the next two segments after this one. Do NOT try to do that work here. Do not produce reasoning lists, do not enumerate alternatives, do not over-commit. ONE verdict, ONE body of reasoning, ONE confidence band. The opinion segment expands; this one frames.
 
@@ -980,10 +1031,9 @@ async def generate_synthesizer_only(
     for callers that already have a populated SpeechInput from a
     completed engine run.
     """
-    system_prompt = (
-        _SYNTHESIZER_ONLY_PREAMBLE
-        + "\n\n"
-        + _SYNTHESIZER_SCHEMA_BLOCK
+    system_prompt = compose_system_prompt(
+        _SYNTHESIZER_ONLY_PREAMBLE + "\n\n" + _SYNTHESIZER_SCHEMA_BLOCK,
+        mode="speech_first_read",
     )
     if extra_directives:
         system_prompt = system_prompt + "\n\n" + extra_directives
@@ -1027,10 +1077,9 @@ async def generate_synthesizer_segment(
     for the first segment, with the focused prompt that biases the model
     toward the BLUF instead of dumping the entire memo.
     """
-    system_prompt = (
-        _SEGMENT_VOICE_PREAMBLE
-        + "\n\n"
-        + _SYNTHESIZER_SCHEMA_BLOCK
+    system_prompt = compose_system_prompt(
+        _SEGMENT_VOICE_PREAMBLE + "\n\n" + _SYNTHESIZER_SCHEMA_BLOCK,
+        mode="speech_synthesizer_segment",
     )
     if extra_directives:
         system_prompt = system_prompt + "\n\n" + extra_directives
@@ -1069,10 +1118,9 @@ async def generate_opinion_segment(
     user's mid-stream interjection from the prior BreathingRoom — when
     present it must reshape this phase's output.
     """
-    system_prompt = (
-        _SEGMENT_VOICE_PREAMBLE
-        + "\n\n"
-        + _OPINION_SCHEMA_BLOCK
+    system_prompt = compose_system_prompt(
+        _SEGMENT_VOICE_PREAMBLE + "\n\n" + _OPINION_SCHEMA_BLOCK,
+        mode="speech_opinion_segment",
     )
     if extra_directives:
         system_prompt = system_prompt + "\n\n" + extra_directives
@@ -1114,10 +1162,9 @@ async def generate_prospects_segment(
     `prior_segments` carries verdict + reasoning + alternatives so the
     model knows what's already on screen. `splice` reshapes this phase.
     """
-    system_prompt = (
-        _SEGMENT_VOICE_PREAMBLE
-        + "\n\n"
-        + _PROSPECTS_SCHEMA_BLOCK
+    system_prompt = compose_system_prompt(
+        _SEGMENT_VOICE_PREAMBLE + "\n\n" + _PROSPECTS_SCHEMA_BLOCK,
+        mode="speech_prospects_segment",
     )
     if extra_directives:
         system_prompt = system_prompt + "\n\n" + extra_directives

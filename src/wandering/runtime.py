@@ -27,7 +27,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable
+from typing import Any, Callable
 
 from src.llm.client import LLMClient
 from src.wandering.agent import (
@@ -39,7 +39,115 @@ from src.wandering.agent import (
 )
 from src.wandering.cushion import CushionGraph
 from src.wandering.report import ExplorationReport
+from src.wandering.session_state import SessionState
 from src.wandering.trace import DecisionTrace
+
+
+# ---------------------------------------------------------------------------
+# Progress handle — live view into the wander, used by the abort path
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class WanderingProgress:
+    """Live progress reference for an in-flight wander.
+
+    The caller (routes.py worker) constructs one of these, hands it to
+    `run_wandering_session(progress=...)`, and stashes it in a per-session
+    dict. The runtime registers each spawned agent here as it's created;
+    `tokens_used` is a real-time sum across those agents' cumulative
+    token counters.
+
+    Used at abort time to compute an HONEST refund — we know exactly
+    how many tokens the agents had spent at the moment of cancel, so
+    the credit math doesn't rely on guesses (time-ratio, etc.) which
+    would either over-charge or over-refund.
+
+    Failures NEVER raise. If `progress` is None throughout, the wander
+    runs exactly as before — this is opt-in observability for callers
+    that need it.
+    """
+
+    agents: list[AgentState] = field(default_factory=list)
+
+    def register(self, *new_agents: AgentState) -> None:
+        """Add the given agents to the live progress set. Idempotent
+        against duplicates by identity (an agent is registered once
+        even if the callback fires twice in some edge case)."""
+        seen = {id(a) for a in self.agents}
+        for a in new_agents:
+            if id(a) not in seen:
+                self.agents.append(a)
+
+    @property
+    def tokens_used(self) -> int:
+        """Sum of all agents' cumulative_tokens. Reads in-memory
+        primitives only — safe to call from any context without
+        awaiting."""
+        return sum(int(a.cumulative_tokens) for a in self.agents)
+
+    @property
+    def reports_count(self) -> int:
+        """Total reports finalized across all registered agents."""
+        return sum(len(a.reports) for a in self.agents)
+
+    @property
+    def urls_visited(self) -> int:
+        """Distinct URLs touched across the wander, read from the shared
+        SessionState if any agent has one wired. Reads in-memory primitives
+        only. Returns 0 when no SessionState was plumbed."""
+        for a in self.agents:
+            ss = a.session_state
+            if ss is not None:
+                try:
+                    return len(ss.visited_urls)
+                except Exception:
+                    return 0
+        return 0
+
+    @property
+    def followon_queue_size(self) -> int:
+        """Depth of the shared follow-on queue if a SessionState is wired."""
+        for a in self.agents:
+            ss = a.session_state
+            if ss is not None:
+                try:
+                    return len(ss.followon_queue)
+                except Exception:
+                    return 0
+        return 0
+
+    def live_state(self) -> list[dict[str, Any]]:
+        """Snapshot per-agent live state for /status to surface. Pure
+        in-memory reads — never awaits, never raises. The shape is the
+        wire contract for the frontend's per-agent panel.
+
+        Each entry:
+          agent_id          — "P01", "P02", ... (display label)
+          model_slug        — full model identifier in use
+          tokens            — current cumulative_tokens
+          reports_count     — reports finalized so far
+          steps_taken       — agent's internal step counter
+          current_phase     — last trace step's kind (e.g. "matched", "fetched")
+          current_position  — last trace step's `position` (URL or domain)
+          last_step_at      — timestamp of the last trace step
+          discarded_count   — # clues this agent classified as discarded
+        """
+        out: list[dict[str, Any]] = []
+        for a in self.agents:
+            last = a.trace.steps[-1] if a.trace.steps else None
+            out.append({
+                "agent_id":         a.agent_id,
+                "model_slug":       a.model_slug,
+                "tokens":           int(a.cumulative_tokens),
+                "reports_count":    len(a.reports),
+                "steps_taken":      int(a.steps_taken),
+                "current_phase":    last.kind.value if last is not None else "initialized",
+                "current_position": (last.position if last is not None else "")[:120],
+                "last_step_at":     float(last.timestamp) if last is not None else 0.0,
+                "discarded_count":  len(a.trace.discarded_clues),
+            })
+        return out
 
 
 log = logging.getLogger("constellax.wandering.runtime")
@@ -165,6 +273,11 @@ class SessionResult:
 
     Contains every report produced by every agent + every agent's trace.
     Passed to the synthesis layer which aggregates into a Dossier.
+
+    `session_state` carries the shared per-wander dedup set + follow-on
+    queue. Stored here so absolute_chaos sub-agents can inherit the
+    parent wander's visited URLs (avoids re-fetching pages already read).
+    Set None when no SessionState was created (legacy callers).
     """
 
     session_id: str
@@ -176,6 +289,7 @@ class SessionResult:
     total_tokens_spent: int = 0
     elapsed_seconds: float = 0.0
     ended_at: float = 0.0
+    session_state: SessionState | None = None
 
     def report_count(self) -> int:
         return len(self.reports)
@@ -212,6 +326,7 @@ async def _run_multi_pendulum(
     client: LLMClient,
     fetcher: FetchFn,
     clock: Callable[[], float],
+    progress: "WanderingProgress | None" = None,
 ) -> SessionResult:
     """N agents in parallel, no sub-agents. The default mode."""
     num_agents, time_secs, tokens_each, model_mix = config.resolved()
@@ -219,6 +334,11 @@ async def _run_multi_pendulum(
 
     started = clock()
     session_id = config.session_id or f"wsess-{uuid.uuid4().hex[:8]}"
+
+    # One SessionState per wander, shared across all agents — drives
+    # cross-agent URL dedup and the follow-on queue. See
+    # WANDERING_ROOM_DECISIONS.md D8 (dedup) and D9 (follow-on).
+    session_state = SessionState(session_id=session_id)
 
     agents = [
         AgentState(
@@ -229,9 +349,16 @@ async def _run_multi_pendulum(
                 token_budget=tokens_each,
             ),
             model_slug=models[i],
+            session_state=session_state,
         )
         for i in range(num_agents)
     ]
+
+    # Register with the live progress handle if the caller supplied one.
+    # This lets the abort route read real cumulative_tokens at cancel
+    # time instead of guessing from a time-ratio estimate.
+    if progress is not None:
+        progress.register(*agents)
 
     # Parallel run. Each agent runs independently — no shared state.
     results = await asyncio.gather(
@@ -262,6 +389,7 @@ async def _run_multi_pendulum(
         total_tokens_spent=total_tokens,
         elapsed_seconds=elapsed,
         ended_at=clock(),
+        session_state=session_state,
     )
 
 
@@ -271,6 +399,7 @@ async def _run_triple_pendulum(
     client: LLMClient,
     fetcher: FetchFn,
     clock: Callable[[], float],
+    progress: "WanderingProgress | None" = None,
 ) -> SessionResult:
     """One chain of N sub-agents, sequential.
 
@@ -279,27 +408,68 @@ async def _run_triple_pendulum(
     this with sequential parallel-of-one execution — same engine, just
     serial. Future enrichment: have each sub-agent receive the prior
     agent's report list as additional context to "pick up from."
+
+    SHARED SESSION DEADLINE:
+    All sequential agents share a single deadline = `started + time_secs`.
+    Each agent's time budget is the REMAINING time at the moment it
+    starts. The chain naturally terminates at the deadline:
+      - Agent 1 starts with the full budget; uses what it needs.
+      - Agent 2 starts with whatever's left; same.
+      - Once an agent finishes and the deadline has passed (or there's
+        too little time left to be useful), we stop the chain.
+    This makes the UI promise honest: "15 minutes" means the chain
+    finishes within 15 minutes total, not 15 × num_agents minutes.
+
+    Token cap is still enforced between agents (defense in depth).
     """
     num_agents, time_secs, tokens_each, model_mix = config.resolved()
     models = assign_models(num_agents, model_mix)
 
     started = clock()
+    session_deadline = started + time_secs
     session_id = config.session_id or f"wsess-{uuid.uuid4().hex[:8]}"
+
+    # Sequential mode still shares one SessionState — even though agents
+    # run one-after-another, each agent's visited URLs and queued
+    # follow-ons benefit the next agent in the chain.
+    session_state = SessionState(session_id=session_id)
 
     reports: list[ExplorationReport] = []
     traces: list[DecisionTrace] = []
     total_tokens = 0
 
+    # Minimum time we'll bother spawning a new agent for. Below this,
+    # the agent won't have time to do useful retrieval before its own
+    # budget exhausts, so we end the chain instead of starting a
+    # near-zero-budget run. 10 seconds is enough for at least one LLM
+    # round trip; below that, skip.
+    MIN_AGENT_BUDGET_SEC = 10.0
+
     for i in range(num_agents):
+        remaining = session_deadline - clock()
+        if remaining < MIN_AGENT_BUDGET_SEC:
+            log.info(
+                "triple_pendulum: ending chain after agent %d "
+                "(remaining=%.1fs below threshold)",
+                i, remaining,
+            )
+            break
+
         agent = AgentState(
             agent_id=f"P{i + 1:02d}",
             cushion=cushion,
             budget=AgentBudget(
-                time_budget_seconds=time_secs,
+                time_budget_seconds=remaining,
                 token_budget=tokens_each,
             ),
             model_slug=models[i],
+            session_state=session_state,
         )
+        # Register THIS sequentially-spawned agent before it runs, so
+        # an abort fired mid-chain reads the right cumulative_tokens
+        # value off the currently-active agent.
+        if progress is not None:
+            progress.register(agent)
         result = await run_agent(agent, client=client, fetcher=fetcher, clock=clock)
         reports.extend(result.reports)
         traces.append(result.trace)
@@ -324,6 +494,7 @@ async def _run_triple_pendulum(
         total_tokens_spent=total_tokens,
         elapsed_seconds=elapsed,
         ended_at=clock(),
+        session_state=session_state,
     )
 
 
@@ -333,6 +504,7 @@ async def _run_absolute_chaos(
     client: LLMClient,
     fetcher: FetchFn,
     clock: Callable[[], float],
+    progress: "WanderingProgress | None" = None,
 ) -> SessionResult:
     """N parallel agents, each may spawn sub-agents on HIGH match.
 
@@ -346,8 +518,10 @@ async def _run_absolute_chaos(
     (they're both legitimate findings). The trace, however, preserves
     the spawning relationship for audit.
     """
-    # First, run the root agents like multi-pendulum.
-    session = await _run_multi_pendulum(cushion, config, client, fetcher, clock)
+    # First, run the root agents like multi-pendulum. The progress
+    # handle (if supplied) accumulates root agents AND sub-agents — see
+    # the spawn block below for sub-agent registration.
+    session = await _run_multi_pendulum(cushion, config, client, fetcher, clock, progress)
 
     # Lazy import to avoid circulars.
     from src.wandering.subagent import (
@@ -400,10 +574,17 @@ async def _run_absolute_chaos(
     if not spawn_jobs:
         return session
 
-    # Run all auto-spawned sub-agents in parallel.
+    # Run all auto-spawned sub-agents in parallel. Pass through the
+    # parent wander's session_state so sub-agents skip URLs the root
+    # agents already visited and can dequeue follow-on items.
     results = await asyncio.gather(
-        *[run_subagent(req, client=client, fetcher=fetcher, parent_clock=clock)
-          for req, _ in spawn_jobs],
+        *[run_subagent(
+            req,
+            client=client,
+            fetcher=fetcher,
+            parent_clock=clock,
+            session_state=session.session_state,
+        ) for req, _ in spawn_jobs],
         return_exceptions=True,
     )
 
@@ -435,6 +616,7 @@ async def run_wandering_session(
     *,
     fetcher: FetchFn = stub_fetcher,
     clock: Callable[[], float] = time.time,
+    progress: "WanderingProgress | None" = None,
 ) -> SessionResult:
     """Top-level entry: run one Wandering Room session and return all
     reports + traces.
@@ -442,6 +624,11 @@ async def run_wandering_session(
     Dispatches on `config.mode` to the per-mode runner. Callers (Phase 5
     synthesis, or the eventual API endpoint) take the SessionResult and
     feed it to the synthesis pipeline.
+
+    `progress`: optional WanderingProgress handle. When provided, each
+    spawned agent registers itself there as it's created, giving the
+    caller a live read on cumulative_tokens for the abort/refund path.
+    When None, the wander runs exactly as before.
     """
     if config.mode == WanderingMode.TRIPLE_PENDULUM:
         runner = _run_triple_pendulum
@@ -450,7 +637,7 @@ async def run_wandering_session(
     else:
         runner = _run_multi_pendulum
 
-    return await runner(cushion, config, client, fetcher, clock)
+    return await runner(cushion, config, client, fetcher, clock, progress)
 
 
 __all__ = [
@@ -459,6 +646,7 @@ __all__ = [
     "MODE_DEFAULTS",
     "WanderingConfig",
     "SessionResult",
+    "WanderingProgress",
     "assign_models",
     "run_wandering_session",
 ]

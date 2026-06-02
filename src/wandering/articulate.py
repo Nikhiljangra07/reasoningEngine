@@ -31,6 +31,8 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from src.identity import compose_system_prompt
+from src.identity.disciplines.goal_supremacy import ServeScore
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.report import Confidence, ExplorationReport
 
@@ -78,7 +80,23 @@ class ArticulatedCard:
     citations: list[dict] = field(default_factory=list)
     match_strength: float = 0.0  # 0.0–1.0, total_matched / total_cushion
 
+    # Identity-layer metadata (additive — does not gate band placement
+    # or filter the card). Populated by `goal_supremacy.discriminate()`
+    # in `build_dossier` against the cushion's real goal. The frontend
+    # can render this as a "this card serves your real goal" badge or
+    # a "serves stated goal but not real goal" warning. Engine logic
+    # does not branch on it. See doctrine §10 "discipline metadata".
+    serve_score: ServeScore | None = None
+
     def to_dict(self) -> dict:
+        sscore: dict | None = None
+        if self.serve_score is not None:
+            sscore = {
+                "score":                  float(self.serve_score.score),
+                "verdict":                str(self.serve_score.verdict),
+                "reasons":                list(self.serve_score.reasons),
+                "serves_attachment_only": bool(self.serve_score.serves_attachment_only),
+            }
         return {
             "report_id": self.report_id,
             "agent_id": self.agent_id,
@@ -92,6 +110,7 @@ class ArticulatedCard:
             "confidence_detail": self.confidence_detail,
             "citations": list(self.citations),
             "match_strength": float(self.match_strength),
+            "serve_score": sscore,
         }
 
 
@@ -317,7 +336,7 @@ async def articulate_report(
     """
     user_message = build_articulation_user_message(report)
     response: LLMResponse = await client.call(
-        system_prompt=_ARTICULATE_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_ARTICULATE_SYSTEM_PROMPT, mode="card_articulation"),
         user_message=user_message,
         domain=ARTICULATE_DOMAIN,
         concept=ARTICULATE_CONCEPT,

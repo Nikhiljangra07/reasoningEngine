@@ -29,6 +29,7 @@ import logging
 import re
 from dataclasses import dataclass
 
+from src.identity import compose_system_prompt
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.cushion import CushionGraph, CushionLayer
 from src.wandering.report import LayerMatch
@@ -269,7 +270,7 @@ async def match_content(
     """
     user_message = build_match_user_message(cushion, content, domain_hint)
     response: LLMResponse = await client.call(
-        system_prompt=_MATCH_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_MATCH_SYSTEM_PROMPT, mode="structural_match"),
         user_message=user_message,
         domain=MATCH_DOMAIN,
         concept=MATCH_CONCEPT,

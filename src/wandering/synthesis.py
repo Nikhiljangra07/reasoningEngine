@@ -31,6 +31,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from src.identity import compose_system_prompt
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.articulate import ArticulatedCard
 from src.wandering.report import Confidence, ExplorationReport
@@ -88,6 +89,17 @@ class OpportunityPath:
     supporting_card_ids: list[str] = field(default_factory=list)
     confidence_estimate: Confidence = Confidence.MEDIUM
 
+    # Identity-layer metadata (additive — does not filter or reorder).
+    # Populated by `opportunity_capture.test()` in `build_dossier`
+    # against the cushion's goal. One of "capture" / "surface" / "skip"
+    # / "" (empty when scoring wasn't run). The frontend may show a
+    # badge ("strong opening" for capture, "novel but check first" for
+    # surface) but engine logic does not drop "skip" paths in this
+    # sprint — every surfaced path still reaches the user. See
+    # doctrine §10 "discipline metadata".
+    verdict: str = ""
+    verdict_score: int = 0   # 0..6 — number of the six questions passed
+
 
 @dataclass
 class SynthesisMap:
@@ -103,6 +115,16 @@ class SynthesisMap:
     open_questions: list[str] = field(default_factory=list)
     recommended_next_direction: str = ""
     what_would_change_the_verdict: str = ""
+
+    # Identity-layer enforcement (0.3.4). Paths with
+    # `opportunity_capture.test` verdict='skip' are moved here in
+    # `build_dossier` rather than dropped — the user can still see
+    # them under a "weak signals" section in the frontend, but the
+    # primary opportunity_paths list is curated to the paths that
+    # passed at least 4/6 questions in the six-question test. This
+    # is the SOFT enforcement of opportunity discipline: filter
+    # without erasing.
+    deprioritized_paths: list[OpportunityPath] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -332,7 +354,7 @@ async def synthesize_dossier(
 
     user_message = build_synthesis_user_message(anchor_summary, cards)
     response: LLMResponse = await client.call(
-        system_prompt=_SYNTHESIS_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_SYNTHESIS_SYSTEM_PROMPT, mode="dossier_synthesis"),
         user_message=user_message,
         domain=SYNTHESIS_DOMAIN,
         concept=SYNTHESIS_CONCEPT,

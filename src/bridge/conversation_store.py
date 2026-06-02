@@ -189,6 +189,16 @@ class ConversationStore:
         if storage_path and isinstance(self._backend, InMemoryConversationBackend):
             self.load()
 
+        # Identity-layer state: position-restatement counter, keyed by
+        # (session_id, position_hash). Incremented on every
+        # `add_iteration`. The counter observes pushback patterns
+        # without yet modifying dispatcher behavior — once the counter
+        # has reliable data, a follow-up sprint can wire the
+        # cartography directive into the dispatcher's system prompt.
+        # In-process only; resets on store rebuild.
+        from src.identity import MapNotMarchCounter
+        self._map_not_march = MapNotMarchCounter()
+
     # -----------------------------------------------------------------------
     # Internal: project key + TTL helpers
     # -----------------------------------------------------------------------
@@ -303,6 +313,20 @@ class ConversationStore:
         sess.iteration_count = seq
         await self._backend.put(self._scope_key(), "sessions", sess)
         self._autosave()
+
+        # Identity-layer observation: record the user's position. The
+        # counter normalizes the text (strip filler, lowercase, hash)
+        # and increments the count for (session_id, position_hash). It
+        # does NOT modify the engine_response or alter dispatch. A
+        # follow-up sprint will read `map_not_march_strike(session_id,
+        # user_text)` from the dispatcher to inject a cartography
+        # directive when the user has restated past threshold.
+        if user_text and user_text.strip():
+            try:
+                self._map_not_march.note(session_id, user_text)
+            except Exception:  # pragma: no cover — counter is defensive
+                pass
+
         return it
 
     async def get_iteration(
@@ -329,6 +353,24 @@ class ConversationStore:
         ]
         out.sort(key=lambda i: i.sequence_num)
         return out
+
+    # -----------------------------------------------------------------------
+    # Identity-layer accessors
+    # -----------------------------------------------------------------------
+
+    def map_not_march_strike(self, session_id: str, user_text: str) -> int:
+        """Return how many times `user_text` (normalized) has been seen
+        in this session. Read-only — does not increment the counter.
+
+        Intended for a follow-up dispatcher integration: when the
+        return value crosses the `MAP_NOT_MARCH_THRESHOLD`, the
+        dispatcher injects a cartography directive into the system
+        prompt so the model switches from arguing to mapping paths.
+        Until that wiring lands, this accessor is exercised only by
+        tests."""
+        if not user_text or not user_text.strip():
+            return 0
+        return self._map_not_march.current(session_id, user_text)
 
     # -----------------------------------------------------------------------
     # Attaching DecisionAnchors (by id) to iterations

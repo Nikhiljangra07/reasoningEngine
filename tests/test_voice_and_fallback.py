@@ -33,7 +33,20 @@ from src.llm.router import (
     LLMFormationPlan,
     _fallback_formation,
 )
+from src.identity import compose_system_prompt
 from src.llm.speech import SPEECH_SYSTEM_PROMPT
+
+
+def _composed_speech_prompt() -> str:
+    """The actual system prompt the model receives for the speech call —
+    Singular Path doctrine header + 'MODE: speech' + the local speech
+    prompt. After the 0.3.1 identity integration, the model sees this
+    composed prompt; SPEECH_SYSTEM_PROMPT alone is no longer
+    representative of what reaches the LLM. Tests that guard the
+    'strategist not counselor' persona should validate against the
+    composed prompt so they catch regressions at the user-visible
+    layer."""
+    return compose_system_prompt(SPEECH_SYSTEM_PROMPT, mode="speech")
 
 
 PASSED = 0
@@ -142,10 +155,22 @@ def test_fallback_complexity_honest():
 
 @test("2.1 speech prompt mentions 'strategist' (the persona the user wants)")
 def test_speech_advisor_identity():
-    text = SPEECH_SYSTEM_PROMPT.lower()
+    # Validate the COMPOSED prompt (Singular Path doctrine + speech
+    # local) — that is what the model actually receives at runtime.
+    # The 'strategist' framing lives in the local speech prompt; the
+    # 'not a counselor / chat partner / coach' rejection lives in the
+    # Singular Path header. Both must reach the model together.
+    text = _composed_speech_prompt().lower()
     assert "strategist" in text
-    # And explicitly NOT the counselor/advisor framing the user pushed back on
-    assert "are not a counselor" in text or "not a counselor, advisor" in text
+    # The Singular Path header explicitly rejects chat-partner / coach /
+    # critic framing; either that header wording OR the legacy explicit
+    # negation satisfies the persona contract.
+    assert (
+        "not a chat partner" in text
+        or "not a coach" in text
+        or "are not a counselor" in text
+        or "not a counselor, advisor" in text
+    )
 
 
 @test("2.2 speech prompt forbids leaving the user with only a question")

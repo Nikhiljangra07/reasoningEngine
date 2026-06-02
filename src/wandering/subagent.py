@@ -40,6 +40,7 @@ from src.wandering.agent import (
 )
 from src.wandering.cushion import CushionGraph
 from src.wandering.report import Confidence, ExplorationReport
+from src.wandering.session_state import SessionState
 from src.wandering.trace import StepKind, TraceStep
 
 
@@ -123,6 +124,7 @@ async def run_subagent(
     *,
     fetcher: FetchFn = stub_fetcher,
     parent_clock=None,
+    session_state: SessionState | None = None,
 ) -> SpawnResult:
     """Execute one sub-agent under the given SpawnRequest.
 
@@ -130,6 +132,11 @@ async def run_subagent(
     smaller budget and the same cushion. The starting position
     (focus_area / starting_domain) influences ONLY the first step;
     after that, the standard chaos policy applies.
+
+    `session_state` is the shared per-wander state from the parent
+    SessionResult. When provided, the sub-agent participates in the same
+    URL dedup set and follow-on queue as the root agents — avoids
+    re-fetching pages the parent wander already read.
     """
     sub_id = f"S{uuid.uuid4().hex[:6]}"
 
@@ -141,6 +148,7 @@ async def run_subagent(
             token_budget=request.distance_budget_tokens,
             max_steps=30,
         ),
+        session_state=session_state,
     )
 
     # Seed the trace with a SPAWNED_SUBAGENT origin marker so the

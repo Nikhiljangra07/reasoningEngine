@@ -23,6 +23,9 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
+from src.identity.disciplines.goal_supremacy import discriminate
+from src.identity.disciplines.opportunity_capture import Opening, test as opportunity_test
+from src.identity.singular_path import Goal
 from src.wandering.articulate import ArticulatedCard, articulate_report
 from src.wandering.cushion import CushionGraph
 from src.wandering.report import Confidence, ExplorationReport
@@ -179,13 +182,65 @@ async def build_dossier(
         card = await articulate_report(report, client)
         cards.append(card)
 
-    # Step 2: synthesize across all cards
+    # Anchor summary doubles as the goal text for identity-layer scoring
+    # below. The cushion's problem field is the stated goal; without a
+    # real-goal surface from the cushion (Hook 1, future), `real`
+    # defaults to the same string and `discriminate` runs in
+    # consistent-goal mode.
     anchor_summary = (
         session.cushion.raw_input.problem.content[:200]
         if session.cushion and session.cushion.raw_input
         else ""
     )
+
+    # Identity-layer metadata: score each card's bridge against the
+    # goal. Result is attached as `card.serve_score`. Band sorting
+    # below does NOT branch on this — order within a band stays
+    # confidence-determined. The frontend may render a "serves real
+    # goal" badge or a "serves stated but not real goal" warning.
+    if anchor_summary:
+        goal = Goal(stated=anchor_summary, real=anchor_summary)
+        for c in cards:
+            scoring_text = " ".join(filter(None, (c.bridge, c.use, c.spark)))
+            if scoring_text.strip():
+                try:
+                    c.serve_score = discriminate(scoring_text, goal)
+                except Exception:  # pragma: no cover — discriminate is pure
+                    c.serve_score = None
+
+    # Step 2: synthesize across all cards
     synthesis_map = await synthesize_dossier(anchor_summary, cards, client)
+
+    # Identity-layer ENFORCEMENT (0.3.4) on opportunity paths.
+    # Each path gets a six-question test verdict ("capture" /
+    # "surface" / "skip"). The verdict is attached to the path AND
+    # used to split the list: capture/surface paths stay in
+    # `opportunity_paths` (primary, prominently rendered);
+    # "skip" paths move to `deprioritized_paths` (secondary,
+    # rendered as a "weak signals" collapsible section in the
+    # frontend). Nothing is silently deleted — every path the
+    # synthesizer surfaced still reaches the user, but the curated
+    # primary list keeps only the paths that passed >= 4/6
+    # questions.
+    if anchor_summary:
+        path_goal = Goal(stated=anchor_summary, real=anchor_summary)
+        kept: list = []
+        deprioritized: list = []
+        for path in synthesis_map.opportunity_paths:
+            try:
+                opening = Opening(description=path.description)
+                vdict = opportunity_test(opening, path_goal)
+                path.verdict = vdict.verdict
+                path.verdict_score = vdict.score
+            except Exception:  # pragma: no cover — test is pure
+                path.verdict = ""
+                path.verdict_score = 0
+            if path.verdict == "skip":
+                deprioritized.append(path)
+            else:
+                kept.append(path)
+        synthesis_map.opportunity_paths = kept
+        synthesis_map.deprioritized_paths = deprioritized
 
     # Step 3: bucket by confidence
     high_band = ConfidenceBand(Confidence.HIGH)
@@ -198,6 +253,24 @@ async def build_dossier(
             medium_band.cards.append(c)
         else:
             low_band.cards.append(c)
+
+    # Identity-layer ENFORCEMENT (0.3.4): within each band, sort cards
+    # by `serve_score.score` descending so goal-aligned bridges land
+    # at the top of their band. Confidence bands themselves (HIGH >
+    # MEDIUM > LOW) are untouched — this is a tiebreaker within band
+    # only, not a re-banding. Cards without a `serve_score` (e.g.
+    # short bridges that scored empty) sort to the end of their
+    # band, preserving the prior arrival order among themselves via
+    # Python's stable sort. The reorder is reversible by removing
+    # this loop.
+    def _serve_key(card: ArticulatedCard) -> float:
+        sc = card.serve_score
+        if sc is None:
+            return -1.0  # cards without a score go to the end of band
+        return float(sc.score)
+
+    for band in (high_band, medium_band, low_band):
+        band.cards.sort(key=_serve_key, reverse=True)
 
     # Step 4: metadata
     metadata = DossierMetadata(

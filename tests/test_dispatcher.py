@@ -110,13 +110,22 @@ def test_classify_trivial_keys():
 # 2. DIRECT route
 # ---------------------------------------------------------------------------
 
-@test("2.1 factual question → DIRECT, exactly 1 LLM call")
+@test("2.1 factual question → DIRECT, 1 or 2 LLM calls (gate may regenerate)")
 async def test_direct_factual():
+    """The DIRECT route is a single-model path — no engine fan-out, no
+    formation. After the identity gate landed in 0.3.2, the call count
+    is 1 (lint passes on the first draft) or 2 (lint blocks, gate
+    runs one regenerate). The contract the route guards is 'no engine
+    fan-out', which is what '<=2 LLM calls' enforces here — anything
+    more would mean wandering or formation ran by mistake."""
     client = mk_client()
     r = await dispatch("what's the difference between async and threading?",
                        client=client)
     assert r.route == Route.DIRECT
-    assert len(client.call_log) == 1
+    assert 1 <= len(client.call_log) <= 2, (
+        f"DIRECT should use 1 or 2 LLM calls (initial + optional gate "
+        f"regenerate), got {len(client.call_log)}"
+    )
     assert r.response_text  # mock returns non-empty content
 
 
