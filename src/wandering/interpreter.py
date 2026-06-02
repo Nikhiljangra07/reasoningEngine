@@ -451,6 +451,32 @@ Examples of shared topic but DIFFERENT mechanism:
     (interface compatibility) — both involve "switching" but different
     forces
 
+# LEXICAL OVERLAP IS NOT MECHANISM OVERLAP — THE CRITICAL TRAP
+
+When both descriptions contain the same English word, that word is
+NOT evidence of a shared mechanism. The word is a hypothesis you must
+TEST. The test: can you write the SAME causal sentence "X → Y because
+Z" with the variables of BOTH sides? If yes, the mechanism is shared.
+If you would need DIFFERENT causal sentences, the shared word is a
+CROSS-DOMAIN PUN — score the mechanism LOW (≤ 0.3) regardless of how
+strong the lexical match feels.
+
+Cross-domain puns are the model's most dangerous failure mode. Be
+especially skeptical when:
+  - The same English word has a technical meaning in different fields
+    (e.g., 'inflation' in economics ≠ 'inflation' in physics; 'flow'
+    in fluid dynamics ≠ 'flow' as Csikszentmihalyi's psychological
+    state; 'spring' as a mechanical device ≠ 'spring' as a season).
+  - The two descriptions are in clearly different domains.
+  - The causal sentence you would write for side A does not transfer
+    to side B without changing fundamental variables.
+
+When the same word DOES carry the same mechanism (e.g., 'feedback' as
+negative feedback in audio amplifiers AND homeostasis AND HVAC — same
+control-signal-returns-to-source primitive), score high. Lexical
+sameness is permitted as evidence — but only after the causal-sentence
+test passes for both sides.
+
 # OUTPUT FORMAT
 
 Return ONE valid JSON object:
@@ -493,6 +519,31 @@ If you can find a meaningful break point, the rest is probably a real
 analogy. If you can't find any break point (the analogy seems perfect),
 that's suspicious — it usually means the analogy is empty or surface-
 level rather than structurally deep.
+
+# CROSS-DOMAIN PUN — A LOAD-BEARING FAILURE MODE TO DETECT
+
+When the two descriptions share an identical English WORD that has
+DIFFERENT technical meanings in their respective domains, that itself
+IS the failure mode. Examples of cross-domain puns:
+  - 'inflation' in economics (money supply expansion) vs in physics
+    (gas pressure increase)
+  - 'pressure' in atmospheric science vs as social/peer influence
+  - 'capacity' as warehouse storage vs as cognitive working memory
+  - 'flow' as fluid dynamics vs as psychological absorption state
+  - 'resistance' as electrical impedance vs as political opposition
+  - 'cycle' as biological circadian rhythm vs as macroeconomic
+    business cycle
+  - 'spring' as mechanical device vs as climate season
+  - 'crash' as software termination vs as cardiovascular event
+
+When you detect a cross-domain pun, return:
+  found: true
+  failure_mode: "cross-domain pun — same word but different mechanisms;
+                 the apparent analogy is lexical coincidence, not
+                 structural rhyme. <name the two distinct mechanisms>."
+
+Detecting the pun is the WHOLE point. Do NOT score the pair as
+matching just because the keyword aligns — the pun IS the break.
 
 # OUTPUT FORMAT
 
