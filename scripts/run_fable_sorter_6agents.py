@@ -46,6 +46,7 @@ from src.llm.client import LLMClient, ClientMode
 from src.wandering.composer import compose_cushion
 from src.wandering.cushion import CushionField, CushionInput, SkipReason
 from src.wandering.dossier import build_dossier
+from src.wandering.fetcher import web_search_fetcher
 from src.wandering.runtime import (
     WanderingConfig,
     WanderingMode,
@@ -238,7 +239,10 @@ async def run() -> dict[str, Any]:
     log.info("[Phase 2] running %d-agent wander (%s, %.0fs budget)…",
              AGENT_COUNT, WANDERING_MODE.value, TIME_BUDGET_S)
     try:
-        session = await run_wandering_session(cushion, config, client)
+        session = await run_wandering_session(
+            cushion, config, client,
+            fetcher=web_search_fetcher,
+        )
     except Exception as e:
         log.error("run_wandering_session failed: %s\n%s", e, traceback.format_exc())
         raise
