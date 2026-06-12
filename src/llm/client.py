@@ -480,6 +480,15 @@ class LLMClient:
             raw=response,
         )
 
+    #: Anthropic models that have deprecated the `temperature` request
+    #: parameter. Calls to these slugs MUST omit the temperature kwarg or
+    #: the API returns HTTP 400 invalid_request_error. Discovered 2026-06-12
+    #: via Fable 5 ping. Add new slugs here as Anthropic ships more models
+    #: that drop the param.
+    _ANTHROPIC_NO_TEMPERATURE: tuple[str, ...] = (
+        "claude-fable-5",
+    )
+
     async def _call_via_anthropic(
         self,
         client,
@@ -491,14 +500,20 @@ class LLMClient:
     ) -> LLMResponse:
         """Call Anthropic's native /v1/messages API."""
         native_model = strip_provider_prefix(model)
+        kwargs = {
+            "model":      native_model,
+            "max_tokens": max_tokens,
+            "system":     system_prompt,
+            "messages":   [{"role": "user", "content": user_message}],
+        }
+        # Newer Anthropic models (Fable 5+) reject temperature. Older
+        # models still accept it; the default at the API server is fine
+        # for our use, so dropping it for incompatible models doesn't
+        # change behavior for them.
+        if native_model not in self._ANTHROPIC_NO_TEMPERATURE:
+            kwargs["temperature"] = temperature
         response = await asyncio.wait_for(
-            client.messages.create(
-                model=native_model,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}],
-            ),
+            client.messages.create(**kwargs),
             timeout=self.TIMEOUT_SECONDS,
         )
         # Anthropic returns content as a list of TextBlock objects.
