@@ -133,6 +133,20 @@ CONTROL_PLANE_SITES: tuple[ExemptSite, ...] = (
             "call across both seats."
         ),
     ),
+    ExemptSite(
+        file="src/wandering/master_sorter.py",
+        prompt_name="system_prompt",
+        reason=(
+            "master_sorter._call_with_budget() — pure passthrough "
+            "helper that wraps client.call with cost-cap enforcement + "
+            "per-call audit for the sorter tributary. The composed "
+            "doctrine header lives at the single master_sort() call site "
+            "where compose_system_prompt(_DOCTRINE_PREAMBLE, mode='master_sorter') "
+            "runs once and is forwarded into the single sort pass. "
+            "Composing inside this helper would double-wrap the doctrine "
+            "on every sort call."
+        ),
+    ),
 )
 
 

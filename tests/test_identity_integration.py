@@ -526,13 +526,13 @@ def test_speech_clarifier_wires_gate():
     assert "_regen_clarification" in source
 
 
-@test("D3 CONTROL_PLANE_SITES has exactly the six expected entries")
+@test("D3 CONTROL_PLANE_SITES has exactly the seven expected entries")
 def test_exempt_registry_shape():
     """The exempt registry's shape is part of the architectural
     contract. Adding a new entry is fine — it must be a real
     control-plane site with a real reason. Removing an entry without
     wrapping the underlying call is not — SP2 catches that. The
-    registry is currently locked at SIX entries:
+    registry is currently locked at SEVEN entries:
 
       - router / triage / visualizer / critique  (control-plane gates)
       - call_tracker.py  (passthrough wrapper for the agent layer)
@@ -540,10 +540,15 @@ def test_exempt_registry_shape():
         synthesizer's cost-cap helper; doctrine header is composed once
         at the master_synthesize entry point and forwarded into every
         R1/R2/R3/R4 call across both seats)
+      - master_sorter.py  (passthrough wrapper for the master sorter
+        tributary's cost-cap helper; doctrine header is composed once
+        at the master_sort entry point and forwarded into the single
+        sort pass)
 
-    Both passthrough wrappers (call_tracker.py and master_synthesizer.py)
-    forward an already-composed system_prompt verbatim; composing again
-    inside them would double-wrap the doctrine header on every call.
+    The passthrough wrappers (call_tracker.py, master_synthesizer.py,
+    master_sorter.py) forward an already-composed system_prompt verbatim;
+    composing again inside them would double-wrap the doctrine header
+    on every call.
     """
     by_file = sorted(s.file for s in CONTROL_PLANE_SITES)
     assert by_file == sorted([
@@ -553,6 +558,7 @@ def test_exempt_registry_shape():
         "src/wandering/call_tracker.py",
         "src/wandering/critique.py",
         "src/wandering/master_synthesizer.py",
+        "src/wandering/master_sorter.py",
     ]), by_file
 
 

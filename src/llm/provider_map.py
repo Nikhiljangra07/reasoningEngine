@@ -150,6 +150,12 @@ PRICING: dict[str, tuple[float, float]] = {
     # (Wandering Room "senior scientist" seat). Per-call cost dominates;
     # used only on aggregated dossier input, never on per-report work.
     "anthropic/claude-opus-4-6":       (15.00, 75.00),
+    # Fable 5 — the master_sorter tributary's sole seat. Single-pass
+    # classification (known / invalid / unplaced); per-call cost
+    # dominates so used only at master-tier, never on per-report work.
+    # Pricing is a Sonnet-tier placeholder pending confirmation against
+    # the published Anthropic rate card — revise once verified.
+    "anthropic/claude-fable-5":        (3.00, 15.00),
 
     # OpenAI (GPT-5.5 intentionally excluded — too expensive)
     "openai/gpt-5.4-nano":             (0.10,  0.40),

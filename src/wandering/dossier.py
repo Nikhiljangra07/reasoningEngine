@@ -28,6 +28,11 @@ from src.identity.disciplines.opportunity_capture import Opening, test as opport
 from src.identity.singular_path import Goal
 from src.wandering.articulate import ArticulatedCard, articulate_report
 from src.wandering.cushion import CushionGraph
+from src.wandering.master_sorter import (
+    MasterSortProgress,
+    SortedReport,
+    master_sort,
+)
 from src.wandering.master_synthesizer import (
     DEFAULT_COST_CEILING_USD,
     MasterSynthesis,
@@ -102,6 +107,12 @@ class Dossier:
     # path; ~5-8 min wall-clock + ~$5-7 cost). None when skipped so
     # frontends can branch on presence rather than emptiness.
     master_synthesis: MasterSynthesis | None = None
+    # Master sorter layer — tributary that runs in place of the
+    # synthesizer when build_dossier(pipeline_mode="sorter"). Single
+    # Fable 5 pass; classifies each card into known / invalid / unplaced.
+    # The dam: when this is set, master_synthesis is None and vice
+    # versa. None when run_master_synthesizer=False.
+    master_sorted: SortedReport | None = None
 
     def all_cards(self) -> list[ArticulatedCard]:
         """All cards across all bands in canonical order."""
@@ -224,6 +235,9 @@ class Dossier:
             "master_synthesis": (
                 self.master_synthesis.to_dict() if self.master_synthesis is not None else None
             ),
+            "master_sorted": (
+                self.master_sorted.to_dict() if self.master_sorted is not None else None
+            ),
             # Fix 7 (audit r4→r5): expose the SUPPRESSED side of every
             # cohort-pair merge as a top-level convenience field for the
             # UI's "alternate framing" expander. Pure derivation from
@@ -243,11 +257,14 @@ async def build_dossier(
     client,  # LLMClient — not typed to keep imports minimal
     *,
     run_master_synthesizer: bool = False,
+    pipeline_mode: str = "sorter",
     master_synth_cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
     master_synth_progress: MasterSynthesisProgress | None = None,
     master_synth_opus_model: str | None = None,
     master_synth_gpt_model:  str | None = None,
     master_synth_agent_provider_map: dict[str, str] | None = None,
+    master_sort_progress: MasterSortProgress | None = None,
+    master_sort_fable_model: str | None = None,
 ) -> Dossier:
     """Build the final Dossier from a completed SessionResult.
 
@@ -390,24 +407,52 @@ async def build_dossier(
         synthesis=synthesis_map,
     )
 
-    # Step 5 (optional): master synthesizer — collaborative Opus + GPT
-    # cross-card fusion. Runs ONLY when opted in; off by default to
-    # preserve the existing API endpoint shape.
+    # Step 5 (optional): master tier — runs ONLY when opted in via
+    # run_master_synthesizer=True. The flag name is retained for
+    # backwards-compat with existing callers but the tier it triggers
+    # is selected by `pipeline_mode`:
+    #
+    #   "sorter"      — Fable 5 classifies each card into known /
+    #                   invalid / unplaced. Single-pass, single-seat,
+    #                   no fusion. THIS IS THE DEFAULT (the dam).
+    #   "synthesizer" — Opus 4.6 + GPT-5.4 collaborative R1-R4 producing
+    #                   3-5 cross-card master fusions. The pre-dam path,
+    #                   still callable but no longer the default.
+    #
+    # The two tributaries are mutually exclusive within a single
+    # build_dossier call — only one populates the corresponding
+    # dossier field, the other stays None.
     if run_master_synthesizer:
-        from src.wandering.master_synthesizer import (
-            OPUS_SEAT_MODEL, GPT_SEAT_MODEL,
-        )
-        dossier.master_synthesis = await master_synthesize(
-            cushion=session.cushion,
-            cards=dossier.all_cards(),
-            synthesis_map=synthesis_map,
-            client=client,
-            progress=master_synth_progress,
-            cost_ceiling_usd=master_synth_cost_ceiling_usd,
-            opus_model=master_synth_opus_model or OPUS_SEAT_MODEL,
-            gpt_model=master_synth_gpt_model  or GPT_SEAT_MODEL,
-            agent_provider_map=master_synth_agent_provider_map,
-        )
+        if pipeline_mode == "sorter":
+            from src.wandering.master_sorter import FABLE_SEAT_MODEL
+            dossier.master_sorted = await master_sort(
+                cushion=session.cushion,
+                cards=dossier.all_cards(),
+                synthesis_map=synthesis_map,
+                client=client,
+                progress=master_sort_progress,
+                cost_ceiling_usd=master_synth_cost_ceiling_usd,
+                fable_model=master_sort_fable_model or FABLE_SEAT_MODEL,
+            )
+        elif pipeline_mode == "synthesizer":
+            from src.wandering.master_synthesizer import (
+                OPUS_SEAT_MODEL, GPT_SEAT_MODEL,
+            )
+            dossier.master_synthesis = await master_synthesize(
+                cushion=session.cushion,
+                cards=dossier.all_cards(),
+                synthesis_map=synthesis_map,
+                client=client,
+                progress=master_synth_progress,
+                cost_ceiling_usd=master_synth_cost_ceiling_usd,
+                opus_model=master_synth_opus_model or OPUS_SEAT_MODEL,
+                gpt_model=master_synth_gpt_model  or GPT_SEAT_MODEL,
+                agent_provider_map=master_synth_agent_provider_map,
+            )
+        else:
+            raise ValueError(
+                f"pipeline_mode must be 'sorter' or 'synthesizer', got: {pipeline_mode!r}"
+            )
 
     return dossier
 
