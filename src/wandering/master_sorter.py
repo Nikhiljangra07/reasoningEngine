@@ -105,10 +105,22 @@ SORTER_DOMAIN  = "master_sorter"
 SORTER_CONCEPT = "master_sort"
 
 #: Single-pass output cap. The sorter emits one JSON object holding
-#: three arrays (known / invalid / unplaced); for typical 15-30 card
-#: dossiers this lands well under 8192 tokens. Matched to synthesizer
-#: R3 cap for headroom on the larger sessions.
-MAX_TOKENS_SORT = 8192
+#: three arrays (known / invalid / unplaced). Sized at 16384 because
+#: Fable 5's adaptive-thinking API counts ThinkingBlock tokens against
+#: this budget; the 8192 we started with worked for 1-card mocked
+#: smoke but exhausted on real 9-card sorts. 16384 gives headroom for
+#: thinking + JSON output even on 20-card sessions. Tighter when we
+#: pass effort="low" or "medium" — see SORTER_EFFORT below.
+MAX_TOKENS_SORT = 16384
+
+#: Thinking-effort cap for the sorter call. Sort is a recognition task,
+#: not a deep-reasoning task — the model's job is to MATCH against
+#: training memory, not deliberate. "low" budget keeps thinking tokens
+#: bounded so the visible TextBlock with JSON output reliably emerges.
+#: Discovered 2026-06-12: leaving this unset (Fable 5 default "adaptive")
+#: caused real 9-card sorts to consume 3296 output tokens entirely on
+#: ThinkingBlocks with zero visible content.
+SORTER_EFFORT = "low"
 
 
 # ---------------------------------------------------------------------------
@@ -364,6 +376,7 @@ async def _call_with_budget(
         concept=SORTER_CONCEPT,
         model=model_slug,
         max_tokens=max_tokens,
+        effort=SORTER_EFFORT,
     )
     cost_usd = _call_cost_usd(model_slug, response)
     result.total_cost_usd += cost_usd

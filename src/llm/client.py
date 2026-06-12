@@ -254,6 +254,7 @@ class LLMClient:
         max_tokens: int | None = None,
         temperature: float = 0.7,
         model: str | None = None,
+        effort: str | None = None,
     ) -> LLMResponse:
         """
         Make a single LLM call.
@@ -266,6 +267,14 @@ class LLMClient:
         Every domain agent calls this. The (domain, concept) tuple drives both
         the system prompt selection (handled by the caller) and the model
         selection (handled here).
+
+        `effort` controls the thinking budget for adaptive-thinking models
+        (Fable 5+ require this; older models ignore it). Valid values:
+        "low" | "medium" | "high". When None, the model uses its default
+        (which for Fable 5 is "adaptive" — may exhaust max_tokens on
+        thinking and emit no visible TextBlock for complex structured-
+        output prompts). For sort / classification work, prefer "low"
+        or "medium" to keep budget for visible output.
         """
         max_tokens = max_tokens or self.MAX_OUTPUT_TOKENS
         chosen_model = model or resolve_model(domain, concept) or self.model
@@ -280,7 +289,7 @@ class LLMClient:
                     )
                 else:
                     response = await self._live_call(
-                        system_prompt, user_message, max_tokens, temperature, chosen_model
+                        system_prompt, user_message, max_tokens, temperature, chosen_model, effort,
                     )
 
                 elapsed_ms = (time.monotonic() - start_time) * 1000
@@ -383,11 +392,15 @@ class LLMClient:
         max_tokens: int,
         temperature: float,
         model: str,
+        effort: str | None = None,
     ) -> LLMResponse:
         """
         Make a real API call, routed to the provider's native SDK when
         a direct key is set. Falls back to OpenRouter for DeepSeek and any
         provider whose direct client isn't configured.
+
+        `effort` only flows to providers whose adaptive-thinking API uses
+        it (Anthropic Fable 5+). Other providers ignore it.
         """
         actual = self._resolve_actual_provider(model)
         client = self._provider_clients.get(actual)
@@ -401,6 +414,7 @@ class LLMClient:
         if actual == Provider.ANTHROPIC:
             return await self._call_via_anthropic(
                 client, system_prompt, user_message, max_tokens, temperature, model,
+                effort=effort,
             )
         if actual == Provider.GOOGLE:
             return await self._call_via_gemini(
@@ -489,6 +503,19 @@ class LLMClient:
         "claude-fable-5",
     )
 
+    #: Anthropic models that use the NEW adaptive-thinking API where
+    #: `output_config.effort` controls thinking depth. For these models
+    #: thinking defaults to "adaptive" — which on complex structured-
+    #: output prompts can exhaust max_tokens on hidden thinking and emit
+    #: zero visible TextBlock content. Discovered 2026-06-12 when the
+    #: first live sort returned 3296 output_tokens with empty content.
+    #: Setting effort="low" or "medium" caps thinking budget so visible
+    #: JSON gets emitted. Older Anthropic models (Sonnet/Opus 4.6) do
+    #: not accept output_config and the param is dropped for them.
+    _ANTHROPIC_USES_OUTPUT_CONFIG: tuple[str, ...] = (
+        "claude-fable-5",
+    )
+
     async def _call_via_anthropic(
         self,
         client,
@@ -497,8 +524,13 @@ class LLMClient:
         max_tokens: int,
         temperature: float,
         model: str,
+        effort: str | None = None,
     ) -> LLMResponse:
-        """Call Anthropic's native /v1/messages API."""
+        """Call Anthropic's native /v1/messages API.
+
+        `effort` is forwarded as output_config.effort for adaptive-thinking
+        models (Fable 5+). For older models it is ignored.
+        """
         native_model = strip_provider_prefix(model)
         kwargs = {
             "model":      native_model,
@@ -512,11 +544,20 @@ class LLMClient:
         # change behavior for them.
         if native_model not in self._ANTHROPIC_NO_TEMPERATURE:
             kwargs["temperature"] = temperature
+        # Forward effort as output_config.effort for adaptive-thinking
+        # models. Without this, Fable 5 defaults to "adaptive" and
+        # complex prompts emit ThinkingBlock-only responses with no
+        # visible TextBlock.
+        if effort and native_model in self._ANTHROPIC_USES_OUTPUT_CONFIG:
+            kwargs["output_config"] = {"effort": effort}
         response = await asyncio.wait_for(
             client.messages.create(**kwargs),
             timeout=self.TIMEOUT_SECONDS,
         )
         # Anthropic returns content as a list of TextBlock objects.
+        # ThinkingBlock objects also appear for adaptive-thinking models
+        # but they have `.thinking` instead of `.text` and are correctly
+        # skipped here.
         content = "".join(
             block.text for block in response.content
             if hasattr(block, "text")
