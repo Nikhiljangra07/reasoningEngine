@@ -155,7 +155,15 @@ PRICING: dict[str, tuple[float, float]] = {
     # dominates so used only at master-tier, never on per-report work.
     # Pricing is a Sonnet-tier placeholder pending confirmation against
     # the published Anthropic rate card — revise once verified.
+    # NOTE: Fable 5 access was gated after the 2026-06-12 sorter run
+    # (Anthropic redirect → Opus 4.8). The slug stays registered for
+    # cost-cap math in case access returns.
     "anthropic/claude-fable-5":        (3.00, 15.00),
+    # Opus 4.8 — Anthropic's redirect target after Fable 5 access was
+    # gated. Available 2026-06-12. Pricing placeholder matched to Opus
+    # 4.6 ($15/$75 per M) pending verification against the published
+    # rate card — Opus 4.8 may be priced slightly higher; revise then.
+    "anthropic/claude-opus-4-8":       (15.00, 75.00),
 
     # OpenAI (GPT-5.5 intentionally excluded — too expensive)
     "openai/gpt-5.4-nano":             (0.10,  0.40),

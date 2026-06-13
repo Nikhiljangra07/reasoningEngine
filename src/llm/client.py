@@ -501,6 +501,10 @@ class LLMClient:
     #: that drop the param.
     _ANTHROPIC_NO_TEMPERATURE: tuple[str, ...] = (
         "claude-fable-5",
+        # Opus 4.8 also dropped temperature — Anthropic is standardizing
+        # on adaptive defaults for new models. Verified 2026-06-12 via
+        # 400 invalid_request_error probe.
+        "claude-opus-4-8",
     )
 
     #: Anthropic models that use the NEW adaptive-thinking API where
@@ -514,6 +518,11 @@ class LLMClient:
     #: not accept output_config and the param is dropped for them.
     _ANTHROPIC_USES_OUTPUT_CONFIG: tuple[str, ...] = (
         "claude-fable-5",
+        # Opus 4.8 accepts output_config.effort cleanly. Its default
+        # behavior emits TextBlock only (no ThinkingBlock by default,
+        # unlike Fable 5), but the effort kwarg is still useful for
+        # explicit budget control on long structured outputs.
+        "claude-opus-4-8",
     )
 
     async def _call_via_anthropic(
