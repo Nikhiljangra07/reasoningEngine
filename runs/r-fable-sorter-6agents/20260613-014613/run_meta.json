@@ -1,0 +1,60 @@
+{
+  "timestamp": "20260613-014613",
+  "git_sha": "b2933f6d6f5bacb573118fc0d1510086bd280cef",
+  "git_branch": "chaos-amp",
+  "wandering": {
+    "mode": "absolute_chaos",
+    "agent_count": 6,
+    "model_mix": [
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-haiku-4-5"
+    ],
+    "time_budget_s": 1800,
+    "tokens_per_agent": 30000,
+    "session_token_cap": 1000000
+  },
+  "control_room": {
+    "WANDER_DOMAINS": [
+      "physics",
+      "mathematics"
+    ],
+    "WANDER_MODE": "absolute_chaos",
+    "WANDER_AGENTS": 6,
+    "WANDER_MODEL": "anthropic/claude-haiku-4-5",
+    "SORTER_MODEL": "anthropic/claude-opus-4-8"
+  },
+  "master_tier": {
+    "pipeline_mode": "sorter",
+    "sorter_model": "anthropic/claude-opus-4-8",
+    "cost_ceiling_usd": 8.0
+  },
+  "durations_seconds": {
+    "cushion_compose": 48.6,
+    "wandering": 479.02,
+    "dossier_build": 349.17,
+    "total": 876.79
+  },
+  "cohort_integrity_ok": true,
+  "cohort_integrity_problems": [],
+  "session_metrics": {
+    "report_count": 16,
+    "agent_count": 6,
+    "tokens_spent": 366102,
+    "expected_agents": 6,
+    "agent_errors": {}
+  },
+  "sort_metrics": {
+    "known": 0,
+    "invalid": 1,
+    "unplaced": 15,
+    "parser_demotions": 0,
+    "dropped": 0,
+    "total_cost_usd": 0.4155,
+    "truncated_by_budget": false
+  },
+  "output_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-fable-sorter-6agents/20260613-014613"
+}

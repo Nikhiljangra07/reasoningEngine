@@ -67,7 +67,7 @@ WANDER_AGENTS = 6
 #   "anthropic/claude-opus-4-8"     ← stronger, pricier
 #   "deepseek/deepseek-v4-pro"      ← different RLHF lineage
 # ---------------------------------------------------------------------------
-WANDER_MODEL = "anthropic/claude-sonnet-4-6"
+WANDER_MODEL = "anthropic/claude-haiku-4-5"
 
 
 # ---------------------------------------------------------------------------
