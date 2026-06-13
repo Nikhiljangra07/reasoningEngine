@@ -56,6 +56,14 @@ log = logging.getLogger("constellax.wandering.policy")
 #: inverse visit-count.
 #:
 #: Editors: add domains liberally. Reducing diversity hurts the design.
+#:
+#: RUNTIME NARROWING (control room): when the env var WANDER_SEED_DOMAINS
+#: is set to a comma-separated list (e.g. "physics,mathematics"), the
+#: policy restricts the wander to ONLY those domains. This is set by the
+#: control room (scripts/control_room.py) via the runner. When the env
+#: var is unset/empty, the full palette below is used (default behavior,
+#: unchanged). The override only applies to callers using the default
+#: seed_domains — an explicit seed_domains argument is always respected.
 SEED_DOMAINS: tuple[str, ...] = (
     # natural sciences
     "physics", "biology", "chemistry", "ecology", "neuroscience", "astronomy",
@@ -82,6 +90,46 @@ SEED_DOMAINS: tuple[str, ...] = (
     # boundary & edge
     "biographies", "investigative_journalism", "research_papers", "patents",
 )
+
+
+# ---------------------------------------------------------------------------
+# Runtime domain narrowing (control room)
+# ---------------------------------------------------------------------------
+
+def _resolve_seed_domains(seed_domains: tuple[str, ...]) -> tuple[str, ...]:
+    """Apply the WANDER_SEED_DOMAINS env override when present.
+
+    Only narrows when the caller used the DEFAULT SEED_DOMAINS (identity
+    check) — an explicit seed_domains argument is always respected, so
+    tests and special callers are never silently overridden.
+
+    Env format: comma-separated domain names, e.g. "physics,mathematics".
+    Unknown names (not in SEED_DOMAINS) are dropped with a warning. If the
+    override resolves to an empty set, the full palette is kept (a typo
+    should not produce a zero-domain wander that finds nothing).
+    """
+    import os
+    if seed_domains is not SEED_DOMAINS:
+        return seed_domains  # caller narrowed explicitly; respect it
+    raw = os.environ.get("WANDER_SEED_DOMAINS", "").strip()
+    if not raw:
+        return seed_domains  # no override → full palette
+    requested = [d.strip() for d in raw.split(",") if d.strip()]
+    valid = tuple(d for d in requested if d in SEED_DOMAINS)
+    unknown = [d for d in requested if d not in SEED_DOMAINS]
+    if unknown:
+        log.warning(
+            "WANDER_SEED_DOMAINS: ignoring unknown domain(s) %s "
+            "(not in SEED_DOMAINS)", unknown,
+        )
+    if not valid:
+        log.warning(
+            "WANDER_SEED_DOMAINS resolved to zero valid domains; "
+            "keeping full palette to avoid a no-op wander",
+        )
+        return seed_domains
+    log.info("WANDER_SEED_DOMAINS narrowing wander to: %s", list(valid))
+    return valid
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +183,8 @@ def pick_next_domain(
     seed_domains: tuple[str, ...] = SEED_DOMAINS,
     random_fn: Callable[[float, float], float] | None = None,
     choice_fn: Callable[[list[str], list[float]], str] | None = None,
+    *,
+    noticeboard_covered_domains: set[str] | None = None,
 ) -> str:
     """Pick the next domain to visit, weighted by inverse visit-count.
 
@@ -146,6 +196,15 @@ def pick_next_domain(
     we use the stdlib `random` module. The policy is seedable for
     reproducibility, but in production we use real randomness — anything
     else would be "smart routing" and violate Law 1.
+
+    WANDER_AGENT_NOTICEBOARD test scaffold (June 2026): when the optional
+    `noticeboard_covered_domains` set is supplied (domains other agents
+    have recently posted notices about), their weight is HALVED — a soft
+    hint to prefer uncovered or complementary territory, NOT an exclusion.
+    Heavily-noticed domains stay possible (the chaos floor still holds);
+    they just become less likely. Each covered domain's halving is
+    independent of its visit count, so a never-visited-by-me-but-covered-
+    by-peers domain still gets a real-but-discounted chance.
     """
     import random as _random
 
@@ -156,6 +215,10 @@ def pick_next_domain(
             return _random.choices(items, weights=weights, k=1)[0]
         choice_fn = _default_choice
 
+    # Control-room narrowing: restrict to WANDER_SEED_DOMAINS when set.
+    seed_domains = _resolve_seed_domains(seed_domains)
+
+    covered: set[str] = noticeboard_covered_domains or set()
     visits = domain_visit_counts(trace)
     weights = []
     for domain in seed_domains:
@@ -164,6 +227,11 @@ def pick_next_domain(
         # Floor at 0.1 so heavily-visited domains aren't completely impossible
         # (chaos respects the long tail).
         w = max(0.1, 2.0 / (1.0 + v))
+        # Noticeboard soft-downweight: halve weight if a peer agent
+        # already posted a notice about this domain. Still bounded by
+        # the chaos floor so it never goes to zero.
+        if domain in covered:
+            w = max(0.1, w * 0.5)
         weights.append(w)
 
     return choice_fn(list(seed_domains), weights)
@@ -192,6 +260,8 @@ def next_move(
     cushion: CushionGraph,
     trace: DecisionTrace,
     seed_domains: tuple[str, ...] = SEED_DOMAINS,
+    *,
+    noticeboard_covered_domains: set[str] | None = None,
 ) -> NextMove:
     """Decide the agent's next move based on cushion + trace.
 
@@ -202,6 +272,12 @@ def next_move(
     The cushion parameter is currently used only for context (could later
     inform domain selection — but per Law 1, we don't do that). We accept
     it now so the API doesn't break when we add features that DO need it.
+
+    WANDER_AGENT_NOTICEBOARD test scaffold (June 2026): `noticeboard_covered_
+    domains` is the optional set of domains other agents have recently
+    posted notices about. When supplied, pick_next_domain halves the
+    weight of covered domains (soft hint, not exclusion) so the cohort
+    spreads coverage. None = legacy behavior unchanged.
     """
     if detect_drift(trace):
         return NextMove(
@@ -213,11 +289,19 @@ def next_move(
             ),
         )
 
-    domain = pick_next_domain(trace, seed_domains=seed_domains)
+    domain = pick_next_domain(
+        trace,
+        seed_domains=seed_domains,
+        noticeboard_covered_domains=noticeboard_covered_domains,
+    )
+    nb_note = (
+        f" (noticeboard-aware; {len(noticeboard_covered_domains)} covered)"
+        if noticeboard_covered_domains else ""
+    )
     return NextMove(
         kind=StepKind.FETCHED,
         position=domain,
-        rationale=f"chaos pick: domain {domain!r} weighted by inverse visits",
+        rationale=f"chaos pick: domain {domain!r} weighted by inverse visits{nb_note}",
     )
 
 

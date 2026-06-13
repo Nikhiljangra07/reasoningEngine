@@ -53,14 +53,25 @@ from src.wandering.runtime import (
     run_wandering_session,
 )
 
+# THE CONTROL ROOM — single source of truth for run direction.
+# Edit scripts/control_room.py, not this file, to change domains/mode/etc.
+import control_room
+
 
 # ---------------------------------------------------------------------------
-# Run config — locked at script authorship time
+# Run config — READ FROM THE CONTROL ROOM
 # ---------------------------------------------------------------------------
 
-AGENT_COUNT      = 6
-MODEL_MIX        = ("anthropic/claude-sonnet-4-6",) * AGENT_COUNT
-WANDERING_MODE   = WanderingMode.MULTI_PENDULUM
+_MODE_MAP = {
+    "multi_pendulum":  WanderingMode.MULTI_PENDULUM,
+    "absolute_chaos":  WanderingMode.ABSOLUTE_CHAOS,
+    "triple_pendulum": WanderingMode.TRIPLE_PENDULUM,
+}
+
+AGENT_COUNT      = control_room.WANDER_AGENTS
+MODEL_MIX        = (control_room.WANDER_MODEL,) * AGENT_COUNT
+WANDERING_MODE   = _MODE_MAP[control_room.WANDER_MODE]
+SORTER_MODEL     = control_room.SORTER_MODEL
 TIME_BUDGET_S    = 30 * 60                # 30 min default
 TOKENS_PER_AGENT = 30_000
 SORT_COST_CAP    = 8.00                   # $ ceiling for the master_sort pass
@@ -178,9 +189,21 @@ async def run() -> dict[str, Any]:
     log = logging.getLogger("run_fable_sorter")
 
     log.info("=" * 70)
-    log.info("FABLE 5 SORTER — 6 SONNET 4.6 AGENTS — RUN %s", timestamp)
+    log.info("CONSTELLAX WANDERING — SORTER RUN %s", timestamp)
     log.info("=" * 70)
     log.info("Output directory: %s", out_dir)
+
+    # ---- CONTROL ROOM — apply the direction ----------------------------
+    cr = control_room.as_dict()
+    log.info("CONTROL ROOM: %s", cr)
+    seed_env = control_room.seed_domains_env()
+    if seed_env:
+        os.environ["WANDER_SEED_DOMAINS"] = seed_env
+        log.info("Domain narrowing ACTIVE — wander restricted to: %s", seed_env)
+    else:
+        os.environ.pop("WANDER_SEED_DOMAINS", None)
+        log.info("Domain narrowing OFF — full %d-domain palette in play",
+                 0)  # informational; policy uses full SEED_DOMAINS
 
     # Git revision for the run_meta — so we know exactly which code shipped
     try:
@@ -278,6 +301,7 @@ async def run() -> dict[str, Any]:
             run_master_synthesizer=True,
             pipeline_mode="sorter",
             master_synth_cost_ceiling_usd=SORT_COST_CAP,
+            master_sort_fable_model=SORTER_MODEL,
         )
     except Exception as e:
         log.error("build_dossier failed: %s\n%s", e, traceback.format_exc())
@@ -318,9 +342,10 @@ async def run() -> dict[str, Any]:
             "tokens_per_agent":  TOKENS_PER_AGENT,
             "session_token_cap": config.session_token_cap,
         },
+        "control_room":          cr,
         "master_tier": {
             "pipeline_mode":     "sorter",
-            "sorter_model":      "anthropic/claude-fable-5",
+            "sorter_model":      SORTER_MODEL,
             "cost_ceiling_usd":  SORT_COST_CAP,
         },
         "durations_seconds": {
