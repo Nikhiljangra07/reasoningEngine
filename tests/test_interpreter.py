@@ -80,7 +80,7 @@ def mk_cushion():
             problem=CushionField(name="problem", content="test"),
             context=CushionField(name="context", content=""),
             vision=CushionField(name="vision", content=""),
-            current_map=CushionField(name="current_map", content=""),
+            hunches=CushionField(name="hunches", content=""),
         ),
     )
 

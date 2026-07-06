@@ -36,8 +36,20 @@ randomness is seedable for testing.
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Callable
+
+# Diversity steering strength (Phase 3, 2026-06-17). When a peer agent has
+# already covered a domain, its pick-weight is multiplied by this factor —
+# STEERING the swarm off already-covered ground to fight homogeneity collapse
+# (the strongest-evidenced multi-agent failure: surface diversity collapses, so
+# structural steering is the real lever). Stronger than the old 0.5. It is a
+# WEIGHT, never an exclusion (floor below keeps it > 0), so it stays flow-not-
+# judge (chaos law intact) and never STARVES a genuinely productive niche — which
+# would fight the governor's REALLOCATE/exploit signal. Tune via env.
+_NOTICEBOARD_DOWNWEIGHT = float(os.environ.get("WANDER_NOTICEBOARD_DOWNWEIGHT", "0.35"))
+_NOTICEBOARD_FLOOR = float(os.environ.get("WANDER_NOTICEBOARD_FLOOR", "0.1"))
 
 from src.wandering.cushion import CushionGraph
 from src.wandering.trace import DecisionTrace, StepKind
@@ -227,11 +239,13 @@ def pick_next_domain(
         # Floor at 0.1 so heavily-visited domains aren't completely impossible
         # (chaos respects the long tail).
         w = max(0.1, 2.0 / (1.0 + v))
-        # Noticeboard soft-downweight: halve weight if a peer agent
-        # already posted a notice about this domain. Still bounded by
-        # the chaos floor so it never goes to zero.
+        # Noticeboard soft-downweight: scale weight down if a peer agent already
+        # posted a notice about this domain — STEERING the swarm off covered
+        # ground to fight homogeneity. Bounded by the chaos floor so it never
+        # goes to zero (steering, not exclusion → chaos-safe, never starves a
+        # productive niche the governor might want to REALLOCATE into).
         if domain in covered:
-            w = max(0.1, w * 0.5)
+            w = max(_NOTICEBOARD_FLOOR, w * _NOTICEBOARD_DOWNWEIGHT)
         weights.append(w)
 
     return choice_fn(list(seed_domains), weights)

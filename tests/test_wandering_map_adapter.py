@@ -80,7 +80,7 @@ def _make_cushion(problem: str = "build a sketchbook tool for solo designers") -
             problem=CushionField(name="problem", content=problem),
             context=CushionField(name="context"),
             vision=CushionField(name="vision"),
-            current_map=CushionField(name="current_map"),
+            hunches=CushionField(name="hunches"),
         ),
     )
 

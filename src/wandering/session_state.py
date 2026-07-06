@@ -125,6 +125,72 @@ class FollowonItem:
 
 
 # ---------------------------------------------------------------------------
+# Agent noticeboard (WANDER_AGENT_NOTICEBOARD test scaffold — June 2026)
+# ---------------------------------------------------------------------------
+#
+# Append-only heads-up board. After a successful dig, an agent posts a short
+# notice — domain, match strength, one-sentence finding, direction pointed —
+# so other agents can SEE what's been covered before picking their next
+# domain. Informational only: notices do NOT enter dig content (the dig
+# itself remains independent per Law 1) and do NOT trigger cross-agent
+# critique. The intent is coverage awareness, not mid-flight consensus.
+#
+# Safety properties (vs the rejected real-time chat design):
+#   - Notices are POSTED only after a dig completes — agents can't see
+#     peers' in-progress findings.
+#   - Notices are READ only at next-domain-pick time — they influence
+#     which domain an agent walks into, not what bridges it finds there.
+#   - Each report remains an independent sample for the synthesizer.
+#   - The noticeboard is append-only; nothing gets edited or retracted.
+#
+# Failure modes to watch for (will surface in A/B against r6):
+#   - Premature claim: thin dig posts "I covered X" → others avoid X →
+#     under-coverage. Mitigation: match_strength in the notice so others
+#     can judge value; notices are informational, not exclusive.
+#   - Domain crowding inverse: agents over-correct toward never-covered
+#     domains, missing complementary dives. Mitigation: domain-pick
+#     policy treats notices as soft hints, not hard exclusions.
+
+
+@dataclass
+class AgentNotice:
+    """One heads-up notice posted to the session noticeboard.
+
+    Posted by an agent after a successful dig produces a report, before
+    the agent picks its next domain. Read by other agents at their own
+    next-domain-pick step. Pure informational — never enters dig content.
+    """
+
+    agent_id:        str
+    domain:          str
+    match_strength:  str   # "weak" | "moderate" | "strong" — derived from total_matched_nodes
+    summary:         str   # one-sentence finding (≤ 200 chars)
+    principle:       str   # load-bearing principle (≤ 200 chars)
+    direction:       str   # where this points other agents (≤ 200 chars)
+    timestamp:       float  # epoch seconds when posted
+
+    def to_dict(self) -> dict[str, str | float]:
+        return {
+            "agent_id":       self.agent_id,
+            "domain":         self.domain,
+            "match_strength": self.match_strength,
+            "summary":        self.summary,
+            "principle":      self.principle,
+            "direction":      self.direction,
+            "timestamp":      self.timestamp,
+        }
+
+    def render_short(self) -> str:
+        """One-line rendering for inclusion in another agent's context."""
+        return (
+            f"[{self.agent_id} | {self.domain} | {self.match_strength}] "
+            f"{self.summary}"
+            + (f" Principle: {self.principle}" if self.principle else "")
+            + (f" Direction: {self.direction}" if self.direction else "")
+        )
+
+
+# ---------------------------------------------------------------------------
 # SessionState
 # ---------------------------------------------------------------------------
 
@@ -154,6 +220,27 @@ class SessionState:
     # the chaos walker. Capacity is much larger than typical use; the
     # priority sort keeps the best near the head.
     MAX_FOLLOWON_QUEUE: int = 50
+
+    # WANDER_AGENT_NOTICEBOARD test scaffold (June 2026). Append-only list
+    # of AgentNotice posted by agents at next-domain-pick boundaries.
+    # Empty when the noticeboard feature flag is off — no behavior change
+    # from baseline in that case. Informational only; never enters dig
+    # content. Bounded to prevent unbounded growth on long runs.
+    noticeboard: list["AgentNotice"] = field(default_factory=list)
+    MAX_NOTICEBOARD_ENTRIES: int = 200
+
+    # CONSTELLAX_GOVERNOR (Stage-2 flow governor, June 2026). The governor is a
+    # session-level observer (src/wandering/governor.py) that watches findings
+    # arrive and may seize FLOW — halting the wander early on a confirmed CLOSE.
+    # SessionState stays PURE: it holds only a halt flag + reason + an optional
+    # per-notice callback ref. ALL governor logic (LLM edge detection, the
+    # decide table) lives in the governor module, never here. Defaults below
+    # mean zero behavior change when the flag is off (no callback, halt False).
+    governor_halt: bool = False
+    governor_halt_reason: str = ""
+    # async callback: (AgentNotice) -> Awaitable[None]. Set by runtime when the
+    # governor is active; fired fire-and-forget from post_notice (off-lock).
+    _on_notice: object = field(default=None, repr=False)
 
     # Internal lock — never expose to callers; use the public helpers.
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
@@ -239,8 +326,67 @@ class SessionState:
         consult the queue this turn."""
         return len(self.followon_queue)
 
+    # --- noticeboard helpers (WANDER_AGENT_NOTICEBOARD test scaffold) ---
+
+    async def post_notice(self, notice: "AgentNotice") -> bool:
+        """Append `notice` to the noticeboard. Returns True on success.
+
+        Bounded — if the board would exceed MAX_NOTICEBOARD_ENTRIES, the
+        OLDEST notice is dropped (FIFO). Newer notices reflect the
+        cohort's most recent coverage and are more useful to readers.
+
+        Called by agents after each successful dig produces a report.
+        Pure write — no read or LLM call. Cheap.
+        """
+        if notice is None or not notice.agent_id:
+            return False
+        async with self._lock:
+            self.noticeboard.append(notice)
+            if len(self.noticeboard) > self.MAX_NOTICEBOARD_ENTRIES:
+                self.noticeboard.pop(0)
+            cb = self._on_notice
+        # Fire the governor observer OFF-lock, fire-and-forget — it must never
+        # block the posting agent. The governor owns all LLM/decision logic and
+        # guards its own state; we only schedule it. Failures are the
+        # governor's to swallow (it wraps observe in try/except).
+        if cb is not None:
+            try:
+                asyncio.get_running_loop().create_task(cb(notice))
+            except Exception as e:  # no running loop / scheduling failure — non-fatal
+                log.warning("governor observer not scheduled (ignored): %s", e)
+        return True
+
+    def recent_notices(
+        self, *, n: int = 10, exclude_agent_id: str = "",
+    ) -> list["AgentNotice"]:
+        """Return the most recent up-to-`n` notices, optionally excluding
+        notices posted by `exclude_agent_id` (so an agent doesn't read
+        its own posts as cohort signal).
+
+        Unlocked — reading a snapshot of an append-only list is safe at
+        our concurrency level. Returns a fresh list so callers can't
+        mutate the live board through the result.
+        """
+        if not self.noticeboard:
+            return []
+        # Walk from the tail so we get most-recent first; filter out
+        # self-posts as we go; stop after collecting n.
+        out: list["AgentNotice"] = []
+        for entry in reversed(self.noticeboard):
+            if exclude_agent_id and entry.agent_id == exclude_agent_id:
+                continue
+            out.append(entry)
+            if len(out) >= n:
+                break
+        return out
+
+    def peek_noticeboard_count(self) -> int:
+        """Unlocked board size. Useful for diagnostics."""
+        return len(self.noticeboard)
+
 
 __all__ = [
+    "AgentNotice",
     "FollowonItem",
     "SessionState",
     "normalize_url",

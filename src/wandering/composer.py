@@ -638,10 +638,12 @@ async def compose_cushion(
     # — the graph is built and shipped either way; the probe is a hint.
     try:
         stated = input_data.problem.content
+        # `question` is intentionally NOT in the signal set — it is a
+        # judge-facing checkpoint, not anchor/goal-contradiction material.
         signals = tuple(filter(None, (
             input_data.context.content,
             input_data.vision.content,
-            input_data.current_map.content,
+            input_data.hunches.content,
         )))
         recovered = surface_real_goal(stated, signals)
         if recovered.surfaced:

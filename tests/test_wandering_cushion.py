@@ -176,7 +176,7 @@ def test_input_full():
         problem=CushionField(name="problem", content="the problem"),
         context=CushionField(name="context", content="the context"),
         vision=CushionField(name="vision", content="the vision"),
-        current_map=CushionField(name="current_map", content="threads"),
+        hunches=CushionField(name="hunches", content="threads"),
     )
     assert inp.is_minimally_viable() is True
     assert inp.filled_field_count() == 4
@@ -189,7 +189,7 @@ def test_input_problem_only():
         problem=CushionField(name="problem", content="the problem"),
         context=CushionField(name="context"),
         vision=CushionField(name="vision"),
-        current_map=CushionField(name="current_map"),
+        hunches=CushionField(name="hunches"),
     )
     assert inp.is_minimally_viable() is True
     assert inp.filled_field_count() == 1
@@ -201,21 +201,26 @@ def test_input_no_problem():
         problem=CushionField(name="problem"),
         context=CushionField(name="context", content="x"),
         vision=CushionField(name="vision", content="y"),
-        current_map=CushionField(name="current_map", content="z"),
+        hunches=CushionField(name="hunches", content="z"),
     )
     assert inp.is_minimally_viable() is False
 
 
-@test("2.4 CushionInput.fields() returns four in canonical order")
+@test("2.4 CushionInput.fields() returns four in canonical order; question excluded")
 def test_input_fields_order():
     inp = CushionInput(
         problem=CushionField(name="problem", content="p"),
         context=CushionField(name="context", content="c"),
         vision=CushionField(name="vision", content="v"),
-        current_map=CushionField(name="current_map", content="m"),
+        hunches=CushionField(name="hunches", content="m"),
+        question=CushionField(name="question", content="the checkpoint"),
     )
     names = [f.name for f in inp.fields()]
-    assert names == ["problem", "context", "vision", "current_map"]
+    # `question` is intentionally EXCLUDED from fields() — it is a judge-facing
+    # checkpoint, never extracted into the wander anchor — yet still stored.
+    assert names == ["problem", "context", "vision", "hunches"]
+    assert "question" not in names
+    assert inp.question.content == "the checkpoint"
 
 
 # ===========================================================================
@@ -288,7 +293,7 @@ def _make_minimal_graph() -> CushionGraph:
             problem=CushionField(name="problem", content="x"),
             context=CushionField(name="context"),
             vision=CushionField(name="vision"),
-            current_map=CushionField(name="current_map"),
+            hunches=CushionField(name="hunches"),
         ),
     )
 
@@ -380,13 +385,13 @@ def test_user_message_filled():
         problem=CushionField(name="problem", content="control wandering agents"),
         context=CushionField(name="context", content="part of Constellax"),
         vision=CushionField(name="vision", content="cognitive augmentation"),
-        current_map=CushionField(name="current_map", content="Heisenberg thread"),
+        hunches=CushionField(name="hunches", content="Heisenberg thread"),
     )
     msg = build_extraction_user_message(inp)
     assert "PROBLEM" in msg
     assert "CONTEXT" in msg
     assert "VISION" in msg
-    assert "CURRENT MAP" in msg
+    assert "HUNCHES" in msg
     assert "control wandering agents" in msg
     assert "cognitive augmentation" in msg
 
@@ -397,7 +402,7 @@ def test_user_message_skipped():
         problem=CushionField(name="problem", content="x"),
         context=CushionField(name="context"),  # skipped
         vision=CushionField(name="vision"),
-        current_map=CushionField(name="current_map"),
+        hunches=CushionField(name="hunches"),
     )
     msg = build_extraction_user_message(inp)
     assert "skipped by user" in msg.lower()
@@ -409,7 +414,7 @@ def test_user_message_memory():
         problem=CushionField(name="problem", content="x"),
         context=CushionField(name="context"),
         vision=CushionField(name="vision"),
-        current_map=CushionField(name="current_map"),
+        hunches=CushionField(name="hunches"),
         memory_enrichment="user has been working on Constellax memory pipeline",
     )
     msg = build_extraction_user_message(inp)
@@ -462,7 +467,7 @@ async def test_compose_no_problem():
         problem=CushionField(name="problem"),  # SKIPPED
         context=CushionField(name="context", content="x"),
         vision=CushionField(name="vision", content="y"),
-        current_map=CushionField(name="current_map", content="z"),
+        hunches=CushionField(name="hunches", content="z"),
     )
     client = _FakeLLMClient(response_text=_good_extraction_json())
     try:
@@ -523,8 +528,8 @@ def _good_input() -> CushionInput:
             name="vision",
             content="A cognitive augmentation tool that simulates partial-match inspiration.",
         ),
-        current_map=CushionField(
-            name="current_map",
+        hunches=CushionField(
+            name="hunches",
             content="Looking at Heisenberg uncertainty, Taoist Wuxing, pendulum chaos.",
         ),
     )

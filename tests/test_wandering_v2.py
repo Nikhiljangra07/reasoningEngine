@@ -291,7 +291,7 @@ async def test_in_memory_sessions_metadata():
             problem=CushionField(name="problem", content="how do I X"),
             context=CushionField(name="context", content=""),
             vision=CushionField(name="vision", content=""),
-            current_map=CushionField(name="current_map", content=""),
+            hunches=CushionField(name="hunches", content=""),
         ),
     )
     session = SessionResult(
@@ -551,7 +551,7 @@ def test_progress_sums_tokens():
             problem=CushionField(name="problem", content="x"),
             context=CushionField(name="context", content=""),
             vision=CushionField(name="vision", content=""),
-            current_map=CushionField(name="current_map", content=""),
+            hunches=CushionField(name="hunches", content=""),
         ),
     )
     p = WanderingProgress()

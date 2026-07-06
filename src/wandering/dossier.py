@@ -33,6 +33,12 @@ from src.wandering.master_sorter import (
     SortedReport,
     master_sort,
 )
+from src.wandering.sorter_verify import (
+    DEFAULT_QUERY_MODEL,
+    EvidenceLedger,
+    SearchFn,
+    gather_evidence,
+)
 from src.wandering.master_synthesizer import (
     DEFAULT_COST_CEILING_USD,
     MasterSynthesis,
@@ -113,6 +119,12 @@ class Dossier:
     # The dam: when this is set, master_synthesis is None and vice
     # versa. None when run_master_synthesizer=False.
     master_sorted: SortedReport | None = None
+    # Web-verification trace — the EvidenceLedger gathered by sorter_verify
+    # before a verified sort (per-card queries + live web hits). Populated
+    # only when build_dossier was invoked with verify_web=True (or a
+    # pre-built ledger was passed). None otherwise. Serialized so the human
+    # reads the evidence behind every bin, not just the verdict.
+    master_sorted_evidence: EvidenceLedger | None = None
 
     def all_cards(self) -> list[ArticulatedCard]:
         """All cards across all bands in canonical order."""
@@ -238,6 +250,10 @@ class Dossier:
             "master_sorted": (
                 self.master_sorted.to_dict() if self.master_sorted is not None else None
             ),
+            "master_sorted_evidence": (
+                self.master_sorted_evidence.to_dict()
+                if self.master_sorted_evidence is not None else None
+            ),
             # Fix 7 (audit r4→r5): expose the SUPPRESSED side of every
             # cohort-pair merge as a top-level convenience field for the
             # UI's "alternate framing" expander. Pure derivation from
@@ -265,6 +281,10 @@ async def build_dossier(
     master_synth_agent_provider_map: dict[str, str] | None = None,
     master_sort_progress: MasterSortProgress | None = None,
     master_sort_fable_model: str | None = None,
+    verify_web: bool = False,
+    web_evidence: EvidenceLedger | None = None,
+    sort_query_model: str | None = None,
+    sort_search_fn: SearchFn | None = None,
 ) -> Dossier:
     """Build the final Dossier from a completed SessionResult.
 
@@ -425,6 +445,21 @@ async def build_dossier(
     if run_master_synthesizer:
         if pipeline_mode == "sorter":
             from src.wandering.master_sorter import FABLE_SEAT_MODEL
+            # Web verification (sorter brick 1): gather real web evidence
+            # for every card BEFORE the sort, so the sorter bins against
+            # the live internet instead of training memory. Opt-in via
+            # verify_web=True, or pass a pre-built ledger via web_evidence
+            # (replay scripts reuse a saved ledger to skip re-searching).
+            evidence = web_evidence
+            if evidence is None and verify_web:
+                evidence = await gather_evidence(
+                    cushion=session.cushion,
+                    cards=dossier.all_cards(),
+                    client=client,
+                    query_model=sort_query_model or DEFAULT_QUERY_MODEL,
+                    search_fn=sort_search_fn,
+                )
+            dossier.master_sorted_evidence = evidence
             dossier.master_sorted = await master_sort(
                 cushion=session.cushion,
                 cards=dossier.all_cards(),
@@ -433,6 +468,7 @@ async def build_dossier(
                 progress=master_sort_progress,
                 cost_ceiling_usd=master_synth_cost_ceiling_usd,
                 fable_model=master_sort_fable_model or FABLE_SEAT_MODEL,
+                web_evidence=evidence,
             )
         elif pipeline_mode == "synthesizer":
             from src.wandering.master_synthesizer import (

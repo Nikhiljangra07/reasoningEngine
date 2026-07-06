@@ -91,6 +91,7 @@ from src.wandering.master_synthesizer import (
     _parse_json_safely,
     _strip_code_fences,
 )
+from src.wandering.sorter_verify import EvidenceLedger
 from src.wandering.synthesis import SynthesisMap
 
 log = logging.getLogger("constellax.wandering.master_sorter")
@@ -121,6 +122,12 @@ MAX_TOKENS_SORT = 16384
 #: caused real 9-card sorts to consume 3296 output tokens entirely on
 #: ThinkingBlocks with zero visible content.
 SORTER_EFFORT = "low"
+
+#: Sort/verification is classification, not creative work — run it cold so
+#: the same cards bin the same way run to run. Dropped automatically for
+#: models that reject the temperature kwarg (Fable 5 / Opus 4.8); applied
+#: for Sonnet 4.6, the current verified-sorter seat.
+SORTER_TEMPERATURE = 0.1
 
 
 # ---------------------------------------------------------------------------
@@ -361,6 +368,7 @@ async def _call_with_budget(
     model_slug:    str,
     result:        SortedReport,
     max_tokens:    int | None = None,
+    temperature:   float = SORTER_TEMPERATURE,
 ) -> LLMResponse:
     """One LLM call, recorded against the cost ceiling.
 
@@ -376,6 +384,7 @@ async def _call_with_budget(
         concept=SORTER_CONCEPT,
         model=model_slug,
         max_tokens=max_tokens,
+        temperature=temperature,
         effort=SORTER_EFFORT,
     )
     cost_usd = _call_cost_usd(model_slug, response)
@@ -524,10 +533,104 @@ prose around it.
 """
 
 
+_DOCTRINE_VERIFIED = """\
+You are a ruthless verification auditor. For EVERY card you have been
+handed REAL web-search results — the `evidence` block lists the queries
+that were run and the hits the live internet returned. You bin each card
+against THAT EVIDENCE. Not against your memory. Not against your priors.
+Against what the search actually found.
+
+This matters: your training memory has a cutoff. A card may map onto a
+paper published after it. The evidence is how you see past your own
+horizon. Read it before you judge.
+
+Treat each card independently. Never let one card influence another.
+
+CARD STRUCTURE — the claim you classify is the `bridge`:
+  - spark        — seed observation (often names a known concept)
+  - source_shape — the source domain the analogy is drawn FROM
+  - bridge       — THE CENTRAL TRANSFER CLAIM. THIS is what you verify.
+  - use / limit  — recommended action / where it breaks
+The named concept in `spark` is a LABEL, not the claim. Match the BRIDGE.
+
+Three bins, judged against the evidence:
+
+KNOWN — the evidence contains a REAL source that documents the SAME
+  transfer the bridge asserts. You MUST provide BOTH:
+    - prior_work_name: the paper / framework / theory the hit describes
+    - reference: the actual URL or citation TAKEN FROM THE EVIDENCE hits
+      (not invented — copy it from a hit's url/title)
+  Aggression rule: if even ONE evidence hit clearly documents the bridge's
+  transfer, the card is KNOWN — do not leave it in unplaced out of caution.
+  A single real prior source is enough to place it.
+  Surface-match trap (still applies): a hit that merely shares the
+  buzzword is NOT a match. The hit must perform the SAME structural
+  transfer the bridge claims. "The search returned a page about Markov
+  chains" does not make a Markov-chain-trust-decay bridge KNOWN unless the
+  page actually models that decay. Co-occurrence of a word is not prior art.
+
+INVALID — the evidence CONTRADICTS a checkable claim in the card (a wrong
+  date, a false attribution, a "first to do X" the record refutes, a named
+  result that does not exist or works differently). State the specific
+  contradiction in `contradicts` and point at the contradicting evidence.
+  "Feels wrong" is rejected. A real concept stapled to a contradicted fact
+  is INVALID, not KNOWN.
+
+UNPLACED — you ran the queries (they are in the evidence) and the hits
+  contain NO source performing the bridge's transfer AND nothing that
+  contradicts the card. This is "searched the corners, found nothing." It
+  is a genuine non-placement, NOT a verdict of novelty or value.
+  Honesty about thin evidence: if the hits for a card are empty or
+  off-topic, that is a WEAK signal — it may mean the bridge is unprecedented,
+  or it may mean the search missed. Either way the card is UNPLACED with a
+  note that the evidence was thin. NEVER fabricate a KNOWN match to fill a
+  gap, and never invent a reference the evidence does not contain.
+  State `why_unplaced` as a single neutral technical clause (e.g.
+  "queries returned no source performing the central transfer";
+  "evidence thin — hits off-topic"). No speculation about novelty or worth.
+
+ABSOLUTE RULES:
+  - Every `reference` in KNOWN must be copyable from the evidence. A
+    citation not present in any hit is a fabrication — the worst error in
+    this role.
+  - When the evidence genuinely doesn't decide it, the card goes to UNPLACED.
+  - One card, one bin. No hedged dual placements.
+  - Do NOT rewrite, paraphrase, complete, or merge cards. Content passes
+    through verbatim.
+  - Every input card appears in exactly ONE bin. Recount before emitting.
+  - No summary, no closing assessment. Output ends with the JSON brace.
+
+You are a sieve with a search engine. Use the search. Trust the search
+over your gut. The gold lives in unplaced; the dirt lives in invalid; the
+already-done lives in known — and the EVIDENCE is what tells them apart.
+
+OUTPUT FORMAT: a single JSON object with three arrays — `known`,
+`invalid`, `unplaced` — per the schema in the user message. Output ONLY
+the JSON.
+"""
+
+
+def _format_evidence_block(ev) -> dict | None:
+    """Compact the per-card evidence into a JSON-serializable block for the
+    sort payload. Returns None when there's nothing to attach."""
+    if ev is None:
+        return None
+    return {
+        "queries_run": list(ev.queries),
+        "searched":    ev.searched,
+        "hits": [
+            {"title": h.title, "url": h.url, "snippet": h.snippet}
+            for h in ev.hits
+        ],
+        "note": ev.note,
+    }
+
+
 def _build_sort_payload(
     cushion: CushionGraph | None,
     cards:   list[ArticulatedCard],
     synthesis_map: SynthesisMap | None,
+    web_evidence: EvidenceLedger | None = None,
 ) -> str:
     """Build the user-message payload for the single sort pass.
 
@@ -542,7 +645,7 @@ def _build_sort_payload(
 
     card_blocks = []
     for c in cards:
-        card_blocks.append({
+        block = {
             "report_id":    c.report_id,
             "agent_id":     c.agent_id or "",
             "spark":        c.spark,
@@ -550,13 +653,26 @@ def _build_sort_payload(
             "bridge":       c.bridge,
             "use":          c.use,
             "limit":        c.limit,
-        })
+        }
+        if web_evidence is not None:
+            ev_block = _format_evidence_block(web_evidence.evidence_for(c.report_id))
+            if ev_block is not None:
+                block["evidence"] = ev_block
+        card_blocks.append(block)
 
+    # When real web evidence is attached, the `reference` must be copied
+    # from a hit; otherwise it's the model's best checkable pointer.
+    ref_hint = (
+        "<REQUIRED, non-empty: the URL or citation COPIED FROM the card's "
+        "evidence hits>"
+        if web_evidence is not None
+        else "<REQUIRED, non-empty: checkable pointer>"
+    )
     schema_spec = {
         "known": [{
             "report_id":       "<copy from input>",
             "prior_work_name": "<REQUIRED, non-empty: named prior work>",
-            "reference":       "<REQUIRED, non-empty: checkable pointer>",
+            "reference":       ref_hint,
             "confidence":      "<float 0..1>",
             "reasoning":       "<one sentence: how the card maps to the named prior work>",
         }],
@@ -577,18 +693,31 @@ def _build_sort_payload(
         }],
     }
 
-    payload = {
-        "problem_context": problem,
-        "card_count":      len(cards),
-        "cards":           card_blocks,
-        "output_schema":   schema_spec,
-        "instruction": (
+    if web_evidence is not None:
+        instruction = (
+            "Each card carries an `evidence` block: the search queries that "
+            "were run and the live web hits they returned. Bin EVERY card "
+            "against that evidence. KNOWN requires a prior_work_name AND a "
+            "reference COPIED from a hit; if no hit performs the bridge's "
+            "transfer, the card is UNPLACED — never invent a citation. "
+            "Output the JSON object only. Recount before emitting: total "
+            "binned items MUST equal the card_count above."
+        )
+    else:
+        instruction = (
             "Classify EVERY card into exactly ONE bin. Output the JSON "
             "object only. No prose around it. Remember: known requires a "
             "named prior_work_name AND a checkable reference, or the card "
             "belongs in unplaced. Recount before emitting: total binned "
             "items MUST equal the card_count above."
-        ),
+        )
+
+    payload = {
+        "problem_context": problem,
+        "card_count":      len(cards),
+        "cards":           card_blocks,
+        "output_schema":   schema_spec,
+        "instruction":     instruction,
     }
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
@@ -750,11 +879,19 @@ async def master_sort(
     progress:         MasterSortProgress | None = None,
     cost_ceiling_usd: float = DEFAULT_COST_CEILING_USD,
     fable_model:      str = FABLE_SEAT_MODEL,
+    web_evidence:     EvidenceLedger | None = None,
 ) -> SortedReport:
     """Sort a dossier's articulated cards into three bins.
 
-    Single-pass, single-seat (Fable 5). No fusion, no synthesis. Each
-    card lands in exactly one of known / invalid / unplaced.
+    Single-pass, single-seat. No fusion, no synthesis. Each card lands in
+    exactly one of known / invalid / unplaced.
+
+    When `web_evidence` is provided, the sorter runs its VERIFIED doctrine:
+    it bins each card against the real web hits in the ledger instead of
+    its training memory, and every KNOWN citation must be copied from a
+    hit. This is the fix for the blind-not-lazy failure mode (a card whose
+    prior work was published after the model's cutoff). Without evidence,
+    the original memory-only doctrine runs (backward-compatible).
 
     Empty input → empty result (no LLM calls fired).
 
@@ -770,14 +907,18 @@ async def master_sort(
         progress.emit("empty_input", {"reason": "no cards provided"})
         return result
 
+    verified = web_evidence is not None
     progress.emit("starting", {
         "card_count":       len(cards),
         "cost_ceiling_usd": cost_ceiling_usd,
         "fable_model":      fable_model,
+        "web_verified":     verified,
+        "evidence_hits":    web_evidence.total_hits if verified else 0,
     })
 
-    system = compose_system_prompt(_DOCTRINE_PREAMBLE, mode="master_sorter")
-    payload = _build_sort_payload(cushion, cards, synthesis_map)
+    doctrine = _DOCTRINE_VERIFIED if verified else _DOCTRINE_PREAMBLE
+    system = compose_system_prompt(doctrine, mode="master_sorter")
+    payload = _build_sort_payload(cushion, cards, synthesis_map, web_evidence)
 
     try:
         progress.emit("sort_started", {"seat": "fable"})

@@ -100,7 +100,7 @@ def _make_cushion() -> CushionGraph:
             problem=CushionField(name="problem", content="how to control wandering agents"),
             context=CushionField(name="context"),
             vision=CushionField(name="vision"),
-            current_map=CushionField(name="current_map"),
+            hunches=CushionField(name="hunches"),
         ),
     )
 
@@ -532,7 +532,7 @@ async def test_enrich_respects_existing():
         problem=CushionField(name="problem", content="x"),
         context=CushionField(name="context"),
         vision=CushionField(name="vision"),
-        current_map=CushionField(name="current_map"),
+        hunches=CushionField(name="hunches"),
         memory_enrichment="pre-existing context",
     )
     await enrich_cushion_input(inp, "user-A")

@@ -232,6 +232,33 @@ async def _search_with_chain(
     return await web_search(query)
 
 
+async def search_chain(query: str) -> SearchResult:
+    """Public entry to the wandering provider chain (Exa → Tavily → DDG).
+
+    The sorter's verification engine (`sorter_verify.py`) reuses the SAME
+    search pipe the wanderers use, so a card's prior-art check runs against
+    the same corners of the web the agents wandered. This is a thin public
+    wrapper over `_search_with_chain` — no dedup, no session state, no
+    stitching: the verifier wants the raw hit list (title/url/snippet) for
+    each query, not one stitched content unit.
+
+    NEVER raises — on total provider failure returns a SearchResult whose
+    `.error` is set and `.hits` is empty; the caller treats that as
+    "searched, found nothing usable."
+    """
+    try:
+        return await _search_with_chain(query)
+    except Exception as e:  # pragma: no cover — defensive, providers raise rarely
+        log.warning("search_chain failed for query=%r: %s", query[:80], e)
+        return SearchResult(
+            query=query,
+            hits=[],
+            provider="error",
+            latency_ms=0.0,
+            error=str(e),
+        )
+
+
 # ---------------------------------------------------------------------------
 # Follow-on queue path
 # ---------------------------------------------------------------------------
@@ -359,4 +386,5 @@ __all__ = [
     "DEDUP_LOOKBACK_HITS",
     "EXA_NUM_RESULTS",
     "web_search_fetcher",
+    "search_chain",
 ]

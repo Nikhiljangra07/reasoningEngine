@@ -532,7 +532,7 @@ def test_exempt_registry_shape():
     contract. Adding a new entry is fine — it must be a real
     control-plane site with a real reason. Removing an entry without
     wrapping the underlying call is not — SP2 catches that. The
-    registry is currently locked at SEVEN entries:
+    registry is currently locked at NINE entries:
 
       - router / triage / visualizer / critique  (control-plane gates)
       - call_tracker.py  (passthrough wrapper for the agent layer)
@@ -559,6 +559,8 @@ def test_exempt_registry_shape():
         "src/wandering/critique.py",
         "src/wandering/master_synthesizer.py",
         "src/wandering/master_sorter.py",
+        "src/wandering/blender.py",
+        "src/wandering/drift_checker.py",
     ]), by_file
 
 

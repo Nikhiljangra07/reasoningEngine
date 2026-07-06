@@ -117,7 +117,7 @@ def _make_cushion(problem: str = "ship the product",
         vision=CushionField(name="vision", content=vision,
                              skip_reason=SkipReason.NOT_SKIPPED if vision
                                          else SkipReason.SKIPPED_NO_PROMPT),
-        current_map=CushionField(name="current_map", content=current_map,
+        hunches=CushionField(name="hunches", content=current_map,
                                   skip_reason=SkipReason.NOT_SKIPPED if current_map
                                               else SkipReason.SKIPPED_NO_PROMPT),
     )

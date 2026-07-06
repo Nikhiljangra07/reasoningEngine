@@ -4,7 +4,9 @@ API endpoints for Wandering Room.
 FOUR endpoints under /api/v2/wandering/:
 
   POST /brief
-    body: { problem, context, vision, current_map, user_id?, auto_enrich? }
+    body: { problem, vision, hunches, question, context?, user_id?, auto_enrich? }
+          ('current_map' accepted as a backwards-compat alias for 'hunches';
+           'question' is required — the run's checkpoint)
     response: { cushion: <CushionGraph dict>, brief_ok: bool, warnings: [...] }
     purpose: turn user's four-field intake into the three-layer cushion.
              Used at session start; returns the cushion the user reviews
@@ -216,15 +218,22 @@ _RESERVATIONS: dict[str, Reservation] = {}
 def _build_cushion_input_from_body(body: dict[str, Any]) -> CushionInput:
     """Turn the JSON body of /brief into a CushionInput.
 
-    Required fields are pulled from `problem`, `context`, `vision`,
-    `current_map` keys (matching the four-field intake form). A missing
-    or whitespace-only value is treated as a skip (SKIPPED_AFTER_PROMPT
-    if `skipped_after_prompt` key set on the body's skip_reasons map).
+    Fields are pulled from `problem`, `context`, `vision`, `hunches`,
+    `question` keys. `current_map` is accepted as a backwards-compat alias
+    for `hunches`. A missing or whitespace-only value is treated as a skip
+    (SKIPPED_AFTER_PROMPT if set on the body's skip_reasons map).
     """
     skip_reasons_raw = body.get("skip_reasons") or {}
 
-    def _field(name: str) -> CushionField:
-        content = str(body.get(name, "") or "").strip()
+    def _field(name: str, *aliases: str) -> CushionField:
+        # First key (canonical name or alias) carrying content wins; the
+        # skip_reason is always read under the canonical `name`.
+        content = ""
+        for key in (name, *aliases):
+            val = str(body.get(key, "") or "").strip()
+            if val:
+                content = val
+                break
         reason_raw = str(skip_reasons_raw.get(name, "not_skipped") or "not_skipped").strip()
         try:
             reason = SkipReason(reason_raw)
@@ -236,7 +245,8 @@ def _build_cushion_input_from_body(body: dict[str, Any]) -> CushionInput:
         problem=_field("problem"),
         context=_field("context"),
         vision=_field("vision"),
-        current_map=_field("current_map"),
+        hunches=_field("hunches", "current_map"),  # accept legacy current_map
+        question=_field("question"),
     )
 
 
@@ -265,7 +275,8 @@ def _cushion_to_response_dict(cushion: CushionGraph) -> dict[str, Any]:
             "problem": cushion.raw_input.problem.content,
             "context": cushion.raw_input.context.content,
             "vision": cushion.raw_input.vision.content,
-            "current_map": cushion.raw_input.current_map.content,
+            "hunches": cushion.raw_input.hunches.content,
+            "question": cushion.raw_input.question.content,
             "memory_enrichment": cushion.raw_input.memory_enrichment,
         },
     }
@@ -281,7 +292,9 @@ def _cushion_from_request_dict(d: dict[str, Any]) -> CushionGraph | None:
             problem=CushionField(name="problem", content=str(raw_input_raw.get("problem", "")).strip()),
             context=CushionField(name="context", content=str(raw_input_raw.get("context", "")).strip()),
             vision=CushionField(name="vision", content=str(raw_input_raw.get("vision", "")).strip()),
-            current_map=CushionField(name="current_map", content=str(raw_input_raw.get("current_map", "")).strip()),
+            hunches=CushionField(name="hunches", content=str(
+                raw_input_raw.get("hunches") or raw_input_raw.get("current_map", "")).strip()),
+            question=CushionField(name="question", content=str(raw_input_raw.get("question", "")).strip()),
             memory_enrichment=str(raw_input_raw.get("memory_enrichment", "")),
         )
         actual_raw = d.get("actual") or {}
@@ -350,6 +363,18 @@ def get_router() -> APIRouter:
                 },
             )
 
+        # `question` is REQUIRED — it is the run's checkpoint, the target the
+        # judges measure advancement/drift against. A wander without it has
+        # no success-criterion to align to.
+        if not input_data.question.is_filled():
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "question_required",
+                    "detail": "the 'question' field is required — state the checkpoint this run must answer",
+                },
+            )
+
         try:
             cushion = await compose_cushion(
                 input_data=input_data,
@@ -372,8 +397,8 @@ def get_router() -> APIRouter:
             warnings.append("context skipped — cushion will be less dimensionally rich")
         if input_data.vision.is_skipped():
             warnings.append("vision skipped — fewer cross-domain Heisenberg-zone hits expected")
-        if input_data.current_map.is_skipped():
-            warnings.append("current_map skipped — agents start cold instead of from your partial map")
+        if input_data.hunches.is_skipped():
+            warnings.append("hunches skipped — agents start cold instead of from your partial map")
 
         return JSONResponse(content={
             "brief_ok": cushion.is_well_formed(),
@@ -1127,9 +1152,10 @@ def get_router() -> APIRouter:
 
         user_id = get_effective_user_id(request, body.get("user_id"))
 
-        # Build the continuation's CushionInput. Vision and current_map
-        # are CARRIED from the original session (the stable anchor).
-        # Pursuit (problem) and hunches (context) are fresh from the user.
+        # Build the continuation's CushionInput. Vision and the QUESTION (the
+        # run's checkpoint) are CARRIED from the original session — the stable
+        # anchor + success-criterion. Pursuit (problem) and hunches are fresh
+        # from the user; context stays vestigial; memory carries over.
         new_hunches = str(body.get("hunches", "") or "").strip()
         original_input = cached_session.cushion.raw_input
         continuation_input = CushionInput(
@@ -1139,18 +1165,24 @@ def get_router() -> APIRouter:
             ),
             context=CushionField(
                 name="context",
-                content=new_hunches,
+                content=original_input.context.content,
+                skip_reason=original_input.context.skip_reason,
             ),
             vision=CushionField(
                 name="vision",
                 content=original_input.vision.content,
                 skip_reason=original_input.vision.skip_reason,
             ),
-            current_map=CushionField(
-                name="current_map",
-                content=original_input.current_map.content,
-                skip_reason=original_input.current_map.skip_reason,
+            hunches=CushionField(
+                name="hunches",
+                content=new_hunches,
             ),
+            question=CushionField(
+                name="question",
+                content=original_input.question.content,
+                skip_reason=original_input.question.skip_reason,
+            ),
+            memory_enrichment=original_input.memory_enrichment,
         )
 
         # Resolve mode + budgets. Defaults match the brief composer's.
@@ -1462,7 +1494,10 @@ def get_router() -> APIRouter:
         # the frontend adapter is local + explicit.
         return JSONResponse(content={
             "session_id": session_id,
-            "question":   cached_session.cushion.raw_input.problem.content,
+            # Prefer the run's explicit checkpoint; fall back to the problem
+            # (pursuit) for legacy sessions composed before the question field.
+            "question":   (cached_session.cushion.raw_input.question.content
+                           or cached_session.cushion.raw_input.problem.content),
             "memo":       memo,
             "mode":       cached_session.config.mode.value,
             "report_count": cached_session.report_count(),

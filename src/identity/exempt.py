@@ -147,6 +147,34 @@ CONTROL_PLANE_SITES: tuple[ExemptSite, ...] = (
             "on every sort call."
         ),
     ),
+    ExemptSite(
+        file="src/wandering/blender.py",
+        prompt_name="system_prompt",
+        reason=(
+            "blender._call_with_budget() — pure passthrough helper that "
+            "wraps client.call with cost-cap enforcement + per-call audit "
+            "for the blender (collision) seat. The composed doctrine header "
+            "lives at the single blend_cards() call site where "
+            "compose_system_prompt(_BLEND_DOCTRINE, mode='master_blender') "
+            "runs once and is forwarded into the single blend pass. "
+            "Composing inside this helper would double-wrap the doctrine "
+            "on every blend call."
+        ),
+    ),
+    ExemptSite(
+        file="src/wandering/drift_checker.py",
+        prompt_name="system_prompt",
+        reason=(
+            "drift_checker._call_with_budget() — pure passthrough helper "
+            "that wraps client.call with cost-cap enforcement + per-call "
+            "audit for the drift-checker (supervisor) seat. The composed "
+            "doctrine header lives at the single check_drift() call site "
+            "where compose_system_prompt(_DRIFT_DOCTRINE, mode='drift_checker') "
+            "runs once and is forwarded into the single drift-check pass. "
+            "Composing inside this helper would double-wrap the doctrine "
+            "on every drift-check call."
+        ),
+    ),
 )
 
 

@@ -133,6 +133,13 @@ KE_CRITIC_MODELS: dict[tuple[str, str], str] = {
 # Specialty roles
 # ---------------------------------------------------------------------------
 SYNTHESIZER_MODEL = "anthropic/claude-sonnet-4-6"   # final voice; citation grounding matters
+
+# Wander digs call with domain="synthesizer" but must NOT use the Sonnet final voice.
+# Nikhil's spec (A/B tested 2026-06-16, dig_model_ab.md): no Sonnet anywhere in the
+# wander/dig path. DeepSeek is the main wander brain (holds the nuance); Haiku covers
+# sub-agent nuance at the model_mix layer. Intercepted BEFORE the synthesizer rule so
+# the production final voice (speech.py) is untouched.
+WANDER_DIG_MODEL = "deepseek/deepseek-v4-pro"
 GATING_MODEL      = "google/gemini-2.5-flash-lite"  # cheap, sub-second, 1M context for reading 5 outputs
 ROUTER_MODEL      = "google/gemini-2.5-flash"       # chemistry self-assembly — fast structured JSON
 
@@ -180,6 +187,14 @@ PRICING: dict[str, tuple[float, float]] = {
     # DeepSeek
     "deepseek/deepseek-v4-pro":        (1.74,  3.48),   # post-promo (May 31, 2026)
     "deepseek/deepseek-v4-flash":      (0.14,  0.28),
+    # DeepSeek R1 — reasoning model. The junior FORMALIZER seat
+    # (src/wandering/formalizer.py, run via scripts/run_formalize.py) renders a
+    # finished blend into testable math. That seat calls OpenRouter DIRECTLY and
+    # reads cost from usage.cost, so it does NOT use this entry — kept only so
+    # get_pricing() stays correct if R1 ever routes through LLMClient. PLACEHOLDER
+    # pricing — verify against the OpenRouter rate card; OUTPUT (reasoning tokens)
+    # dominates cost. Slug confirmed live 2026-06-15: "deepseek/deepseek-r1".
+    "deepseek/deepseek-r1":            (0.55,  2.19),
 
     # xAI (Grok) — confirmed against console.x.ai/models dashboard 2026-06-02.
     # 4.20-non-reasoning is the workhorse choice for the wander agent layer:
@@ -226,6 +241,12 @@ def resolve_model(domain: str, concept: str) -> str:
     if domain == "critic" and "_checks_" in concept:
         challenger, _, target = concept.partition("_checks_")
         return KE_CRITIC_MODELS.get((challenger, target), DEFAULT_MODEL)
+
+    # Wander dig synthesis — route OFF Sonnet to DeepSeek (no Sonnet in the wander
+    # path). Must come before the synthesizer rule, which the dig calls would
+    # otherwise hit (they pass domain="synthesizer", concept="wandering_dig_*").
+    if "wandering_dig" in concept:
+        return WANDER_DIG_MODEL
 
     # Specialty roles
     if domain == "synthesizer":

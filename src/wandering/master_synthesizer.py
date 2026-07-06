@@ -98,9 +98,23 @@ log = logging.getLogger("constellax.wandering.master_synthesizer")
 
 # ---------------------------------------------------------------------------
 # Model slug pinning — explicit, not via resolve_model()
+#
+# Two-seat cross-lineage synthesis. Seat 1 = Opus (the creative blender). Seat 2
+# = the independent CRITIC that pushes back on Opus's drafts (R2) so BOTH_AGREE
+# means two DIFFERENT lineages corroborated a fusion — the load-bearing signal.
+#
+# 2026-06-17 (Nikhil): Opus 4-6 → 4-8 (4.8 was always the intended blender — the
+# 4-6 pin was a stale-drift bug, same class as the Sonnet-4 incident). And the
+# critic seat GPT-5.4 → DeepSeek-R1: R1 is our math/critical-analysis model, is
+# cross-lineage to Opus (preserves the independence the whole design rests on),
+# and is far cheaper (0.55/2.19 vs gpt-5.4). NOTE ON NAMING: the internal seat
+# label stays `Seat.GPT` / `r2_critique_gpt` / `SOLO_GPT` ON PURPOSE — those are
+# the persisted artifact-schema keys (renaming would break saved blends + tests).
+# The LABEL is historical; the MODEL it points to is R1. Read "GPT seat" as
+# "second/critic seat" everywhere below.
 # ---------------------------------------------------------------------------
-OPUS_SEAT_MODEL = "anthropic/claude-opus-4-6"
-GPT_SEAT_MODEL  = "openai/gpt-5.4"
+OPUS_SEAT_MODEL = "anthropic/claude-opus-4-8"
+GPT_SEAT_MODEL  = "deepseek/deepseek-r1"   # the CRITIC seat (label historical; model is R1)
 
 #: Domain/concept used when calling client.call. They're internal —
 #: provider_map.resolve_model is bypassed via the explicit `model=` kwarg.
@@ -340,8 +354,16 @@ class MasterSynthesis:
     #: collapsed (Opus↔Opus + GPT↔GPT) before bipartite. Addresses
     #: Blocker #4 of the run-#3 audit.
     same_seat_pairs_collapsed: int                    = 0
+    #: r9 Fix #1 metric — count of claim-text near-duplicate pairs
+    #: collapsed by the final-sweep _dedupe_claim_text layer. These are
+    #: cross-seat pairs whose title-Jaccard AND citation-Jaccard both
+    #: fell below 0.6 (so the cohort detector missed them) but whose
+    #: title+claim word-set Jaccard >= 0.85. r8 produced 2 such pairs
+    #: (F4/F8 and F6/F7); r9 should collapse them at the synthesizer
+    #: layer instead of shipping both halves.
+    claim_text_pairs_collapsed: int                   = 0
     #: Hunch-coverage surveillance (Fix 6, audit r4→r5). For each hunch
-    #: extracted from cushion.raw_input.current_map.content, names the
+    #: extracted from cushion.raw_input.hunches.content, names the
     #: master-fusion titles whose text (title+claim+reasoning+limit)
     #: lexically references it. Empty list under a hunch label = the
     #: hunch was NOT exercised by any fusion this run.
@@ -378,6 +400,8 @@ class MasterSynthesis:
             "r3_pre_merge_gpt":    list(self.r3_pre_merge_gpt),
             # blocker #4 metric
             "same_seat_pairs_collapsed": self.same_seat_pairs_collapsed,
+            # r9 Fix #1 metric
+            "claim_text_pairs_collapsed": self.claim_text_pairs_collapsed,
             # Fix 6: hunch-coverage surveillance
             "hunch_coverage": {k: list(v) for k, v in self.hunch_coverage.items()},
         }
@@ -921,8 +945,10 @@ def _format_cushion(cushion: CushionGraph | None) -> str:
     inp = cushion.raw_input
     blocks = [
         "# USER'S PURSUIT",   inp.problem.content,
+        "\n# QUESTION (the checkpoint — what this run must answer)",
+        getattr(inp.question, "content", "") or "(none)",
         "\n# USER'S VISION",  getattr(inp.vision, "content", "") or "(none)",
-        "\n# UNFINISHED THREADS / HUNCHES", getattr(inp.current_map, "content", "") or "(none)",
+        "\n# UNFINISHED THREADS / HUNCHES", getattr(inp.hunches, "content", "") or "(none)",
         f"\n# CUSHION CONSTELLATION ({cushion.constellation_size} nodes across 3 layers)",
         "## actual:    " + ", ".join(cushion.actual.nodes),
         "## essence:   " + ", ".join(cushion.essence.nodes),
@@ -1102,13 +1128,30 @@ def _parse_final_fusion(raw) -> MasterFusionReport | None:
 
 def _is_valid_fusion(f: MasterFusionReport) -> bool:
     """Citation discipline B: >= 2 citations per fusion. Limit mandatory
-    except when DISPUTED (Round 4 supplies the per-angle limit instead)."""
+    except when DISPUTED (Round 4 supplies the per-angle limit instead).
+
+    r9 Fix #1 empty-DISPUTED guard: r8 shipped F3 (Anchor Contradiction
+    Dissolves...) with claim='', reasoning='', limit='' all literally
+    empty strings — yet it cleared the old gate because the DISPUTED
+    branch only checked citations. A DISPUTED fusion must at least
+    carry SOMETHING (a non-empty disputed_angles list or some
+    substantive prose). Reject fully-empty DISPUTED records."""
     if len(f.citations) < 2:
         return False
     if f.agreement_status != AgreementStatus.DISPUTED:
         if not f.limit.strip():
             return False
         if not f.claim.strip():
+            return False
+    else:
+        # DISPUTED must carry either disputed_angles or substantive prose.
+        has_angles = bool(getattr(f, "disputed_angles", None))
+        has_prose  = bool(
+            (f.claim or "").strip()
+            or (f.reasoning or "").strip()
+            or (f.limit or "").strip()
+        )
+        if not has_angles and not has_prose:
             return False
     return True
 
@@ -1168,6 +1211,18 @@ import re as _re
 # weight. 0.6 requires a clear majority overlap.
 COHORT_CONVERGENCE_THRESHOLD = 0.6
 
+# r9 Fix #1 (June 2026). r8 shipped 8 fusions where the correct count
+# was 4-5: F4/F8 and F6/F7 were unmerged halves of the same insight
+# that survived because BOTH their citation-set Jaccard AND their
+# title-Jaccard fell below 0.6 (rephrased titles + distinct evidence
+# sets) — but their CLAIM TEXT rhymed word-for-word. The existing
+# cohort detector cannot see this third channel. The 0.85 threshold
+# is intentionally high: this is a final-sweep last-chance check,
+# not a first-line dedup. Word-set Jaccard >= 0.85 means substantially
+# the same word kit in substantially the same proportions across
+# title + claim — a textual signature of "same insight, rephrased."
+CLAIM_TEXT_DUP_THRESHOLD = 0.85
+
 _TITLE_STOPWORDS = {
     "the", "a", "an", "and", "or", "but", "is", "are", "of", "in", "on",
     "at", "to", "for", "with", "by", "as", "that", "this", "these",
@@ -1207,6 +1262,109 @@ def _cohort_similarity(o: MasterFusionReport, g: MasterFusionReport) -> float:
     title_sim = _jaccard(_title_tokens(o.title), _title_tokens(g.title))
     cite_sim  = _jaccard(_citation_keys(o), _citation_keys(g))
     return max(title_sim, cite_sim)
+
+
+# r9 Fix #1 — claim-text final-sweep helpers ---------------------------------
+#
+# These run AFTER _dedupe_across_seats but BEFORE field-attribution
+# validation. They catch the F4/F8 + F6/F7 failure mode r8 exhibited:
+# two fusions whose titles AND citations both fell below the cohort
+# threshold of 0.6, but whose claim text was substantially the same
+# word kit rephrased.
+
+def _claim_text_tokens(f: MasterFusionReport) -> set[str]:
+    """Word-set for near-dup detection: title + claim ONLY.
+
+    Reasoning/limit are deliberately excluded — they're voice-heavy
+    (Opus tends to elaborate; GPT tends to compress) and inflating the
+    denominator with that noise lowers true-positive Jaccard. Title +
+    claim is the insight skeleton; that's where genuine duplication
+    lives. Lowercase, alphanumeric, len > 2, stop words removed.
+    """
+    text = f"{f.title or ''} {f.claim or ''}".lower()
+    raw  = _re.findall(r"[a-z0-9]+", text)
+    return {t for t in raw if t and t not in _TITLE_STOPWORDS and len(t) > 2}
+
+
+def _claim_text_similarity(
+    a: MasterFusionReport,
+    b: MasterFusionReport,
+) -> float:
+    """Jaccard over title+claim token sets. Cheap, deterministic, zero
+    new dependency. On short paragraphs this tracks cosine on bag-of-
+    words within ~0.05; if false negatives surface in dry-runs, the
+    body can be swapped for a sentence-transformer call without
+    changing any caller."""
+    return _jaccard(_claim_text_tokens(a), _claim_text_tokens(b))
+
+
+def _dedupe_claim_text(
+    fusions: list[MasterFusionReport],
+    threshold: float = CLAIM_TEXT_DUP_THRESHOLD,
+) -> tuple[list[MasterFusionReport], int]:
+    """Final sweep — collapse fusions whose title+claim word-set Jaccard
+    >= threshold but which the cohort-convergence detector missed
+    because their citation overlap was < 0.6 AND their titles were
+    rephrased enough to drop title-Jaccard below 0.6 too.
+
+    Greedy by descending similarity. Each fusion participates in at
+    most one collapse. Keeper picked via the SAME `_keeper_score`
+    tuple used by `_merge_cohort_pair` (cards, providers, conf, prose)
+    so the choice is consistent across both dedup layers. Loser's
+    citations are folded into keeper via `_combine_citations`. Keeper's
+    `agreement_status` is preserved as-is (we cannot relabel as
+    BOTH_AGREE without knowing whether the two fusions independently
+    agreed or one is restating the other).
+
+    Returns (deduped list, count of pairs collapsed).
+    """
+    if len(fusions) < 2:
+        return list(fusions), 0
+
+    # Compute all pairwise similarities. Greedy: process pairs in
+    # descending similarity order so the strongest match resolves first.
+    pairs: list[tuple[float, int, int]] = []
+    for i in range(len(fusions)):
+        for j in range(i + 1, len(fusions)):
+            sim = _claim_text_similarity(fusions[i], fusions[j])
+            if sim >= threshold:
+                pairs.append((sim, i, j))
+    pairs.sort(key=lambda t: t[0], reverse=True)
+
+    consumed: set[int] = set()
+    survivors: dict[int, MasterFusionReport] = {i: f for i, f in enumerate(fusions)}
+    collapsed_count = 0
+
+    for sim, i, j in pairs:
+        if i in consumed or j in consumed:
+            continue
+        a = survivors[i]
+        b = survivors[j]
+        # Pick the keeper via _keeper_score (same multi-factor tuple
+        # used elsewhere). Loser is folded in.
+        if _keeper_score(a) >= _keeper_score(b):
+            keeper, loser = a, b
+            keeper_idx, loser_idx = i, j
+        else:
+            keeper, loser = b, a
+            keeper_idx, loser_idx = j, i
+        keeper.citations = _combine_citations(keeper.citations, loser.citations)
+        survivors[keeper_idx] = keeper
+        consumed.add(loser_idx)
+        collapsed_count += 1
+        log.info(
+            "claim_text_dedup: collapsed F%d→F%d sim=%.2f "
+            "(keeper title=%r, loser title=%r)",
+            loser_idx + 1, keeper_idx + 1, sim,
+            (keeper.title or "")[:60], (loser.title or "")[:60],
+        )
+
+    deduped = [
+        survivors[i] for i in range(len(fusions))
+        if i not in consumed
+    ]
+    return deduped, collapsed_count
+# ---------------------------------------------------------------------------
 
 
 def _combine_citations(a: list, b: list) -> list:
@@ -1597,9 +1755,9 @@ _HUNCH_STOPWORDS = {
 
 
 def _extract_hunches(cushion: CushionGraph | None) -> list[str]:
-    """Pull hunch labels from cushion.raw_input.current_map.content.
+    """Pull hunch labels from cushion.raw_input.hunches.content.
 
-    The Wandering Room UI binds the 'Hunches' field to backend CURRENT_MAP.
+    The Wandering Room UI binds the 'Hunches' field to backend `hunches`.
     Expected formats (lenient — covers numbered, bulleted, and
     blank-line-separated paragraphs):
 
@@ -1612,11 +1770,11 @@ def _extract_hunches(cushion: CushionGraph | None) -> list[str]:
     and take up to the first colon / em-dash / en-dash as the label.
 
     Returns a list of short, lowercase labels. Empty list when cushion or
-    current_map is missing.
+    hunches is missing.
     """
     if cushion is None or cushion.raw_input is None:
         return []
-    text = getattr(cushion.raw_input.current_map, "content", "") or ""
+    text = getattr(cushion.raw_input.hunches, "content", "") or ""
     if not text.strip():
         return []
 
@@ -1626,6 +1784,17 @@ def _extract_hunches(cushion: CushionGraph | None) -> list[str]:
     blocks = [b for b in re.split(r"\n\s*\n", text) if b.strip()]
     if len(blocks) < 2:
         blocks = [b for b in re.split(r"\n(?=\s*(?:[\-\*]|\d+[\.\)]))", text) if b.strip()]
+
+    # r8 fix: reject non-enumerated leading paragraphs. If at least 2
+    # blocks have an explicit enumeration marker (bullet or number),
+    # use ONLY those — intro paragraphs that don't start with a marker
+    # were leaking through as false hunch labels.
+    marker_blocks = [
+        b for b in blocks
+        if re.match(r"^\s*(?:[\-\*]|\d+[\.\)]|\(\d+\))", b)
+    ]
+    if len(marker_blocks) >= 2:
+        blocks = marker_blocks
 
     labels: list[str] = []
     for block in blocks:
@@ -1898,6 +2067,24 @@ async def master_synthesize(
         result.same_seat_pairs_collapsed = same_seat_collapsed
         merged_fusions = [f for f in merged_fusions if _is_valid_fusion(f)]
 
+        # r9 Fix #1 — final-sweep claim-text dedup. Runs AFTER cohort/
+        # same-seat dedup AND validity filtering, but BEFORE citation
+        # field attribution. Catches the F4/F8 + F6/F7 failure r8
+        # exhibited: two fusions whose title-Jaccard and citation-
+        # Jaccard both fell below 0.6 (cohort detector missed them)
+        # but whose title+claim word-set Jaccard >= 0.85. Greedy by
+        # descending similarity; loser's citations folded into keeper.
+        merged_fusions, claim_text_collapsed = _dedupe_claim_text(
+            merged_fusions, threshold=CLAIM_TEXT_DUP_THRESHOLD,
+        )
+        result.claim_text_pairs_collapsed = claim_text_collapsed
+        if claim_text_collapsed:
+            log.info(
+                "master_synth: claim-text dedup collapsed %d pair(s) "
+                "(post-cohort)",
+                claim_text_collapsed,
+            )
+
         # Field-attribution validator — when a citation's excerpt is a
         # verbatim substring of a DIFFERENT field on the cited card,
         # re-attribute the `which_field` tag. Paraphrases (excerpts
@@ -1928,6 +2115,7 @@ async def master_synthesize(
             "gpt_r3_parsed":                len(gpt_finals),
             "cohort_pairs_collapsed":       cohort_pair_count,
             "same_seat_pairs_collapsed":    same_seat_collapsed,
+            "claim_text_pairs_collapsed":   claim_text_collapsed,
             "citation_field_fixes":         field_fixes_applied,
             "cumulative_cost_usd":          round(result.total_cost_usd, 4),
         })

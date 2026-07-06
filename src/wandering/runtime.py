@@ -22,12 +22,16 @@ articulation or synthesis (those run AFTER the runtime completes).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 import time
+import traceback as _traceback
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable
 
 from src.llm.client import LLMClient
 from src.wandering.agent import (
@@ -215,11 +219,16 @@ MODE_DEFAULTS: dict[WanderingMode, ModeDefaults] = {
         agents=10,
         time_seconds=60 * 60,
         tokens_per_agent=40_000,
-        # diverse: Sonnet + DeepSeek + Haiku across 3 families
+        # 2026-06-16: Sonnet removed from the wander mix (Nikhil's spec).
+        # deepseek-v4-pro is on par with Sonnet on the reasoning/dig work
+        # (validated: 83% edge-detection, real gap-naming) at a fraction of the
+        # cost; Haiku covers the nuance/sub-agent gap. deepseek = workhorse,
+        # haiku = nuance. Was 3×Sonnet + 2×DeepSeek + 5×Haiku — the 3 Sonnet
+        # sub-agents were ~$1.2/run of dig cost with minimal quality delta.
         model_mix=(
-            "anthropic/claude-sonnet-4-6",
-            "anthropic/claude-sonnet-4-6",
-            "anthropic/claude-sonnet-4-6",
+            "deepseek/deepseek-v4-pro",
+            "deepseek/deepseek-v4-pro",
+            "deepseek/deepseek-v4-pro",
             "deepseek/deepseek-v4-pro",
             "deepseek/deepseek-v4-pro",
             "anthropic/claude-haiku-4-5",
@@ -258,6 +267,14 @@ class WanderingConfig:
     # Wired April–June 2026 to fix the silent model_slug-dead bug that
     # collapsed run #1's "2×DeepSeek + 4×Haiku" cohort into a monoculture.
     call_log_path: str | None = None
+    # Phase-3 per-agent anchoring (cycle-1 sub-question seeding). When set to a
+    # list of CushionGraph (one per root agent), root agent i wanders its OWN
+    # cushion — a goal-free, translator-laundered sub-question lens — instead of
+    # the shared `cushion` arg, while still sharing ONE session_state so the
+    # governor sees every agent's notices and the skeleton forms across the wave.
+    # Shorter list / None entry → that agent falls back to the shared cushion
+    # (today's behavior). Untouched by the other modes / callers.
+    per_agent_cushions: list | None = None
 
     def resolved(self) -> tuple[int, float, int, tuple[str, ...]]:
         """Return (agents, time_seconds, tokens_per_agent, model_mix) with
@@ -313,12 +330,102 @@ class SessionResult:
     # actually accumulated content hashes across the run rather than
     # collapsing to constant-1.0 like it did in run #1.
     interpreter_session_state: _interpreter.SessionState | None = None
+    # ── Cohort integrity (added 2026-06-03 after the r9 silent dropout) ──
+    #
+    # r9 launched 6 agents (P01-P06); the final SessionResult arrived
+    # with only 4 traces (P03-P06) and no warning. P01/P02 had made 11+7
+    # LLM calls and written forensics dig entries, then their work
+    # vanished between agent-task completion and SessionResult assembly.
+    # Root cause was the gather loop using `return_exceptions=True`
+    # plus a downstream `'str'.value` crash that the warning log
+    # ("agent crashed: %s") fired without an agent_id, so the run
+    # appeared to finish cleanly with paid-but-lost work.
+    #
+    # These three fields close that class of failure:
+    #   expected_agent_count — what the config asked for. Compared
+    #     against `len(traces) + len(agent_errors)` to detect silent
+    #     shrink.
+    #   agent_errors — keyed by agent_id; each value carries
+    #     {exc_type, message, traceback, last_stage?}. A named, full-
+    #     traceback record so post-mortem is one grep away.
+    #   agent_statuses — keyed by agent_id; values are one of
+    #     {"completed", "crashed", "cancelled"}. Every expected agent
+    #     should show up here exactly once.
+    #
+    # All three default to empty/zero so legacy callers (tests, the
+    # triple/chaos modes that haven't been re-instrumented yet) keep
+    # working unchanged.
+    expected_agent_count: int = 0
+    agent_errors: dict[str, dict[str, Any]] = field(default_factory=dict)
+    agent_statuses: dict[str, str] = field(default_factory=dict)
 
     def report_count(self) -> int:
         return len(self.reports)
 
     def agent_count(self) -> int:
         return len(self.traces)
+
+    def validate_cohort_integrity(self) -> tuple[bool, list[str]]:
+        """Cross-check the cohort completed as expected. Pure check —
+        never raises, never has side effects. Returns
+        ``(ok, problems)``. ok=True means every expected agent shows up
+        either in traces (completed) or in agent_errors (crashed /
+        cancelled) and the counts line up.
+
+        Callers (live_wander.py + the eventual /api/wander endpoint)
+        should run this BEFORE spending money on the master synth
+        phase: synthesizing on a silently-shrunk cohort wastes spend
+        and misleads the user about what the wander actually saw.
+
+        Backward-compatibility: if `expected_agent_count` is 0 we skip
+        the check and return ok=True. The triple/chaos runners don't
+        populate it yet, and we don't want this to break those paths.
+        """
+        problems: list[str] = []
+        if self.expected_agent_count <= 0:
+            return (True, problems)
+
+        expected = self.expected_agent_count
+        n_traces = len(self.traces)
+        n_errors = len(self.agent_errors)
+        n_statuses = len(self.agent_statuses)
+
+        if n_traces + n_errors != expected:
+            problems.append(
+                f"cohort_shrink: expected {expected} agents, got "
+                f"{n_traces} traces + {n_errors} errors = "
+                f"{n_traces + n_errors} accounted for"
+            )
+        if n_statuses != expected:
+            problems.append(
+                f"status_gap: expected {expected} status entries, "
+                f"got {n_statuses}"
+            )
+
+        expected_ids = {f"P{i + 1:02d}" for i in range(expected)}
+        missing = expected_ids - set(self.agent_statuses)
+        if missing:
+            problems.append(
+                f"missing_status_for: {sorted(missing)}"
+            )
+
+        # Agents with traces must be marked completed; agents in
+        # agent_errors must NOT be marked completed.
+        trace_ids = {t.agent_id for t in self.traces}
+        for aid in trace_ids:
+            if self.agent_statuses.get(aid) != "completed":
+                problems.append(
+                    f"trace_status_mismatch: {aid} has a trace but "
+                    f"status={self.agent_statuses.get(aid)!r}"
+                )
+        for aid in self.agent_errors:
+            if self.agent_statuses.get(aid) == "completed":
+                problems.append(
+                    f"error_status_mismatch: {aid} in agent_errors "
+                    f"but marked completed"
+                )
+
+        return (not problems, problems)
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +477,19 @@ async def _run_multi_pendulum(
     # WANDERING_ROOM_DECISIONS.md D8 (dedup) and D9 (follow-on).
     session_state = SessionState(session_id=session_id)
 
+    # CONSTELLAX_GOVERNOR: attach the session-level flow governor. It observes
+    # findings as they hit the noticeboard (via session_state._on_notice) and
+    # may seize FLOW — setting governor_halt on a confirmed CLOSE so agents exit
+    # early. Off by default → no governor instantiated, no behavior change. The
+    # governor governs flow only; it never reads the cushion question (chaos law)
+    # and never touches a finding's content or quality.
+    governor = None
+    if os.environ.get("CONSTELLAX_GOVERNOR", "0") == "1":
+        from src.wandering.governor import WanderGovernor
+        governor = WanderGovernor(session_state=session_state)
+        session_state._on_notice = governor.observe
+        log.info("[governor] attached to session %s", session_id)
+
     # Interpreter SessionState — fixes the run-#1 bug where the novelty
     # channel always returned 1.0 because nothing constructed one of
     # these. Now: one instance per wander, marked-seen by `_run_match`
@@ -387,10 +507,19 @@ async def _run_multi_pendulum(
             jsonl_path=config.call_log_path or None,
         )
 
+    # Per-agent anchoring (Phase 3): agent i wanders config.per_agent_cushions[i]
+    # when supplied, else the shared cushion. All agents share ONE session_state
+    # (above) regardless, so the governor's cross-agent edge detection is intact.
+    _pac = config.per_agent_cushions
+    def _agent_cushion(i: int) -> CushionGraph:
+        if _pac and i < len(_pac) and _pac[i] is not None:
+            return _pac[i]
+        return cushion
+
     agents = [
         AgentState(
             agent_id=f"P{i + 1:02d}",
-            cushion=cushion,
+            cushion=_agent_cushion(i),
             budget=AgentBudget(
                 time_budget_seconds=time_secs,
                 token_budget=tokens_each,
@@ -427,24 +556,96 @@ async def _run_multi_pendulum(
         progress.register(*agents)
 
     # Parallel run. Each agent runs independently — no shared state.
-    results = await asyncio.gather(
+    #
+    # Named per-agent wrapper (2026-06-03). Earlier this method used
+    # `asyncio.gather(..., return_exceptions=True)` and dropped any
+    # BaseException with a `log.warning("agent crashed: %s", r)` line
+    # that didn't include the agent_id or traceback. r9 silently lost
+    # P01 and P02 to a `'str'.value` AttributeError under that path —
+    # the gap took six hours to diagnose. The wrapper below keeps the
+    # (agent_id, outcome) association intact so any future crash is
+    # named at the moment it lands AND captures the full traceback for
+    # post-mortem.
+    async def _run_one_named(
+        agent_id: str,
+        coro: Awaitable[Any],
+    ) -> dict[str, Any]:
+        try:
+            r = await coro
+            return {"status": "completed", "agent_id": agent_id, "result": r}
+        except asyncio.CancelledError:
+            return {
+                "status": "cancelled",
+                "agent_id": agent_id,
+                "error": {
+                    "exc_type": "CancelledError",
+                    "message": "task cancelled",
+                    "traceback": "",
+                },
+            }
+        except BaseException as e:  # noqa: BLE001 — we WANT the catch-all
+            tb = _traceback.format_exc()
+            return {
+                "status": "crashed",
+                "agent_id": agent_id,
+                "error": {
+                    "exc_type": type(e).__name__,
+                    "message": str(e),
+                    "traceback": tb,
+                },
+            }
+
+    outcomes = await asyncio.gather(
         *[
-            run_agent(a, client=sc, fetcher=fetcher, clock=clock)
+            _run_one_named(
+                a.agent_id,
+                run_agent(a, client=sc, fetcher=fetcher, clock=clock),
+            )
             for a, sc in zip(agents, scoped_clients)
         ],
-        return_exceptions=True,
     )
 
     reports: list[ExplorationReport] = []
     traces: list[DecisionTrace] = []
+    agent_errors: dict[str, dict[str, Any]] = {}
+    agent_statuses: dict[str, str] = {}
     total_tokens = 0
-    for r in results:
-        if isinstance(r, BaseException):
-            log.warning("agent crashed: %s", r)
-            continue
-        reports.extend(r.reports)
-        traces.append(r.trace)
-        total_tokens += r.cumulative_tokens
+    for o in outcomes:
+        aid = o["agent_id"]
+        status = o["status"]
+        agent_statuses[aid] = status
+        if status == "completed":
+            r = o["result"]
+            reports.extend(r.reports)
+            traces.append(r.trace)
+            total_tokens += r.cumulative_tokens
+        else:
+            err = o["error"]
+            agent_errors[aid] = err
+            log.error(
+                "agent %s %s: %s: %s\n%s",
+                aid, status, err["exc_type"], err["message"], err["traceback"],
+            )
+
+    # CONSTELLAX_GOVERNOR: emit the governance record beside the run's call log
+    # and release the governor's HTTP client. Never fatal — a governor failure
+    # must not affect the wander's result.
+    if governor is not None:
+        try:
+            rec = governor.governance_record()
+            log.info(
+                "[governor] session %s final=%s halted=%s edges=%d probes=%d",
+                session_id, rec["final_action"], rec["halted"],
+                rec["edges_found"], rec["probes_used"],
+            )
+            if config.call_log_path:
+                out = Path(config.call_log_path).resolve().parent / "governance.json"
+                out.write_text(json.dumps(rec, indent=2))
+                log.info("[governor] wrote %s", out)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[governor] record emission failed (ignored): %s", e)
+        finally:
+            await governor.aclose()
 
     elapsed = clock() - started
 
@@ -462,6 +663,9 @@ async def _run_multi_pendulum(
         call_tracker=tracker,
         call_tracker_summary=tracker.summary(),
         interpreter_session_state=interpreter_state,
+        expected_agent_count=num_agents,
+        agent_errors=agent_errors,
+        agent_statuses=agent_statuses,
     )
 
 
@@ -637,6 +841,9 @@ async def _run_absolute_chaos(
     from src.wandering.report import Confidence
 
     MAX_AUTO_SPAWNS_PER_ROOT = 2  # bound runaway: each root spawns at most 2
+    # Sub-agents = the cheap NUANCE layer (roots = DeepSeek workhorse). Forced via
+    # the scoped-client wrap in run_subagent (concept-routing would give DeepSeek).
+    SUBAGENT_NUANCE_MODEL = "anthropic/claude-haiku-4-5"
 
     high_reports_by_agent: dict[str, list] = {}
     for report in session.reports:
@@ -689,6 +896,8 @@ async def _run_absolute_chaos(
             fetcher=fetcher,
             parent_clock=clock,
             session_state=session.session_state,
+            tracker=tracker,
+            sub_model=SUBAGENT_NUANCE_MODEL,
         ) for req, _ in spawn_jobs],
         return_exceptions=True,
     )

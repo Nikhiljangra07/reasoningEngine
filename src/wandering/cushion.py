@@ -1,19 +1,24 @@
 """
 Cushion graph — the immutable anchor that wandering agents tether against.
 
-The user fills four fields (Problem / Context / Vision / Current Map). The
-system derives a three-layer structural representation (Actual / Essence /
-Mechanism) used internally for matching. Agents wandering across any domain
-match discovered content against any of the three layers — partial matches
-trigger exploration, not termination.
+The user fills the typed fields (Problem / Vision / Hunches / Question, plus an
+optional vestigial Context). The system derives a three-layer structural
+representation (Actual / Essence / Mechanism) used internally for matching.
+Agents wandering across any domain match discovered content against any of the
+three layers — partial matches trigger exploration, not termination.
 
-User-facing surface: 4 fields.
+User-facing surface: problem, vision, hunches, question (+ optional context).
 Internal representation: 3 layers, each with 3-8 sub-nodes.
 The merge is conceptual — one workflow, two views.
 
-Auto-enrichment: the "current map" field is enriched from project memory
-(Neo4j graph) transparently. The user provides what they consciously have;
-the system supplements with relevant project state.
+`question` is the run's checkpoint/success-criterion. It is fed to the JUDGES
+(quality ranker, drift-checker, halo auditor) — NOT extracted into the wander
+anchor — so the chaos/serendipity of the walk is preserved.
+
+Auto-enrichment: project memory (Neo4j graph) is resolved transparently into
+`memory_enrichment` — a field kept SEPARATE from the user's typed `hunches`.
+The user provides what they consciously have; the system supplements with
+relevant project state, without conflating the two.
 
 ISOLATION: this module defines types only. It does NOT call LLMs, hit
 storage, or import from other domain modules. The composer module
@@ -57,9 +62,14 @@ class CushionField:
 
     Field names map to the dimensions they capture:
       problem      → actual problem (concrete description)
-      context      → system context + origin (where it sits, what brings it here)
+      context      → system context + origin (vestigial; kept optional for the
+                     extractor prompt — the live UI no longer feeds it)
       vision       → future trajectory (where the user is heading)
-      current_map  → initial inspirations + related domains (+ auto-enriched memory)
+      hunches      → the user's raw half-baked theories / inspirations about the
+                     problem (renamed from current_map; the synthesizer renders
+                     this under a HUNCHES header)
+      question     → the run's task / success-criterion / checkpoint. Fed to the
+                     JUDGES; NOT extracted into the wander anchor.
     """
 
     name: str
@@ -93,12 +103,19 @@ class CushionInput:
     problem: CushionField
     context: CushionField
     vision: CushionField
-    current_map: CushionField
-    memory_enrichment: str = ""  # auto-filled from project memory graph
+    hunches: CushionField  # renamed from current_map (the user's typed inspirations)
+    # The run's checkpoint / success-criterion. Defaulted so legacy constructors
+    # (scripts/tests) still build; the live intake enforces it as REQUIRED.
+    # Deliberately NOT part of fields() — `question` must never reach the
+    # wander-anchor extraction (judges read it; wanderers never see it).
+    question: CushionField = field(default_factory=lambda: CushionField(name="question"))
+    memory_enrichment: str = ""  # auto-filled from project memory graph (SEPARATE from hunches)
 
     def fields(self) -> list[CushionField]:
-        """All four user-facing fields in canonical order."""
-        return [self.problem, self.context, self.vision, self.current_map]
+        """The four EXTRACTION fields in canonical order. `question` is
+        deliberately excluded — it is a judge-facing checkpoint, not anchor
+        material, so it must not flow into the three-layer extraction."""
+        return [self.problem, self.context, self.vision, self.hunches]
 
     def filled_field_count(self) -> int:
         """How many of the four fields the user actually filled."""
@@ -306,7 +323,7 @@ class CushionGraph:
     # construction or wandering). Populated by
     # `goal_supremacy.surface_real_goal()` in `compose_cushion` from
     # the four-field input. When the stated problem contradicts
-    # signals in context/vision/current_map, this field holds a
+    # signals in context/vision/hunches, this field holds a
     # rendered probe ("is X the goal, or is Y the goal underneath?")
     # the frontend may show the user before committing to the
     # wander. None means no contradiction detected. See doctrine §10

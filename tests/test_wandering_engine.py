@@ -150,7 +150,7 @@ def _make_cushion(problem_text: str = "test problem about bounded freedom") -> C
             problem=CushionField(name="problem", content=problem_text),
             context=CushionField(name="context"),
             vision=CushionField(name="vision"),
-            current_map=CushionField(name="current_map"),
+            hunches=CushionField(name="hunches"),
         ),
     )
 
