@@ -90,7 +90,7 @@ class LLMClient:
     Usage:
         client = LLMClient(mode=ClientMode.MOCK)   # for testing
         response = await client.call(
-            system_prompt="You are LoRa's Physics agent...",
+            system_prompt="You are Constellax's Physics agent...",
             user_message="Analyze this problem...",
             domain="physics",
             concept="first_principles",

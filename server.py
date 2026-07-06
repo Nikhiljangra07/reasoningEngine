@@ -139,7 +139,7 @@ MAX_PHASE1_SUMMARY_CHARS = int(os.environ.get("MAX_PHASE1_SUMMARY_CHARS", "20000
 
 # Default effort tier when a request does not specify one. Mapped to an
 # iteration budget via src/llm/effort.py (low=3, medium=6, high=10).
-DEFAULT_EFFORT = normalize_effort(os.environ.get("LORA_EFFORT"))
+DEFAULT_EFFORT = normalize_effort((os.environ.get("CONSTELLAX_EFFORT") or os.environ.get("LORA_EFFORT")))
 
 # Conversation store backend selection.
 #
@@ -156,7 +156,7 @@ DEFAULT_EFFORT = normalize_effort(os.environ.get("LORA_EFFORT"))
 #
 # Redis support was removed in the Phase 6 cleanup of the Neo4j migration —
 # Neo4j is the sole persistent backend now.
-CONVERSATION_STORE_PATH = os.environ.get("LORA_CONVERSATION_STORE_PATH", "")
+CONVERSATION_STORE_PATH = (os.environ.get("CONSTELLAX_CONVERSATION_STORE_PATH") or os.environ.get("LORA_CONVERSATION_STORE_PATH", ""))
 CONSTELLAX_DB_BACKEND = os.environ.get("CONSTELLAX_DB_BACKEND", "neo4j").strip().lower()
 
 _CONV_BACKEND: dict = {}
@@ -686,8 +686,8 @@ def _persist_after_engine_done(*, request_id: str, memo_id: str) -> None:
 # Background sweep — periodic deletion of expired conversation entries.
 # Filter-on-read already hides them from queries; this is what actually
 # frees the heap (and disk, when persistence is enabled).
-SWEEP_ENABLED = os.environ.get("LORA_SWEEP_ENABLED", "1") not in ("0", "false", "False", "")
-SWEEP_INTERVAL_SECONDS = int(os.environ.get("LORA_SWEEP_INTERVAL_SECONDS", "3600"))
+SWEEP_ENABLED = (os.environ.get("CONSTELLAX_SWEEP_ENABLED") or os.environ.get("LORA_SWEEP_ENABLED", "1")) not in ("0", "false", "False", "")
+SWEEP_INTERVAL_SECONDS = int((os.environ.get("CONSTELLAX_SWEEP_INTERVAL_SECONDS") or os.environ.get("LORA_SWEEP_INTERVAL_SECONDS", "3600")))
 _sweep_task: "asyncio.Task | None" = None  # populated on startup, cancelled on shutdown
 
 
@@ -3177,7 +3177,7 @@ async def _drain_wandering_jobs() -> None:
 # When disabled, build_memory_directive returns "" and dispatch is
 # unchanged.
 
-MEMORY_RECALL_ENABLED = os.environ.get("LORA_MEMORY_RECALL_ENABLED", "1") not in ("0", "false", "no")
+MEMORY_RECALL_ENABLED = (os.environ.get("CONSTELLAX_MEMORY_RECALL_ENABLED") or os.environ.get("LORA_MEMORY_RECALL_ENABLED", "1")) not in ("0", "false", "no")
 _MEMORY_RETRIEVER: "MemoryRetriever | None" = None
 
 
@@ -3261,10 +3261,10 @@ async def _build_memory_for_request(
 #
 # Disable for dev / specific deploys via LORA_DT_SWEEP_ENABLED=0.
 
-DT_SWEEP_ENABLED = os.environ.get("LORA_DT_SWEEP_ENABLED", "1") not in ("0", "false", "no")
-DT_IDLE_SEC = int(os.environ.get("LORA_DT_IDLE_SEC", "1800"))            # 30 min default
-DT_BATCH = int(os.environ.get("LORA_DT_BATCH", "50"))
-DT_INTERVAL_SEC = int(os.environ.get("LORA_DT_INTERVAL_SEC", "300"))     # 5 min default
+DT_SWEEP_ENABLED = (os.environ.get("CONSTELLAX_DT_SWEEP_ENABLED") or os.environ.get("LORA_DT_SWEEP_ENABLED", "1")) not in ("0", "false", "no")
+DT_IDLE_SEC = int((os.environ.get("CONSTELLAX_DT_IDLE_SEC") or os.environ.get("LORA_DT_IDLE_SEC", "1800")))            # 30 min default
+DT_BATCH = int((os.environ.get("CONSTELLAX_DT_BATCH") or os.environ.get("LORA_DT_BATCH", "50")))
+DT_INTERVAL_SEC = int((os.environ.get("CONSTELLAX_DT_INTERVAL_SEC") or os.environ.get("LORA_DT_INTERVAL_SEC", "300")))     # 5 min default
 
 _dt_sweep_task: "asyncio.Task | None" = None
 _dt_sweeper: "object | None" = None     # DecisionTraceSweeper, lazily imported

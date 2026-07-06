@@ -1,125 +1,99 @@
-# LoRa Deep Reasoning Engine
+# Constellax
 
-A domain-specialist reasoning engine built to compete with frontier models (Claude Opus 4.6, OpenAI o3) in **one** domain: reasoning about human problems — career, relationships, business, life decisions.
+An autonomous **divergent-reasoning engine**: instead of asking one model to answer a hard question,
+Constellax sends goal-blind agents wandering across distant knowledge domains for structural analogies,
+then fuses what they find — across model families — into grounded, testable proposals.
 
-The thesis: a domain-specialist system powered by Sonnet + purpose-built architecture beats general-purpose frontier models in its own lane.
+> **Project status — honest version.** Constellax as a product is **in the architecture phase**; parts
+> of the system (memory pipeline, credit/payment scaffolding, product routing) are built but not
+> complete. **The core subsystem — the Wandering Room — is built, has run end-to-end on a real
+> published open research problem, and is documented with full evidence.** That run, warts and all, is
+> this repo's centerpiece. Start with:
+>
+> - ⭐ [`RESEARCH_CASE_STUDY.md`](RESEARCH_CASE_STUDY.md) — the complete end-to-end run record
+> - ⭐ [`PIPELINE_ASSESSMENT.md`](PIPELINE_ASSESSMENT.md) — a deliberately balanced strengths *and*
+>   weaknesses audit
+> - [`CLAUDE.md`](CLAUDE.md) — the dated decision log (every architecture call and why)
 
-## Architecture
+## The Wandering Room (the part that works)
 
-5 fused domains organized as a Taoist Wu Xing (Five Elements) dual-cycle engine:
+The pipeline takes a structured **cushion** (problem / context / vision / hunches / question), parses
+the question into sub-angles, and runs an autonomous multi-cycle loop:
 
-| Element | Domain | Role |
-|---------|--------|------|
-| Earth | Physics | Ground of reality. What IS happening mechanically. |
-| Metal | Mathematics | Precision grid. Structures, measures, cuts noise. |
-| Water | Psychology | Hidden depths. Why the human distorts variables. |
-| Wood | Philosophy | Expansion. Questions the question itself. |
-| Fire | Chemistry | Transformation/Governance. Decides what bonds. |
+```
+cushion ──► goal-BLIND wandering agents          (search distant domains for structural analogies;
+               │                                  a three-tier "chaos law" leak-gate strips any goal
+               │                                  signal — fails closed, enforced in code)
+               ▼
+        governor · shepherd · halo               (flow control, drift detection, blind-spot audit —
+               │                                  goal-AWARE judges steering up to 4 cycles)
+               ▼
+        cross-lineage blender                    (Anthropic Opus + DeepSeek R1 — two model families;
+               │                                  agreement across lineages is the signal)
+               ▼
+        grounding stage                          (proposals → explicit math → falsifiable toy model)
+```
 
-**63 concepts** across the 5 domains. Two cycles run simultaneously:
-- **Sheng** (Generating): Philosophy → Chemistry → Physics → Maths → Psychology
-- **Ke** (Controlling): each domain is challenged by a different domain than the one feeding it
+The load-bearing original idea: **generators never see the goal; judges do.** Convergence-by-prompt is
+the failure mode this architecture exists to prevent, and the blindness is mechanically enforced
+(regex + n-gram leak gates that drop unlaunderable leads), not aspirational.
 
-Convergence happens when the constructive cycle's output survives the deconstructive cycle's challenge.
+### What happened when we pointed it at a real open problem
 
-See [CLAUDE.md](CLAUDE.md) for the full architecture and decision log.
+Target: the coordination-vs-correlation detection gap in *Multi-Agent Risks from Advanced AI*
+(Hammond et al., Cooperative AI Foundation, 2025). Four cycles, 218 cards, coverage 0 → 0.8, $24.35,
+4h14m. The pipeline **did not hallucinate**, converged on an interventionist separation criterion,
+grounded it in do-calculus, and **validated it in a self-checking toy model** (separates coordination
+from common-cause correlation, 0.345 vs 0.0001).
 
-## Quick Start
+**And the honest headline:** the result was *correct but not novel* — a single frontier-model prompt
+matched it in ~30 seconds for ~2¢. The full account of why, what that means, and where the wander
+underperformed its own design (topic clustering, ~1 keeper per 25 discarded cards) is in the
+assessment doc. That evaluation — running the comparison and publishing the unflattering answer — is
+the part of this project I'd defend hardest.
+
+## What's genuinely here
+
+- **~139K lines of Python** across 345 files; **43 test files (~18.5K lines)** covering the dispatcher,
+  identity system, wandering engine, and bridge
+- Fail-open degradation on every external dependency (Neo4j, search, judges) — the pipeline runs with
+  reduced signal instead of dying; zero bare `except:` in the codebase
+- Honest cost accounting (per-model pricing, true cumulative budget caps) and lossless cancellation
+  (a wander cut at its ceiling keeps its finished work)
+- Judge position-bias hardening (bidirectional probing before an emergence edge is accepted)
+- A memory layer (Neo4j graph + embeddings) and `/api/v2` routing — **work in progress**
+- FastAPI server (`server.py`, 22 endpoints) + CLI (`run.py`) + minimal web UI
+
+## What's NOT done (also the honest version)
+
+- The full product around the engine — memory consolidation, credits, multi-user routing — is
+  scaffolded, not finished.
+- The wander's divergence is weaker than designed: it clusters on topic more than it should.
+- No demonstrated *novel* result yet. The engine's edge can only appear on problems whose answer is not
+  already latent in a frontier model's weights — finding and testing such a problem is the open front.
+
+## Provenance
+
+Constellax began inside the author's earlier project (**LoRa**, an analytical-reasoning product) and
+was split out as an independent system. Two pieces were deliberately ported rather than rewritten, and
+their docstrings say so:
+
+- `src/auth/supabase_auth.py` — a Python port of LoRa's TypeScript Supabase JWT middleware
+- `src/bridge/` — an adapter mirroring LoRa's Memory-V2 shapes during the transition
+
+Legacy `LORA_`-prefixed environment variables still work as fallbacks; the canonical names are now
+`CONSTELLAX_*` (see `.env.example`).
+
+## Quick start
 
 ```bash
-# 1. Install dependencies
 pip install -r requirements.txt
-
-# 2. Configure environment
-cp .env.example .env
-# Edit .env and set your ANTHROPIC_API_KEY
-
-# 3. Run the server
-python server.py
+cp .env.example .env        # set ANTHROPIC_API_KEY (+ optional OPENROUTER/EXA/NEO4J for full signal)
+python server.py            # FastAPI on :8100, minimal UI at /
+python run.py               # CLI mode
+PYTHONPATH=. .venv/bin/python tests/test_wandering_engine.py   # tests are plain-python runners,
+                                                               # NOT pytest — see tests/README.md
 ```
 
-Then open **http://localhost:8100** in your browser.
-
-## Project Structure
-
-```
-reasoningEngine/
-├── server.py              # FastAPI server + UI host
-├── run.py                 # Interactive CLI mode
-├── requirements.txt
-├── .env.example
-├── Dockerfile
-├── web/
-│   └── index.html         # Chat-based UI
-├── src/
-│   ├── core/types.py      # Shared data types + framework IDs
-│   ├── domains/           # 5 isolated domain islands
-│   │   ├── physics/
-│   │   ├── psychology/
-│   │   ├── philosophy/
-│   │   └── chemistry/
-│   ├── maths/             # 9 internal math layers
-│   ├── formation/         # Wu Xing orchestration, funnel, cache
-│   └── llm/               # Async engine, prompts, speech, client
-└── tests/
-    └── test_integration.py
-```
-
-## API
-
-### `POST /api/trace`
-
-Run the full reasoning engine on a problem.
-
-**Request:**
-```json
-{
-  "question": "Describe your situation here...",
-  "max_iterations": 2,
-  "phase1_summary": ""
-}
-```
-
-**Response:**
-```json
-{
-  "speech": "LoRa's narrated response...",
-  "trajectories": [...],
-  "domains": {...},
-  "ke": [...],
-  "convergence": [...],
-  "funnel": [...],
-  "stats": {
-    "calls": 22,
-    "tokens": 46193,
-    "cost": 0.34,
-    "iterations": 2,
-    "converged": false
-  }
-}
-```
-
-### `GET /health`
-
-Returns `{"status": "ok"}` for liveness probes.
-
-## Testing
-
-```bash
-PYTHONPATH=. python -m unittest tests.test_integration -v
-```
-
-## Deployment
-
-The included `Dockerfile` builds a runnable container:
-
-```bash
-docker build -t lora-reasoning-engine .
-docker run -p 8100:8100 -e ANTHROPIC_API_KEY=sk-ant-... lora-reasoning-engine
-```
-
-The server reads `PORT`, `HOST`, and `CORS_ORIGINS` from the environment.
-
-## License
-
-Proprietary. All rights reserved.
+Autonomous wandering runs are launched from `scripts/` (see `scripts/control_room.py` for the knobs);
+run artifacts land under `runs/` — the case study's artifacts are preserved there.
