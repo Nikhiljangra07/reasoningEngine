@@ -1,0 +1,133 @@
+{
+  "cushion_audit": {
+    "layer": "cushion",
+    "blind_spots": [
+      {
+        "layer": "cushion",
+        "blind_spot": "No mechanism defined for distinguishing 'advancing prior work' from 'replicating it with cosmetic novelty' — the system has no specified test for whether a generated direction is genuinely incremental or merely recombinant noise dressed as progress.",
+        "why_it_matters": "If the system cannot operationalize 'next level,' it will produce outputs that feel like advancement but are lateral moves or regressions in disguise, undermining the core promise to users who want real progression, not the appearance of it.",
+        "severity": "high",
+        "suggested_angle": "Define a delta-function: what measurable or structural difference between the source work and the proposed advance would constitute genuine uplift? Anchor this before the retrieval layer is designed."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The three anchor points (current pursuit, undone inspirations, visualized vision) are treated as sufficient inputs, but no account is taken of what the user cannot articulate — the tacit knowledge, the felt sense of wrongness about existing work, the intuition that has no language yet.",
+        "why_it_matters": "The system's value proposition is precisely for vague, half-baked, inarticulate states. If the model only works on what the user can already say, it fails the hardest and most valuable use case — the person who cannot yet name what they are reaching for.",
+        "severity": "high",
+        "suggested_angle": "Design an elicitation layer that extracts signal from what the user rejects, not just what they affirm — negative space mapping as a fourth input channel."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The 'wandering through the Internet to find native and metaphorical work' step is entirely unspecified in terms of quality control — no filter is named for relevance, credibility, recency, or domain-transfer validity.",
+        "why_it_matters": "Cross-domain metaphorical retrieval is the highest-risk step: a bad analogy from theater applied to a physics problem can actively mislead the user's thinking and send their work in a structurally wrong direction with false confidence.",
+        "severity": "high",
+        "suggested_angle": "Specify a transfer-validity gate: before a cross-domain analogy is surfaced, what structural isomorphism must it satisfy to be admitted? Name the rejection criteria, not just the retrieval criteria."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The cushion assumes a single user working on a concept in isolation, but does not address the case where the 'prior work' the user wants to advance is contested, proprietary, or ethically encumbered — IP, attribution, and epistemic ownership are entirely absent.",
+        "why_it_matters": "A system that helps users 'take a research paper or concept to the next level' without surfacing IP or attribution obligations could expose users to legal or reputational risk, and could undermine the system's credibility in academic or professional contexts.",
+        "severity": "medium",
+        "suggested_angle": "Build an inheritance-provenance layer that flags when source material carries ownership or attribution obligations before the advance is generated, not after."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The cushion conflates two distinct use cases — (1) advancing existing published work and (2) articulating a vague original concept — without acknowledging that these require fundamentally different system architectures and user contracts.",
+        "why_it_matters": "Designing one system to serve both without explicitly separating the pipelines risks producing a hybrid that does neither well: the retrieval-and-advance mode will contaminate the original-articulation mode with anchoring bias, pulling the user's novel concept toward existing work rather than helping it emerge on its own terms.",
+        "severity": "medium",
+        "suggested_angle": "Treat these as two distinct modes with a hard fork at intake — mode one is inheritance-and-advance, mode two is emergence-and-articulation — and audit whether a single model architecture can serve both without cross-contamination."
+      }
+    ],
+    "cost_usd": 0.0186,
+    "ok": true,
+    "note": ""
+  },
+  "cards_audit": {
+    "layer": "cards",
+    "blind_spots": [
+      {
+        "layer": "cards",
+        "blind_spot": "No card addresses the retrieval and ranking mechanism — how the system decides which wandered results are surfaced to the user versus discarded. Every card describes search or generation, none describes the selection filter that converts a large wandered set into a small, useful return.",
+        "why_it_matters": "The cushion's promise is that sparse user input (pursuit + undone inspirations + vision) anchors the system well enough to return relevant, non-obvious work. Without a retrieval and ranking layer, the anchor is only half a mechanism — it bounds the search but does not close the loop back to the user with ranked, actionable results. The system stalls at generation and never delivers.",
+        "severity": "high",
+        "suggested_angle": "Commission a wander specifically on relevance ranking under sparse, ambiguous queries — look at learned retrieval models, reciprocal rank fusion, or interestingness-weighted re-ranking that can operate when the user's goal is only partially specified."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card touches the cold-start problem: what happens when the user's anchor is so vague or so novel that no existing published work maps onto it. All cards assume the anchor is legible enough to constrain search productively; none address the failure mode where the anchor is too sparse to generate a useful signal.",
+        "why_it_matters": "The cushion explicitly names users who have 'vague inspirations' and 'don't know how to articulate' their concept. If the anchor is the load-bearing mechanism and the anchor can be near-empty, the system needs a protocol for bootstrapping signal from near-zero input — otherwise it fails exactly the users it is designed for.",
+        "severity": "high",
+        "suggested_angle": "Wander toward work on query expansion under uncertainty, zero-shot retrieval, or iterative clarification loops — systems that generate candidate anchors from minimal input and ask the user to confirm or reject, progressively sharpening the signal."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "All cards cluster on physics and mathematics as the domain exemplars (Sim2Reason, FERMAT, MaD Physics, Augmented Physics). The cushion explicitly names psychology, theater, and literature as target domains. No card tests whether the anchor-plus-wander mechanism transfers to domains without formal verification signals or simulators.",
+        "why_it_matters": "The structural analogy the cards keep drawing — anchor plays the role of DSL or interestingness function — depends on there being some ground-truth signal that validates a wandered result. In physics, a simulator provides that signal. In theater or psychology, there is no simulator. If the mechanism only works where formal verification exists, the cushion's cross-domain promise is broken.",
+        "severity": "high",
+        "suggested_angle": "Commission a wander into soft-domain analogical retrieval — work on concept mapping in humanities, narrative similarity, or metaphor-based search — to test whether the anchor mechanism can operate without a formal correctness signal."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card addresses the 'advance it' requirement — the cushion is not asking for retrieval of similar work, it is asking for a system that helps users take existing work to a next level. The cards describe finding resonant territory; none describe the generative step of synthesizing what comes after the found work.",
+        "why_it_matters": "The cushion has two distinct modes: (1) find native and metaphorical work in the domain, and (2) use that inheritance to advance the user's concept. The cards cover mode 1 almost exclusively. Mode 2 — the synthesis and extension step — is the part that differentiates this system from a search engine, and it has no coverage.",
+        "severity": "high",
+        "suggested_angle": "Wander toward work on analogical reasoning for innovation, conceptual blending theory, or AI-assisted hypothesis generation — systems that take a found body of work and produce a candidate next step rather than stopping at retrieval."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card examines how the system handles the user's 'undone inspirations' as a distinct input type. The cards treat the anchor as a single unified signal; the cushion describes three separate information points (current pursuit, undone inspirations, visualized vision) that may point in different or even contradictory directions.",
+        "why_it_matters": "If the three input types are collapsed into one anchor, the system loses the structural tension between them — which is precisely where the user's most generative uncertainty lives. A user's undone inspiration may contradict their current pursuit; that contradiction is signal, not noise. No card captures how to hold and use that tension rather than flatten it.",
+        "severity": "medium",
+        "suggested_angle": "Wander toward multi-objective or multi-constraint search architectures — systems that maintain several partially conflicting attractors simultaneously and use their tension to navigate toward novel territory rather than averaging them away."
+      }
+    ],
+    "cost_usd": 0.0257,
+    "ok": true,
+    "note": ""
+  },
+  "blends_audit": {
+    "layer": "blends",
+    "blind_spots": [
+      {
+        "layer": "blends",
+        "blind_spot": "None of the four blends specify how the anchor is initialized when the user's input is genuinely pre-verbal — a felt sense with no articulable structure. Blend-03's sparse-gap vector and Blend-04's membership distribution both presuppose enough signal to seed a representation, but the cushion explicitly names 'vague inspirations I don't know how to articulate' as the entry condition. The cold-start problem is unaddressed.",
+        "why_it_matters": "If the anchor cannot be seeded from pre-verbal input, the entire pipeline stalls at the first user interaction — the system's core promise (advancing half-baked concepts) fails at the most common entry point.",
+        "severity": "high",
+        "suggested_angle": "Design a pre-anchor elicitation layer that uses behavioral probes (reaction to shown exemplars, forced-choice between metaphors, rejection signals) to bootstrap a sparse representation before any structural slot is named."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-01's counterfactual shadow-agent assumes the 'anchor's constraints' can be zeroed cleanly, but the cushion's anchor is a composite of pursuit + undone inspirations + visualized vision — three entangled information points. No blend addresses how to disentangle these so that zeroing one does not corrupt the others, making the divergence signal noisy or meaningless.",
+        "why_it_matters": "A corrupted divergence signal means the steering mechanism either fires on false positives (flagging moves that are actually on-anchor) or misses genuine departures, degrading the traversal quality that is the system's core value.",
+        "severity": "high",
+        "suggested_angle": "Specify a factorized anchor representation where pursuit, undone inspirations, and vision are held as separable components, so ablation can zero each independently and the shadow-agent comparison remains interpretable."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-02's 'role criterion' extracts the structural position a concept is straining to occupy, but no blend addresses cross-domain role translation — the cushion explicitly names math, physics, psychology, theater, literature as target domains. A role that is legible in one domain (e.g., a force-vector in physics) may have no named structural slot in another (e.g., theater). The translation mechanism is absent.",
+        "why_it_matters": "The cushion's differentiating promise is metaphorical and native discovery across domains. If role translation fails at domain boundaries, the system collapses into single-domain retrieval — a much weaker and already-solved capability.",
+        "severity": "high",
+        "suggested_angle": "Build a domain-agnostic role ontology (e.g., roles as relational functions: mediator, constraint, amplifier, resolver) that can be instantiated in any domain's vocabulary, enabling cross-domain structural matching without requiring domain-specific slot names."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-04's gradient-binding crystallizer treats user card-acceptance as a clean re-weighting signal, but the cushion describes users who do not know how to articulate their vision — meaning their acceptance or rejection of a card may reflect surface familiarity bias rather than genuine alignment with their underlying intent. No blend distinguishes recognition from resonance.",
+        "why_it_matters": "If the distribution is re-weighted by recognition bias, the crystallizer converges on the user's existing vocabulary rather than their actual unarticulated vision — the system advances what the user already knows, not what they are straining toward, inverting the core value proposition.",
+        "severity": "medium",
+        "suggested_angle": "Introduce a surprise-weighted acceptance signal: cards that are accepted despite being unfamiliar to the user carry higher re-weighting authority than cards accepted because they match known terms, using a familiarity pre-screen to calibrate the gradient."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-03's absence-coded anchor uses structurally-implied-but-unfilled slots as the wandering signal, but no blend addresses slot stability over time — the cushion describes a system that 'keeps wandering through the Internet,' implying persistent traversal sessions. As the user's concept develops, previously empty slots may fill, and new implied slots may emerge. No blend specifies how the gap-vector is updated without collapsing the original anchor.",
+        "why_it_matters": "A static gap-vector becomes stale as the concept matures, causing the system to keep retrieving material for gaps the user has already resolved while missing newly opened ones — wasting traversal cycles and eroding user trust in the system's relevance.",
+        "severity": "medium",
+        "suggested_angle": "Design a versioned anchor protocol where each confirmed insight closes a slot and triggers a re-inference pass to detect newly implied gaps, preserving the original anchor as a read-only baseline for divergence comparison."
+      }
+    ],
+    "cost_usd": 0.0221,
+    "ok": true,
+    "note": ""
+  },
+  "model": "anthropic/claude-sonnet-4-6",
+  "total_cost_usd": 0.0664
+}

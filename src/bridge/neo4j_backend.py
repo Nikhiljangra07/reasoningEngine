@@ -85,6 +85,11 @@ log = logging.getLogger("constellax.neo4j_backend")
 GUEST_BUCKET = "guest"
 _DEFAULT_EMBEDDING_DIM = 1536  # matches OpenAI ada-002 / Gemini at output_dim=1536
 _VECTOR_INDEX_NAME = "iteration_embedding_idx"
+# Constellation Interpreter (2026-06-01) — vector indexes for the
+# multi-channel matcher's cushion-node and content-fingerprint sides.
+# Both share the iteration index's 1536-dim cosine contract.
+_CUSHION_NODE_VECTOR_INDEX_NAME = "cushion_node_embedding_idx"
+_CONTENT_FINGERPRINT_VECTOR_INDEX_NAME = "content_fingerprint_embedding_idx"
 _UNSCOPED_PROJECT = "__unscoped__"  # marker for project_id=None in ConversationStore
 
 # Bridge entity types — must match _ENTITY_TYPES tuple in redis_backend.py.
@@ -166,6 +171,14 @@ _SCHEMA_STATEMENTS = [
     "CREATE INDEX decision_anchor_status IF NOT EXISTS FOR (d:DecisionAnchor) ON (d.status)",
     "CREATE INDEX bridge_session_project IF NOT EXISTS FOR (s:Session) ON (s.project_id)",
     "CREATE INDEX bridge_iteration_session IF NOT EXISTS FOR (i:BridgeIteration) ON (i.session_id)",
+    # Constellation Interpreter (2026-06-01). CushionNode persists each
+    # dual-artifact cushion entry (graph_meaning + retrieval_face +
+    # embedding). ContentFingerprint persists Haiku-extracted structural
+    # phrases per fetched content piece, keyed by content_hash for cache
+    # lookup across sessions. Vector indexes for both are created
+    # separately below (Neo4j 5.13+ vector DDL).
+    "CREATE CONSTRAINT cushion_node_id_unique IF NOT EXISTS FOR (n:CushionNode) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT content_fingerprint_hash_unique IF NOT EXISTS FOR (f:ContentFingerprint) REQUIRE f.content_hash IS UNIQUE",
 ]
 
 
@@ -175,6 +188,43 @@ def _vector_index_statement(dim: int) -> str:
     return (
         f"CREATE VECTOR INDEX {_VECTOR_INDEX_NAME} IF NOT EXISTS "
         f"FOR (i:Iteration) ON i.embedding "
+        f"OPTIONS {{indexConfig: {{"
+        f"`vector.dimensions`: {int(dim)}, "
+        f"`vector.similarity_function`: 'cosine'"
+        f"}}}}"
+    )
+
+
+def _cushion_node_vector_index_statement(dim: int) -> str:
+    """Cosine-similarity index over CushionNode.embedding.
+
+    Constellation Interpreter (2026-06-01). The multi-channel matcher's
+    vector channel queries this index with a fingerprint embedding to
+    find cushion nodes whose retrieval_face embedding_text lives near
+    the fingerprint in structural space.
+    """
+    return (
+        f"CREATE VECTOR INDEX {_CUSHION_NODE_VECTOR_INDEX_NAME} IF NOT EXISTS "
+        f"FOR (n:CushionNode) ON n.embedding "
+        f"OPTIONS {{indexConfig: {{"
+        f"`vector.dimensions`: {int(dim)}, "
+        f"`vector.similarity_function`: 'cosine'"
+        f"}}}}"
+    )
+
+
+def _content_fingerprint_vector_index_statement(dim: int) -> str:
+    """Cosine-similarity index over ContentFingerprint.embedding.
+
+    Constellation Interpreter (2026-06-01). Each fetched content piece
+    gets a Haiku-extracted structural fingerprint (2-5 phrases) and an
+    embedding of those phrases concatenated. This index lets us find
+    fingerprints whose structural language matches a given cushion-node
+    query without paying for an LLM call per candidate.
+    """
+    return (
+        f"CREATE VECTOR INDEX {_CONTENT_FINGERPRINT_VECTOR_INDEX_NAME} IF NOT EXISTS "
+        f"FOR (f:ContentFingerprint) ON f.embedding "
         f"OPTIONS {{indexConfig: {{"
         f"`vector.dimensions`: {int(dim)}, "
         f"`vector.similarity_function`: 'cosine'"
@@ -201,6 +251,17 @@ async def init_schema(driver: Any, *, database: str = "neo4j", embedding_dim: in
         except Exception as e:
             # Vector index requires Neo4j 5.13+; falls back gracefully if older.
             log.warning("vector index creation failed (need Neo4j 5.13+): %s", e)
+        # Constellation Interpreter (2026-06-01) — same 5.13+ requirement,
+        # same 1536-dim cosine contract. Failure is non-fatal: the iteration
+        # path keeps working, only the new matcher's vector channel is offline.
+        try:
+            await session.run(_cushion_node_vector_index_statement(embedding_dim))
+        except Exception as e:
+            log.warning("cushion_node vector index creation failed: %s", e)
+        try:
+            await session.run(_content_fingerprint_vector_index_statement(embedding_dim))
+        except Exception as e:
+            log.warning("content_fingerprint vector index creation failed: %s", e)
     log.info("Neo4j schema initialized (database=%s, embedding_dim=%d)", database, embedding_dim)
 
 

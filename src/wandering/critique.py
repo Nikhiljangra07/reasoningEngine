@@ -141,6 +141,16 @@ is to deliver honest material, not impressive material.
 - Lost the anchor's structural shape ("I'm now writing about something
   unrelated") → Q2 red
 
+# WHAT IS A VALID FINDING (do NOT red-flag these)
+
+A cross-domain mapping that is PARTIAL but whose limits are explicitly
+named ("this maps in these specific ways; does NOT map in these other
+specific ways") is a VALID finding, not a red flag. The "what does not
+map" field exists precisely to make partial mappings honest. Do not
+flag Q3 (projection) just because the mapping is partial — only flag
+Q3 when the mapping is INVENTED (the source genuinely has no
+structural connection to the anchor, but the agent forces one).
+
 # VERDICTS
 
 - continue          — on track, keep digging
@@ -149,6 +159,18 @@ is to deliver honest material, not impressive material.
                      move on to next direction
 - hand_off         — promising lead but not THIS agent's focus; spawn a
                      sub-agent for it and this agent continues elsewhere
+
+# WHEN TO PICK ABANDON_DIG vs RETURN_TO_ANCHOR vs CONTINUE
+
+abandon_dig is the STRONGEST verdict and the rarest. Use it only when
+BOTH Q3 (projection — the analogy was invented, not found) AND Q4
+(no gain — nothing transferable was learned) are simultaneously true.
+If you choose abandon_dig, you MUST list BOTH "Q3" and "Q4" in
+red_flags. Q3 alone (projection but you DID gain something usable
+elsewhere) → return_to_anchor with a clean handoff note in summary.
+Q4 alone (no gain but the source was real and the mapping was honest)
+→ return_to_anchor — re-orient and try a different angle. Neither
+Q3 nor Q4 → continue.
 
 # OUTPUT FORMAT
 
@@ -332,13 +354,174 @@ async def run_self_critique(
     return parse_critique_response(response.content)
 
 
+# ---------------------------------------------------------------------------
+# r9 Fix #2 — Structural abandonment gate
+# ---------------------------------------------------------------------------
+#
+# r7 had NO structural constraints on the abandon verdict — it trusted
+# whatever the LLM wrote. This let model personality leak through: Grok
+# eagerly abandoned, Haiku/Gemini refused to abandon. r8 removed the
+# entire iter-1 abandonment path to neutralize the leak, but that lost
+# the legitimate honest-abandonment escape valve r7 had.
+#
+# r9 restores iter-1 abandonment under THREE structural layers, all of
+# which must pass for ABANDON_DIG to actually terminate at iter-1:
+#
+#   Layer 1 — Q3+Q4 floor:    abandon_dig requires both Q3 (projection)
+#                             AND Q4 (no gain) in red_flags. Q4 alone →
+#                             return_to_anchor. Q3 alone → continue.
+#                             Neither → continue.
+#   Layer 2 — Circuit breaker: if the agent already abandoned ≥ 2 of its
+#                             first 3 digs, demote the next ABANDON_DIG
+#                             to CONTINUE. Catches the Grok-personality
+#                             leak before it accumulates.
+#   Layer 3 — Confidence cap: iter-1 abandonments cap report confidence
+#                             at MEDIUM regardless of layer-match
+#                             ratio. Applied in agent.py at the report-
+#                             build step (this module only emits the
+#                             verdict; the cap is enforced downstream).
+#
+# Layers 1 and 2 act on the verdict returned to the agent loop. Layer 3
+# is communicated via the GateDecision.confidence_cap field which the
+# agent loop respects when building the report.
+
+_CIRCUIT_BREAKER_WINDOW = 3   # examine first N digs
+_CIRCUIT_BREAKER_LIMIT  = 2   # if >= LIMIT abandonments in WINDOW, demote next
+
+
+@dataclass
+class GateDecision:
+    """Output of enforce_abandon_gate.
+
+    `verdict` is the (possibly demoted) verdict the agent loop should
+    consume. `original_verdict` records what the LLM emitted before
+    the gate ran — needed for forensics. `gate_action` is a short
+    machine-readable code describing which layer fired (e.g.
+    "passed", "layer1_demote_to_rta", "layer1_demote_to_continue",
+    "layer2_circuit_breaker"). `confidence_cap` is the maximum
+    confidence the resulting iter-1 report may ship at — None means
+    no cap (most cases); "medium" means apply Layer 3.
+    """
+
+    verdict: CritiqueVerdict
+    original_verdict: CritiqueVerdict
+    gate_action: str
+    confidence_cap: str | None = None  # None | "medium" | "low"
+
+
+def enforce_abandon_gate(
+    result: CritiqueResult,
+    iteration_so_far: int,
+    abandon_history: list[bool] | None = None,
+) -> GateDecision:
+    """Apply the three-layer structural gate to a critique result.
+
+    Only intervenes when the LLM verdict is ABANDON_DIG AND we are at
+    iter-1 (iteration_so_far == 1). All other verdicts pass through
+    unchanged (return_to_anchor / continue / hand_off are already
+    safe — they do not terminate the dig at iter-1).
+
+    Parameters:
+      result            — parsed CritiqueResult from the LLM
+      iteration_so_far  — the iteration number critique fired AFTER
+                          (1 for the first post-iter-1 check)
+      abandon_history   — list of booleans, one per prior dig in this
+                          agent's session, True if that dig terminated
+                          at iter-1. May be None (treated as empty).
+
+    Returns a GateDecision the agent loop consumes.
+    """
+    history = abandon_history or []
+    original = result.verdict
+
+    # Pass-through for non-abandonment verdicts: nothing to gate.
+    if original != CritiqueVerdict.ABANDON_DIG:
+        return GateDecision(
+            verdict=original,
+            original_verdict=original,
+            gate_action="passed",
+            confidence_cap=None,
+        )
+
+    # Pass-through for iter-2+ abandonments: by r9 design iter-2 always
+    # runs, so an iter-2 critique can still recommend abandonment but
+    # only as advisory (the agent loop already ran the revise step).
+    if iteration_so_far >= 2:
+        return GateDecision(
+            verdict=original,
+            original_verdict=original,
+            gate_action="passed_iter2",
+            confidence_cap=None,
+        )
+
+    # Layer 2 — circuit breaker. If the agent already abandoned a
+    # majority of its first few digs, downgrade this abandonment to
+    # CONTINUE. The check looks at the FIRST N digs in the session
+    # (not the last N) so a Grok-personality bias caught early is
+    # caught for the rest of the run.
+    if len(history) >= _CIRCUIT_BREAKER_WINDOW:
+        window = history[:_CIRCUIT_BREAKER_WINDOW]
+        if sum(1 for h in window if h) >= _CIRCUIT_BREAKER_LIMIT:
+            return GateDecision(
+                verdict=CritiqueVerdict.CONTINUE,
+                original_verdict=original,
+                gate_action="layer2_circuit_breaker",
+                confidence_cap=None,
+            )
+
+    # Layer 1 — Q3+Q4 floor. abandon_dig requires both flags.
+    rf = set(result.red_flags)
+    has_q3 = "Q3" in rf
+    has_q4 = "Q4" in rf
+
+    if has_q3 and has_q4:
+        # All layers passed — true honest abandonment. Layer 3 caps
+        # the report's confidence at MEDIUM.
+        return GateDecision(
+            verdict=CritiqueVerdict.ABANDON_DIG,
+            original_verdict=original,
+            gate_action="passed",
+            confidence_cap="medium",
+        )
+
+    if has_q4 and not has_q3:
+        # Q4 alone — gained nothing but the source was real. Re-orient.
+        return GateDecision(
+            verdict=CritiqueVerdict.RETURN_TO_ANCHOR,
+            original_verdict=original,
+            gate_action="layer1_demote_to_rta",
+            confidence_cap=None,
+        )
+
+    if has_q3 and not has_q4:
+        # Q3 alone — projection but you gained something. Self-correct
+        # and keep going (iter-2 will revise).
+        return GateDecision(
+            verdict=CritiqueVerdict.CONTINUE,
+            original_verdict=original,
+            gate_action="layer1_demote_to_continue_q3only",
+            confidence_cap=None,
+        )
+
+    # Neither Q3 nor Q4 — the LLM said abandon_dig without the
+    # structural signature. Demote to CONTINUE.
+    return GateDecision(
+        verdict=CritiqueVerdict.CONTINUE,
+        original_verdict=original,
+        gate_action="layer1_demote_to_continue_noflags",
+        confidence_cap=None,
+    )
+
+
 __all__ = [
     "QUESTIONS",
     "CRITIQUE_DOMAIN",
     "CRITIQUE_CONCEPT",
     "CritiqueVerdict",
     "CritiqueResult",
+    "GateDecision",
     "build_critique_user_message",
     "parse_critique_response",
     "run_self_critique",
+    "enforce_abandon_gate",
 ]

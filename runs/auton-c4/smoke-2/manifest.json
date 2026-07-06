@@ -1,0 +1,269 @@
+{
+  "cushion": "C4",
+  "angles": [
+    "how to fuse two independent gap-detectors \u2014 a goal-blind structural piece-finder and a goal-aware auditor \u2014 into one dispatch priority, with corroboration rather than concatenation",
+    "how to size each dispatch wave from the gap's expected yield rather than a fixed count, and when to stop adding agents to a single gap",
+    "how to distinguish an UNFILLABLE gap (terminate) from an UNDER-ATTEMPTED one (re-route deeper) from observable signals, including the record of what was already sent at it",
+    "how to bias re-exploration toward identified gaps WITHOUT collapsing the diversity that made the first pass productive, and how to measure depth of coverage rather than mere presence; and",
+    "what governs the overall STOP decision \u2014 coverage-complete versus diminishing-returns versus a hard cap \u2014 when the coverage signal itself may be shallow and no quality judge is in the loop?"
+  ],
+  "cycles": [
+    {
+      "cycle": 1,
+      "waves": [
+        {
+          "tag": "main",
+          "label": "cycle-1: 1 agent per laundered sub-question",
+          "agents": 2,
+          "reports": 1,
+          "cost_usd": 0.1218,
+          "tokens": 49510,
+          "cost_by_model": {
+            "deepseek/deepseek-v4-pro": 0.1216
+          },
+          "governor": {}
+        }
+      ],
+      "cards_new": 1,
+      "cards_total": 1,
+      "memory_written": 1,
+      "card_bridges": [
+        {
+          "report_id": "wander-P01-001",
+          "source_shape": "HadiFrt20/deepresearch decomposes a research question into 100+ tasks, spawns subagents to execute them, and runs an adversarial verifier that attacks each output's truth claims before accepting them. The system has real, working organs \u2014 a decomposer, a researcher, an adversary, a provenance tracker \u2014 but they are coordinated externally: a CLI tells them when to start, a hard session cap tells them when to stop, and the user decides when the result is good enough. The adversary's attack outputs do feed back into the researcher, making it a primitive loop, but nothing accumulates across sessions \u2014 each run starts blind.",
+          "bridge": "Your anchor is this system's near-twin, which is exactly why the gap is instructive. Your seven wandering agents correspond to their subagent pool \u2014 locally validated, capable of producing correct outputs in isolation. Your 'uncomposed loop' node maps directly to their governance problem: the adversary produces a scalar trust score, your detector produces a resonance signal, but in both cases the "
+        }
+      ],
+      "halo_blind_spots": [
+        {
+          "blind_spot": "No card addresses how the pipeline handles contradictory findings across waves \u2014 when wave N+1 produces a card that directly conflicts with a card from wave N, the coverage scorer has no described mechanism to adjudicate which claim stands, and the final draft may silently contain both.",
+          "severity": "high",
+          "suggested_angle": "Probe whether the coverage checkpoint has any contradiction-detection pass, or whether contradiction resolution is assumed to be the human's job at review time \u2014 if the latter, the autonomy claim is overstated."
+        },
+        {
+          "blind_spot": "No card examines what happens when the chaos-law lead-laundering gate systematically rejects leads in a domain where the target question is genuinely novel \u2014 the gate may be calibrated to known-pattern chaos-law violations and could starve the pipeline of the only leads capable of reaching the frontier of the question.",
+          "severity": "high",
+          "suggested_angle": "Audit the gate's training signal: what corpus of leads was it calibrated against, and does that corpus include genuinely novel-domain leads or only well-mapped territory?"
+        },
+        {
+          "blind_spot": "No card covers the marginal-value wave-sizer's behavior under diminishing returns that are domain-specific rather than signal-specific \u2014 the sizer may correctly detect that successive waves are returning lower marginal value, but attribute it to exhaustion of the question when the actual cause is a systematic blind spot in the wander anchor itself.",
+          "severity": "high",
+          "suggested_angle": "Ask whether the terminate-vs-reroute math distinguishes between 'low marginal value because the question is answered' and 'low marginal value because the current anchor cannot reach this territory' \u2014 if it does not, the two failure modes are indistinguishable from inside the loop."
+        },
+        {
+          "blind_spot": "No card addresses the two-batch triangulation method's assumption that replication across batches is a reliable signal of truth rather than a signal of shared source bias \u2014 if both batches draw from the same underlying corpus or model prior, high replication confirms the bias, not the fact.",
+          "severity": "medium",
+          "suggested_angle": "Probe whether the two batches are sourced from genuinely independent retrieval paths or whether they share a common index, model, or embedding space that would cause correlated errors to replicate."
+        },
+        {
+          "blind_spot": "No card examines the goal-aware auditor's susceptibility to goal-anchoring drift \u2014 over successive waves, the auditor's definition of 'blind spot' may narrow toward the goal as stated rather than the goal as needed, causing it to stop naming gaps that would require reframing the goal itself.",
+          "severity": "medium",
+          "suggested_angle": "Determine whether the auditor has any mechanism to flag 'the goal framing itself may be the gap' or whether its output space is constrained to gaps within the current framing."
+        }
+      ],
+      "coverage": {
+        "d_t": 0.0,
+        "per_angle": [
+          {
+            "idx": 1,
+            "angle": "how to fuse two independent gap-detectors \u2014 a goal-blind structural piece-finder and a goal-aware auditor \u2014 into one dispatch priority, with corroboration rather than concatenation",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 2,
+            "angle": "how to size each dispatch wave from the gap's expected yield rather than a fixed count, and when to stop adding agents to a single gap",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 3,
+            "angle": "how to distinguish an UNFILLABLE gap (terminate) from an UNDER-ATTEMPTED one (re-route deeper) from observable signals, including the record of what was already sent at it",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 4,
+            "angle": "how to bias re-exploration toward identified gaps WITHOUT collapsing the diversity that made the first pass productive, and how to measure depth of coverage rather than mere presence; and",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 5,
+            "angle": "what governs the overall STOP decision \u2014 coverage-complete versus diminishing-returns versus a hard cap \u2014 when the coverage signal itself may be shallow and no quality judge is in the loop?",
+            "coverage": "uncovered",
+            "by": ""
+          }
+        ]
+      },
+      "signals": {
+        "novelty": 0,
+        "change": 0.0
+      },
+      "shepherd": {
+        "cycle": 1,
+        "status": "on_track",
+        "momentum": 0.7,
+        "repetition": [],
+        "drift_reason": "",
+        "refocus": "",
+        "rationale": "Cycle 1 opens genuinely new ground by framing the governance problem through a structural analogy (the 'uncomposed loop' / adversarial composition failure), which is directly relevant to the fusion and stop-decision angles. No prior cycles exist to repeat, and the trajectory points toward the cushion's core composition questions rather than away from them.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "cost_usd": 0.007752,
+        "ok": true
+      },
+      "dispatch_signals": {
+        "skeleton_gaps": 0,
+        "high_halo": 3,
+        "open_angles": 5,
+        "rest_halo": 2,
+        "shepherd_refocus": 0,
+        "prior_keys_known": 0
+      },
+      "dispatch_leads": [
+        "Iterative synthesis pipelines that accumulate claims across sequential passes must address the problem of contradictory findings. Mechanisms for conflict detection, adjudication, and revision in such systems form a structural family that includes versioned knowledge bases, truth maintenance systems, and multi-agent consensus protocols.",
+        "The structural neighbourhood includes classification systems that filter candidate pathways based on historical pattern signatures, and the dynamics that arise when a filtering boundary is applied to a space containing genuinely unprecedented structural configurations. The territory covers the relationship between pattern-memory constraints in filtering architectures and the structural novelty density of the candidate stream."
+      ],
+      "cost_usd": 0.1296
+    },
+    {
+      "cycle": 2,
+      "waves": [
+        {
+          "tag": "dispatch",
+          "label": "dispatch: 2 gap(s)",
+          "agents": 2,
+          "reports": 1,
+          "cost_usd": 0.198,
+          "tokens": 85633,
+          "cost_by_model": {
+            "deepseek/deepseek-v4-pro": 0.1981
+          },
+          "governor": {}
+        }
+      ],
+      "cards_new": 1,
+      "cards_total": 2,
+      "memory_written": 1,
+      "card_bridges": [
+        {
+          "report_id": "wander-P01-001",
+          "source_shape": "HadiFrt20/deepresearch decomposes a research question into 100+ tasks, spawns subagents to execute them, and runs an adversarial verifier that attacks each output's truth claims before accepting them. The system has real, working organs \u2014 a decomposer, a researcher, an adversary, a provenance tracker \u2014 but they are coordinated externally: a CLI tells them when to start, a hard session cap tells them when to stop, and the user decides when the result is good enough. The adversary's attack outputs do feed back into the researcher, making it a primitive loop, but nothing accumulates across sessions \u2014 each run starts blind.",
+          "bridge": "Your anchor is this system's near-twin, which is exactly why the gap is instructive. Your seven wandering agents correspond to their subagent pool \u2014 locally validated, capable of producing correct outputs in isolation. Your 'uncomposed loop' node maps directly to their governance problem: the adversary produces a scalar trust score, your detector produces a resonance signal, but in both cases the "
+        },
+        {
+          "report_id": "wander-P01-001",
+          "source_shape": "CognitiveTemp runs eight agents in a fixed linear pipeline: Planner, Retriever, and so on through to Synthesis. At the end of each pass, an uncertainty agent evaluates the output; if uncertainty is still high, the loop runs again. The halting condition is therefore earned \u2014 the system keeps going until it has genuinely resolved enough uncertainty \u2014 rather than simply stopping after a preset number of iterations. That one change, swapping a count for a signal, is the structural move the system contributes.",
+          "bridge": "Your anchor already distinguishes 'earned halting' from 'blunt cutoff,' and CognitiveTemp is a live implementation of that exact distinction \u2014 so the resonance is real and direct, not metaphorical. Where the bridge gets interesting is in what the source did *not* do: it wired uncertainty to the stop/continue decision but left the question of *where to send effort next* completely unaddressed. Your"
+        }
+      ],
+      "halo_blind_spots": [
+        {
+          "blind_spot": "No card addresses how the pipeline validates that its own coverage checkpoint is calibrated \u2014 the scorer that declares 'gap closed' is treated as ground truth, but nothing in the wander examines what happens when the scorer is systematically wrong or miscalibrated against the actual target structure.",
+          "severity": "high",
+          "suggested_angle": "Hunt for implementations or theory on meta-evaluation of coverage metrics \u2014 specifically cases where a scorer's own coverage of the target space is tested, not just the artifacts it scores."
+        },
+        {
+          "blind_spot": "Both cards are drawn from the same architectural family: multi-agent loops with a single central evaluator. The wander produced zero cards from adversarial or red-team traditions, formal verification approaches, or ensemble-disagreement methods that could serve as the gap-detection organ.",
+          "severity": "high",
+          "suggested_angle": "Dispatch a wave specifically into adversarial NLP, ensemble disagreement as a coverage signal, and formal specification checking \u2014 traditions that find gaps by structural contrast rather than by scoring similarity to a target."
+        },
+        {
+          "blind_spot": "Neither card touches the 'genuinely unfillable versus merely under-attempted' distinction the vision names as a required capability. The wander brought back nothing on how a system distinguishes a gap that no additional wave can close from one that simply needs more force.",
+          "severity": "high",
+          "suggested_angle": "Look for work on diminishing-returns detection in iterative retrieval, information-theoretic stopping criteria, and 'unknown unknowns' literature in knowledge-base completion."
+        },
+        {
+          "blind_spot": "The wander produced only two cards, both from open-source repository descriptions. No card comes from empirical evaluation literature, ablation studies, or failure post-mortems of autonomous research pipelines \u2014 sources that would surface where these architectures actually break in practice.",
+          "severity": "medium",
+          "suggested_angle": "Widen the next wave to explicitly target published evaluations, benchmark results, and failure analyses of autonomous agent pipelines \u2014 not just architecture descriptions."
+        },
+        {
+          "blind_spot": "No card examines the chaos-law lead-laundering gate or the marginal-value wave-sizer as architectural choices with known failure modes \u2014 both are named in the problem as validated organs, but the wander brought back nothing that would stress-test whether those specific mechanisms hold under adversarial or edge-case inputs.",
+          "severity": "medium",
+          "suggested_angle": "Target literature on query reformulation quality metrics, goal-leakage in constrained generation, and adaptive sampling strategies \u2014 to find external benchmarks against which these two organs can be stress-tested."
+        }
+      ],
+      "coverage": {
+        "d_t": 0.1,
+        "per_angle": [
+          {
+            "idx": 1,
+            "angle": "how to fuse two independent gap-detectors \u2014 a goal-blind structural piece-finder and a goal-aware auditor \u2014 into one dispatch priority, with corroboration rather than concatenation",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 2,
+            "angle": "how to size each dispatch wave from the gap's expected yield rather than a fixed count, and when to stop adding agents to a single gap",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 3,
+            "angle": "how to distinguish an UNFILLABLE gap (terminate) from an UNDER-ATTEMPTED one (re-route deeper) from observable signals, including the record of what was already sent at it",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 4,
+            "angle": "how to bias re-exploration toward identified gaps WITHOUT collapsing the diversity that made the first pass productive, and how to measure depth of coverage rather than mere presence; and",
+            "coverage": "uncovered",
+            "by": ""
+          },
+          {
+            "idx": 5,
+            "angle": "what governs the overall STOP decision \u2014 coverage-complete versus diminishing-returns versus a hard cap \u2014 when the coverage signal itself may be shallow and no quality judge is in the loop?",
+            "coverage": "partial",
+            "by": "[wander-P01-001]"
+          }
+        ]
+      },
+      "signals": {
+        "novelty": 0,
+        "change": 0.1
+      },
+      "shepherd": {
+        "cycle": 2,
+        "status": "circling",
+        "momentum": 0.15,
+        "repetition": [
+          "CognitiveTemp / uncertainty-wired stopping as a near-twin analogy to the anchor system",
+          "earned halting vs. blunt cutoff framing \u2014 already introduced in cycle 1"
+        ],
+        "drift_reason": "",
+        "refocus": "Steer toward the fusion mechanism for the two gap-detectors: specifically, how corroboration scores are computed when the goal-blind structural finder and the goal-aware auditor disagree on the same gap.",
+        "rationale": "Cycle 2 extended the CognitiveTemp bridge from cycle 1 but added no new ground on any of the five open angles \u2014 it deepened the same analogy rather than moving into dispatch priority, wave sizing, unfillability signals, diversity preservation, or the stop decision. Momentum is near-zero because the new sentence is a continuation of prior framing, not a new territory.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "cost_usd": 0.009498,
+        "ok": true
+      },
+      "dispatch_signals": {
+        "skeleton_gaps": 0,
+        "high_halo": 3,
+        "open_angles": 5,
+        "rest_halo": 2,
+        "shepherd_refocus": 1,
+        "prior_keys_known": 0
+      },
+      "dispatch_leads": [
+        "The structural neighbourhood of self-referential validation in evaluation frameworks, where internal scoring proxies are treated as ground truth for coverage or completeness, and the consequences that arise when those proxies drift away from the unobserved target structure they aim to represent.",
+        "Adversarial red-teaming frameworks, formal verification harnesses, and ensemble-disagreement monitors each constitute a distinct architectural tradition for gap-detection."
+      ],
+      "cost_usd": 0.2075,
+      "halt": "cycle cap 2 reached (open: [1, 2, 3, 4, 5])"
+    }
+  ],
+  "run_dir": "runs/auton-c4/smoke-2",
+  "started": "2026-06-18 03:00:45",
+  "terminal": {
+    "d_t": 0.1,
+    "blend_d_t": null,
+    "covered": [],
+    "cards": 2,
+    "blends": 0,
+    "formalized": 0,
+    "cost_usd": 0.3371,
+    "elapsed_s": 1025
+  }
+}

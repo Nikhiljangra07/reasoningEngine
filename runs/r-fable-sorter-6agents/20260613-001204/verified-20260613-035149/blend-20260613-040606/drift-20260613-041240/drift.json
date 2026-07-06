@@ -1,0 +1,57 @@
+{
+  "verdicts": [
+    {
+      "blend_id": "blend-01",
+      "on_course": true,
+      "resonance": 0.95,
+      "drift_reason": "",
+      "redirect": ""
+    },
+    {
+      "blend_id": "blend-02",
+      "on_course": true,
+      "resonance": 0.9,
+      "drift_reason": "",
+      "redirect": ""
+    },
+    {
+      "blend_id": "blend-03",
+      "on_course": true,
+      "resonance": 0.95,
+      "drift_reason": "",
+      "redirect": ""
+    },
+    {
+      "blend_id": "blend-04",
+      "on_course": true,
+      "resonance": 0.98,
+      "drift_reason": "",
+      "redirect": ""
+    }
+  ],
+  "on_course_ids": [
+    "blend-01",
+    "blend-02",
+    "blend-03",
+    "blend-04"
+  ],
+  "drifting_ids": [],
+  "total_cost_usd": 0.0051,
+  "cost_ceiling_usd": 8.0,
+  "truncated_by_budget": false,
+  "truncation_reason": "",
+  "parser_notes": [],
+  "call_log": [
+    {
+      "phase": "drift_check",
+      "model": "deepseek/deepseek-v4-pro",
+      "in_tok": 2507,
+      "out_tok": 204,
+      "cost_usd": 0.0051,
+      "ms": 7018.2,
+      "ok": true,
+      "err": ""
+    }
+  ],
+  "model": "deepseek/deepseek-v4-pro"
+}

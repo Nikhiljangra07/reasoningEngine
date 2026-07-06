@@ -94,14 +94,14 @@ def parse_problem(text: str) -> Problem:
     )
 
 
-async def run_lora(text: str, client: LLMClient, effort: Effort = Effort.MEDIUM) -> None:
-    """Run the full LoRa pipeline on a user's problem."""
+async def run_constellax(text: str, client: LLMClient, effort: Effort = Effort.MEDIUM) -> None:
+    """Run the full Constellax pipeline on a user's problem."""
     problem = parse_problem(text)
 
     max_iters = iterations_for(effort)
 
     print()
-    print(f"  LoRa is thinking... (effort={effort.value}, iterations={max_iters})")
+    print(f"  Constellax is thinking... (effort={effort.value}, iterations={max_iters})")
     print(f"  ({len(problem.variables)} variables extracted)")
     print()
 
@@ -159,7 +159,7 @@ def _resolve_mode_and_effort() -> tuple[ClientMode, str, Effort]:
     else:
         mode = ClientMode.MOCK
         mode_label = "MOCK (no API key — set OPENROUTER_API_KEY in .env for live mode)"
-    effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+    effort = normalize_effort((os.environ.get("CONSTELLAX_EFFORT") or os.environ.get("LORA_EFFORT")))
     return mode, mode_label, effort
 
 
@@ -211,7 +211,7 @@ async def main(effort: Effort):
             # Reset call log for fresh stats per problem
             client.call_log = []
 
-            await run_lora(text, client, effort=current_effort)
+            await run_constellax(text, client, effort=current_effort)
 
         except KeyboardInterrupt:
             print("\n\n  Goodbye.\n")
@@ -227,7 +227,7 @@ def _parse_cli_args(argv: list[str]) -> tuple[str, Effort]:
     Effort comes from the flag if present, otherwise from LORA_EFFORT env,
     otherwise DEFAULT_EFFORT (medium).
     """
-    effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+    effort = normalize_effort((os.environ.get("CONSTELLAX_EFFORT") or os.environ.get("LORA_EFFORT")))
     cleaned: list[str] = []
     i = 0
     while i < len(argv):
@@ -259,10 +259,10 @@ if __name__ == "__main__":
             print(f"  Problem: {problem_text[:80]}...")
 
             client = LLMClient(mode=mode)
-            await run_lora(problem_text, client, effort=cli_effort)
+            await run_constellax(problem_text, client, effort=cli_effort)
 
         asyncio.run(single_run())
     else:
         # Interactive mode — effort from env, switchable mid-session via "effort <tier>"
-        env_effort = normalize_effort(os.environ.get("LORA_EFFORT"))
+        env_effort = normalize_effort((os.environ.get("CONSTELLAX_EFFORT") or os.environ.get("LORA_EFFORT")))
         asyncio.run(main(env_effort))

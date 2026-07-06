@@ -29,6 +29,7 @@ import logging
 import re
 from dataclasses import dataclass
 
+from src.identity import compose_system_prompt
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.cushion import CushionGraph, CushionLayer
 from src.wandering.report import LayerMatch
@@ -269,7 +270,7 @@ async def match_content(
     """
     user_message = build_match_user_message(cushion, content, domain_hint)
     response: LLMResponse = await client.call(
-        system_prompt=_MATCH_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_MATCH_SYSTEM_PROMPT, mode="structural_match"),
         user_message=user_message,
         domain=MATCH_DOMAIN,
         concept=MATCH_CONCEPT,
@@ -293,16 +294,39 @@ async def match_content(
     try:
         matches = parse_match_response(response.content, cushion)
     except (ValueError, json.JSONDecodeError) as e:
-        log.warning("match response unparseable: %s", e)
-        # Treat unparseable as "no match" — safe, the agent moves on.
-        matches = {
-            layer.name: LayerMatch(
-                layer_name=layer.name,
-                matched_nodes=[],
-                total_nodes=layer.node_count(),
+        # The model occasionally returns prose / no JSON object. Silently
+        # treating that as "no match" drops a REAL dig trigger (observed twice
+        # in the 2026-06-17 autonomous run). Re-ask ONCE with a hard format
+        # reminder before giving up — bounded to one extra call, only on the
+        # rare parse failure, so the hot path cost is unchanged.
+        log.warning("match response unparseable (%s) — one strict retry", e)
+        retry = await client.call(
+            system_prompt=compose_system_prompt(_MATCH_SYSTEM_PROMPT, mode="structural_match"),
+            user_message=(
+                user_message
+                + "\n\nREMINDER: Output ONLY the JSON object "
+                '{"actual":[...],"essence":[...],"mechanism":[...]} — '
+                "no prose, no preamble, no code fences."
+            ),
+            domain=MATCH_DOMAIN,
+            concept=MATCH_CONCEPT,
+        )
+        try:
+            matches = parse_match_response(
+                retry.content if getattr(retry, "success", False) else "", cushion
             )
-            for layer in cushion.layers()
-        }
+            response = retry  # raw_response should reflect the parsed payload
+        except (ValueError, json.JSONDecodeError) as e2:
+            log.warning("match retry still unparseable (%s) — treating as no-match", e2)
+            # Treat unparseable as "no match" — safe, the agent moves on.
+            matches = {
+                layer.name: LayerMatch(
+                    layer_name=layer.name,
+                    matched_nodes=[],
+                    total_nodes=layer.node_count(),
+                )
+                for layer in cushion.layers()
+            }
 
     total = sum(m.match_count for m in matches.values())
     return MatchResult(

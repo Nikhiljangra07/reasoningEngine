@@ -133,6 +133,13 @@ KE_CRITIC_MODELS: dict[tuple[str, str], str] = {
 # Specialty roles
 # ---------------------------------------------------------------------------
 SYNTHESIZER_MODEL = "anthropic/claude-sonnet-4-6"   # final voice; citation grounding matters
+
+# Wander digs call with domain="synthesizer" but must NOT use the Sonnet final voice.
+# Nikhil's spec (A/B tested 2026-06-16, dig_model_ab.md): no Sonnet anywhere in the
+# wander/dig path. DeepSeek is the main wander brain (holds the nuance); Haiku covers
+# sub-agent nuance at the model_mix layer. Intercepted BEFORE the synthesizer rule so
+# the production final voice (speech.py) is untouched.
+WANDER_DIG_MODEL = "deepseek/deepseek-v4-pro"
 GATING_MODEL      = "google/gemini-2.5-flash-lite"  # cheap, sub-second, 1M context for reading 5 outputs
 ROUTER_MODEL      = "google/gemini-2.5-flash"       # chemistry self-assembly — fast structured JSON
 
@@ -146,9 +153,31 @@ PRICING: dict[str, tuple[float, float]] = {
     # Anthropic (cost-conscious tier — Opus 4.7 intentionally excluded)
     "anthropic/claude-sonnet-4-6":     (3.00, 15.00),
     "anthropic/claude-haiku-4-5":      (1.00,  5.00),
+    # Opus 4.6 is reserved exclusively for the master_synthesizer layer
+    # (Wandering Room "senior scientist" seat). Per-call cost dominates;
+    # used only on aggregated dossier input, never on per-report work.
+    "anthropic/claude-opus-4-6":       (15.00, 75.00),
+    # Fable 5 — the master_sorter tributary's sole seat. Single-pass
+    # classification (known / invalid / unplaced); per-call cost
+    # dominates so used only at master-tier, never on per-report work.
+    # Pricing is a Sonnet-tier placeholder pending confirmation against
+    # the published Anthropic rate card — revise once verified.
+    # NOTE: Fable 5 access was gated after the 2026-06-12 sorter run
+    # (Anthropic redirect → Opus 4.8). The slug stays registered for
+    # cost-cap math in case access returns.
+    "anthropic/claude-fable-5":        (3.00, 15.00),
+    # Opus 4.8 — Anthropic's redirect target after Fable 5 access was
+    # gated. Available 2026-06-12. Pricing placeholder matched to Opus
+    # 4.6 ($15/$75 per M) pending verification against the published
+    # rate card — Opus 4.8 may be priced slightly higher; revise then.
+    "anthropic/claude-opus-4-8":       (15.00, 75.00),
 
     # OpenAI (GPT-5.5 intentionally excluded — too expensive)
     "openai/gpt-5.4-nano":             (0.10,  0.40),
+    # GPT-5.4 flagship — second master_synthesizer seat, paired with
+    # Opus 4.6 for cross-provider collaborative critique. Workhorse
+    # GPT calls during the wander stay on gpt-5.4-nano.
+    "openai/gpt-5.4":                  (2.50, 10.00),
 
     # Google
     "google/gemini-2.5-pro":           (1.25, 10.00),
@@ -158,6 +187,24 @@ PRICING: dict[str, tuple[float, float]] = {
     # DeepSeek
     "deepseek/deepseek-v4-pro":        (1.74,  3.48),   # post-promo (May 31, 2026)
     "deepseek/deepseek-v4-flash":      (0.14,  0.28),
+    # DeepSeek R1 — reasoning model. The junior FORMALIZER seat
+    # (src/wandering/formalizer.py, run via scripts/run_formalize.py) renders a
+    # finished blend into testable math. That seat calls OpenRouter DIRECTLY and
+    # reads cost from usage.cost, so it does NOT use this entry — kept only so
+    # get_pricing() stays correct if R1 ever routes through LLMClient. PLACEHOLDER
+    # pricing — verify against the OpenRouter rate card; OUTPUT (reasoning tokens)
+    # dominates cost. Slug confirmed live 2026-06-15: "deepseek/deepseek-r1".
+    "deepseek/deepseek-r1":            (0.55,  2.19),
+
+    # xAI (Grok) — confirmed against console.x.ai/models dashboard 2026-06-02.
+    # 4.20-non-reasoning is the workhorse choice for the wander agent layer:
+    # latest generation (4.20 family), direct response (no chain-of-thought
+    # latency penalty), 1M context, 1,800 RPM headroom for 10-agent parallelism.
+    # The reasoning, multi-agent, and build-0.1 variants on the dashboard
+    # are deliberately NOT registered — reasoning is too slow for divergent
+    # generation, multi-agent has a 450 RPM bottleneck (flagship-tier),
+    # build-0.1 carries preview-version risk.
+    "xai/grok-4.20-0309-non-reasoning": (1.25,  2.50),
 
     # Embedding models (output_cost = 0 — embeddings return vectors, not tokens)
     "openai/text-embedding-3-small":   (0.02,  0.00),
@@ -194,6 +241,12 @@ def resolve_model(domain: str, concept: str) -> str:
     if domain == "critic" and "_checks_" in concept:
         challenger, _, target = concept.partition("_checks_")
         return KE_CRITIC_MODELS.get((challenger, target), DEFAULT_MODEL)
+
+    # Wander dig synthesis — route OFF Sonnet to DeepSeek (no Sonnet in the wander
+    # path). Must come before the synthesizer rule, which the dig calls would
+    # otherwise hit (they pass domain="synthesizer", concept="wandering_dig_*").
+    if "wandering_dig" in concept:
+        return WANDER_DIG_MODEL
 
     # Specialty roles
     if domain == "synthesizer":

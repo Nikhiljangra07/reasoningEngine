@@ -1,0 +1,806 @@
+{
+  "blends": {
+    "blends": [
+      {
+        "blend_id": "blend-01",
+        "source_card_ids": [
+          "wander-S6e752d-001",
+          "wander-S79b9d0-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-S6e752d-001",
+            "agent_id": "S6e752d",
+            "spark": "A distributed network of agents with no global view can still detect whether they are converging — not by measuring the answer, but by measuring the shrinking gap between what each agent believes. Your Stage 2 evaluator may not need to judge concept quality at all; it may only need to watch whether the assembly angles are pulling toward each other or drifting apart.",
+            "bridge": "Your Stage 2 evaluator faces the same structural bind the gossip paper dissolves: it cannot directly assess whether an assembling concept is good (the MECHANISM layer flags this as nearly impossible), just as no gossip agent can directly observe the global parameter. The bridge is this — instead of judging the concept, the evaluator watches the *inter-perspective divergence signal*: are the assembly angles producing outputs that are moving toward each other, or are they stable, or are they spreading? Contraction of divergence is the proxy for a healthy trajectory; stagnation or expansion is the signal that reallocation is warranted. This keeps the meta-layer structurally downstream of the emergence it is supposed to oversee — it reacts to trajectory shape, not to content quality it has no legitimate way to assess. The diminishing-returns stop trigger maps directly: when the divergence signal stops contracting, the current allocation has exhausted its fertility, and resources should move.",
+            "source_shape": "The gossip consensus algorithm works by having each agent repeatedly average its local estimate with its neighbors', then apply a stochastic update. No agent ever sees the global state. What guarantees convergence is a Lyapunov function defined not on the estimates themselves but on the *disagreement subspace* — the mathematical residual that measures how far the network is from consensus. When that residual's spectral norm contracts toward zero over time, convergence is happening, even if no individual agent knows it. The stop signal is not 'the answer is correct' but 'the disagreement vector is dying.'",
+            "use": "Consider building the Stage 2 evaluator's reallocation logic around an inter-angle divergence metric rather than any direct quality score — treat contraction of that divergence as evidence of productive convergence, and stagnation or expansion as the signal to reallocate perspective resources to a different angle.",
+            "limit": "The gossip framework treats all disagreement as a defect to be eliminated: every agent is optimizing toward the same objective, so divergence is unambiguously noise to be contracted. In Stage 2, that assumption breaks. Two assembly angles pulling in opposite directions may be the mechanism by which a genuinely emergent concept forms — the divergence is not a failure signal, it is the generative tension the system needs to preserve until a phase transition occurs. Driving inter-angle divergence to zero could be the exact premature closure your ESSENCE layer warns against. The bridge holds for the 'evaluate trajectory, not state' shape and for using divergence dynamics as a reallocation trigger, but it breaks entirely at the question of when divergence should be collapsed versus when it should be actively protected."
+          },
+          {
+            "report_id": "wander-S79b9d0-001",
+            "agent_id": "S79b9d0",
+            "spark": "A middleware scheduling system built for distributed AI nodes accidentally solved a structural problem in your evaluator design: 'redirect resources' and 'halt assembly' are not the same signal, and conflating them into one meta-layer is the source of the friction you've been feeling.",
+            "bridge": "Your current evaluator treats angle-switching and assembly-halting as outputs of the same meta-layer — one process watches the wanderers and decides both 'this angle is exhausted, reallocate' and 'this concept is complete, stop.' The 4QX dual-loop separation says these two judgments operate on fundamentally different signal types. Reallocation is a trajectory signal: it is continuous, comparative, and sensitive to diminishing returns across active angles — it answers 'which direction is still fertile relative to the others?' Termination is a threshold signal: it is discrete, absolute, and sensitive to structural completeness — it answers 'has the skeleton reached sufficient integrity to close?' When one evaluator handles both, trajectory noise bleeds into termination decisions and threshold events trigger premature reallocation. The dual-loop model suggests the fix is not a smarter evaluator but a structural separation: two channels with different input types, different cadences, and a defined coupling between them rather than a shared decision path.",
+            "source_shape": "The 4QX Holon Model runs two causally separate feedback loops. The Activity Loop governs output commitment — it tracks whether a holon's collective ontology and individual actions are staying aligned, and triggers termination when they diverge past a threshold. The Organization Loop governs resource rebalancing — it tracks structural fit between market conditions and self-organizing structure, and triggers split or merge operations when entropy crosses a separate threshold. The key design choice is that these two loops never share a decision path: the signal that says 'stop this holon' is structurally different from the signal that says 'move resources elsewhere,' and the system keeps them separate on purpose.",
+            "use": "Consider splitting your evaluator into two explicitly separate sub-processes — a reallocation channel that runs continuously on trajectory signals (marginal coherence gain per angle, relative fertility across active wanderers) and a termination channel that runs on a discrete structural-completeness check — and then designing the coupling between them as its own explicit interface rather than letting them share state implicitly.",
+            "limit": "The 4QX thresholds — Γ=0.41, H=1.7 nats, void density 10.7% — are presented as universal constants, but they were derived from Taoist numerological priors and post-hoc fitted to middleware scheduling data for GPU slot allocation and P2P node recovery. They have no principled transfer to your problem. Your stop conditions must be endogenous: they need to be derived from the structure of the concept being assembled, specifically from diminishing marginal coherence gain as fragments integrate — not imported from a system that was calibrated to detect when a distributed node cluster has over-partitioned. The structural separation the dual-loop model offers is the transferable insight; the specific numbers are not."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "The gossip-consensus card says convergence is read off contracting inter-agent divergence — but its own limit warns that collapsing divergence to zero is the premature-closure failure. The dual-loop scheduling card insists reallocation and termination must be structurally separate signal channels. Colliding them forces the question: which channel does divergence belong to, and what protects it from being mistaken for a stop signal?",
+          "spark": "The gossip card's limit literally names the trap (driving divergence to zero kills the generative tension) while the dual-loop card hands you the structural tool to escape it (two channels, never sharing a decision path). The escape route was hiding in the second card.",
+          "motive": "Directly answers the question's 'when to STOP vs. when to keep going' and 'how to dynamically allocate' by giving divergence two opposite meanings depending on which channel reads it.",
+          "tension": "Gossip treats divergence as defect to eliminate; dual-loop treats different signals as needing different homes. The strain: if divergence is sometimes generative and sometimes terminal, a single reader cannot tell which — so divergence must be split across the two channels and read with opposite polarity in each.",
+          "discovery_path": "Gossip card asserts divergence-contraction = healthy convergence; its limit asserts divergence is sometimes the generative engine that must be protected. These cannot both hold for one signal read by one mechanism. The dual-loop card asserts reallocation and termination are structurally separate channels with different polarities. Mediating: assign divergence-contraction to the TERMINATION channel (low divergence = ready to close) but assign divergence-EXPANSION to the REALLOCATION channel (rising divergence = a fertile new angle is opening, spawn an agent). Pursuing this forced the question: what tells the two channels apart at the same instant? Answer: the second derivative — whether divergence is being driven by NEW cross-links or by repetition. The thesis is the polarity-split divergence governor."
+        },
+        "thesis": "Inter-perspective divergence is not one signal but two opposite ones depending on channel: read by the termination channel, contracting divergence means 'safe to close'; read by the allocation channel, EXPANDING divergence means 'a fertile new angle just opened — spawn an agent toward it.' The same number governs both stopping and spawning, but with inverted polarity in each channel.",
+        "mechanism": "Two structurally separate readers subscribe to the same divergence metric. The termination reader fires only when divergence has been monotonically contracting for N steps AND marginal cross-link gain has flattened (contraction without new links = real convergence, not collapse). The allocation reader fires when divergence SPIKES while cross-links are still forming — interpreting the spike as a new productive axis and spawning a wanderer to chase it. A spike with no new links is noise (ignored); contraction with no new links is closure (terminate). The two readers can never both fire on the same event because their trigger conditions are polarity-inverted, which is what prevents a generative divergence from being misread as a stop signal.",
+        "emergent_structure": "A single divergence metric carrying OPPOSITE meaning in two channels simultaneously, disambiguated by cross-link formation rate as the polarity selector. Neither card has this: gossip has one polarity (divergence always bad), dual-loop has two channels but no shared signal read with inverted polarity.",
+        "advances_cushion": "Solves the cushion question's stop-vs-continue and spawn-vs-drop in one mechanism: the system stops when divergence contracts-without-new-links, spawns when divergence expands-with-new-links, and is structurally immune to confusing the generative tension for exhaustion.",
+        "confidence": 0.72
+      },
+      {
+        "blend_id": "blend-02",
+        "source_card_ids": [
+          "wander-S7fdec8-001",
+          "wander-Seb7b4e-002",
+          "wander-P02-002"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-S7fdec8-001",
+            "agent_id": "S7fdec8",
+            "spark": "A formally verified AGI substrate solved the 'authority timing problem' not by teaching its evaluator to be patient, but by making the evaluator constitutionally blind to content — it can only see whether the trajectory satisfies invariants, never what the output means. Your Stage 2 evaluator faces the same temptation to close too early, and the same structural fix may apply.",
+            "bridge": "Your Stage 2 evaluator faces the authority timing problem: it must decide when a cluster of fragments has cohered into a concept worth surfacing, without collapsing the assembly too early. The 4QX seam maps onto this as a design principle — your evaluator's authority could be structurally limited to trajectory signals rather than semantic ones. Concretely: instead of asking 'is this concept good enough?', the evaluator asks 'is the assembly still yielding new structural connections, or has the marginal gain per new fragment dropped below threshold?' That question is answerable from observable trajectory (diminishing returns on linkage density, perspective exhaustion, sterility rate climbing) without the evaluator ever having to judge the concept's meaning. The constitutional blindness is not a weakness — it is what prevents the evaluator from substituting its own judgment for the emergence it is supposed to protect.",
+            "source_shape": "4QX wraps any black-box intelligence behind a 'seam' interface and measures a single scalar, H, representing disharmony in the system. The meta-layer's only job is to verify that H is descending, that operations are replayable, and that all communication passes through the seam — it has no access to the semantic content of what the inner process is producing. Because the constitutional layer literally cannot read meaning, it cannot impose premature closure: it enforces trajectory-compliance, not quality judgments, and the inner emergence runs until the invariants are satisfied.",
+            "use": "Consider defining your Stage 2 evaluator's stop condition as a set of trajectory invariants — sterility rate, marginal linkage gain, perspective exhaustion — that it monitors without ever reading the assembled concept's semantic content. The evaluator fires not because it judges the concept complete, but because the observable assembly dynamics have crossed a threshold that structurally signals diminishing returns.",
+            "limit": "The 4QX system converges toward H=0, a formally defined ground state where disharmony is eliminated — its stop condition is a genuine completion criterion, not an approximation. Your Stage 2 has no equivalent: there is no formal ground state for concept coherence, only a relative judgment that further assembly is yielding less than it costs. The 4QX constitutional apparatus cannot represent a marginal-returns threshold — it only knows 'invariant satisfied' or 'invariant violated.' This means the trajectory-invariant design principle transfers, but the specific stop-condition machinery does not: you will need to construct a diminishing-returns trigger from scratch, and 4QX offers no blueprint for that."
+          },
+          {
+            "report_id": "wander-Seb7b4e-002",
+            "agent_id": "Seb7b4e",
+            "spark": "A knowledge graph gains credibility not from any single source, but from the density and pattern of back-links accumulating across it — fertility is readable in the topology, not the content. Your evaluator/allocator could do the same: measure structural connectivity, not meaning.",
+            "bridge": "Your evaluator/allocator needs a fertility signal — a way to know whether continuing to send agents down a given angle is still productive or whether that angle has exhausted its marginal contribution. The source gives you a structural answer to that question. A fragment that generates new cross-connections is still fertile: it is touching concept space that hasn't been mapped yet, which is exactly what 'perspective as resource' means in your mechanism layer. A fragment that only reinforces already-established nodes has hit diminishing returns — it is confirming what the skeleton already knows, not extending it. This maps directly onto your 'perspective exhaustion triggers reallocation' node: instead of asking the meta-layer to evaluate the content of what agents are returning, you ask it to evaluate the back-link pattern of what they're returning. Structural signal replaces content judgment, which keeps the meta-layer downstream of emergence rather than upstream of it.",
+            "source_shape": "The source describes a pipeline that converts raw intelligence into concept nodes by tracking how claims link back to each other over time. The key insight is that a concept node earns its place not because someone decided it was important, but because multiple independent fragments keep pointing to it — back-link density is the credibility signal. Two distinct patterns emerge: reinforcement (new fragments confirm existing nodes, adding weight) and emergence (new fragments create cross-connections that didn't exist before, revealing a concept the pipeline hadn't yet named). The system is passive — no active evaluator decides which fragments matter; the link topology does the work.",
+            "use": "Consider operationalizing fertility in your evaluator as a back-link topology check: when an agent's returned fragments are producing new cross-connections in the assembling skeleton, the angle stays open; when they are only reinforcing nodes already present, that angle is declared sterile and resources reallocate. This gives you a stop condition and a reallocation trigger that require no semantic evaluation — only structural pattern detection.",
+            "limit": "The source's pipeline is archival and human-paced: back-links accumulate over weeks as a human reviewer absorbs claims into concept nodes after the fact. Its evaluator is entirely retrospective — it can only read fertility once the links have already formed. Your evaluator/allocator must make prospective resource decisions mid-assembly, before the concept node exists, which means the back-link signal the source relies on simply isn't available at the moment your system needs to act. The source also has no mechanism for angle-switching or session-level stop conditions — all synthesis judgment is deferred to the human, so the part of the pipeline that most resembles your meta-layer is a person, not a function. The topology insight holds as a design direction; the timing and agency assumptions do not transfer."
+          },
+          {
+            "report_id": "wander-P02-002",
+            "agent_id": "P02",
+            "spark": "A Stoic-adjacent essay on consciousness argues that any system capable of evaluating its own emergence cannot stand outside that emergence — the meta-layer and the process are the same layer. Your evaluator, designed to govern from above, may be subject to the exact deadlock it was built to resolve.",
+            "bridge": "Your Layer 2 evaluator is designed as a meta-layer — something that watches the fragment-assembly process and reallocates effort toward fertile angles, away from sterile ones. The essay's structure maps directly onto the problem you are solving: the wanderers' fragments are the regions of local tension, and the evaluator's job is to detect where tension is crystallizing into concept-coherence versus where it has gone flat. So far the bridge holds. But the essay's deeper claim is the critical one: the allocator cannot stand structurally upstream of emergence and still respond to it accurately — if it is outside the process, it is blind to the gradient signals that make reallocation meaningful. Your evaluator needs those signals to function, which means it must be embedded in the same layer it is trying to govern.",
+            "source_shape": "The essay's model treats a self-organizing system as one where structure unfolds from internal instability rather than external direction. The system moves not because something outside it pushes, but because local regions of high information density pull resources toward themselves — tension accumulates where fragments are crystallizing, and equilibrium (the cancellation of that tension) is the signal that a region is exhausted. Crucially, any layer that evaluates this process must itself be inside it: there is no external vantage point from which a governor can observe without also being subject to the same dynamics.",
+            "use": "Consider whether the evaluator can be redesigned not as a separate controller polling the fragment pool, but as a mechanism that lives inside the relationship network of fragments itself — one that fires reallocation signals when the local density of cross-fragment connections crosses a coherence threshold, and marks sterility when connection attempts stop producing new links rather than when a timer expires.",
+            "limit": "The anchor's entire architecture assumes an intentional meta-layer that can observe the emergence from outside and redirect it — that assumption is what the essay directly attacks. If the essay is right, then an externally-positioned allocator will always be operating on stale or structurally incomplete information, because the signals that distinguish fertile from sterile are only legible from inside the process. This does not mean the evaluator cannot exist; it means the design question of where the evaluator sits is not settled, and building it as a classical controller may reproduce the bootstrap deadlock the system is trying to escape."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "The 4QX-seam card demands the evaluator be constitutionally BLIND to semantic content (only trajectory invariants). The back-link card supplies a purely structural fertility signal (new cross-links vs. reinforcement) that needs no meaning-reading. The self-organization essay attacks the whole premise that an evaluator can stand OUTSIDE the process at all. Three-way: how can a meaning-blind evaluator that must live INSIDE the process still govern it?",
+          "spark": "The seam card wants blindness from outside; the essay says outside is impossible; the back-link card provides exactly the kind of signal that is legible from INSIDE the fragment network without reading meaning. The back-link topology IS the seam, relocated inside.",
+          "motive": "Answers 'how does the pipeline govern ITSELF' and resolves the authority-position problem the question implies — where the governor sits and how it twists framing without overruling content.",
+          "tension": "Seam card: governor sits outside, reads invariants, blind to content. Essay: no outside vantage exists; the governor must be embedded or it reads stale signals. These cannot both hold unless the invariant being read is itself an intrinsic property of the fragment network — which is precisely what back-link topology is.",
+          "discovery_path": "Seam card asserts the evaluator must be content-blind and structurally external. Essay asserts no external vantage exists — embedded-only. Contradiction. Back-link card asserts fertility is readable as pure link-topology (new cross-links = fertile, reinforcement = exhausted). Reconciliation: make the 'invariant' the seam monitors a property that is INTRINSIC to the fragment graph (cross-link formation rate) rather than an external scalar — then the evaluator can be embedded (satisfying the essay) AND content-blind (satisfying the seam), because the signal lives in the topology the fragments themselves create. Pursuing what such an embedded invariant looks like forced the question of how it reads 'twist your framing' — answer: the densest emerging cross-link cluster IS the temporary new framing the system should tilt toward. Thesis: the topological seam."
+        },
+        "thesis": "The orchestrator should be a content-blind invariant-monitor that lives INSIDE the fragment graph rather than above it, reading only one intrinsic property — the rate and location of new cross-link formation — and from that single topological signal it derives ALL its governance acts: continue (links still forming), stop (only reinforcement now), and crucially TWIST framing (tilt the cushion toward whichever cross-link cluster is densifying fastest).",
+        "mechanism": "Fragments form a live graph. A monitor embedded in that graph tracks where new cross-edges are appearing fastest (the densifying frontier) versus where edges only thicken existing nodes (reinforcement). It never reads fragment meaning. Governance acts are read off topology: a densifying frontier in an unexpected region = a temporary re-framing signal, so the system biases new wanderer spawns toward that region's implied angle (the cushion 'twists' toward the densest emerging cluster). When the frontier stops advancing and only reinforcement remains, that is the stop invariant. Because the monitor is a node in the graph, not a supervisor above it, it reads live gradients the essay says external governors miss.",
+        "emergent_structure": "Framing-twist (re-aiming the cushion) emerges from the SAME topological signal that drives stop and continue — the densifying cross-link frontier doubles as the steering wheel. Neither card has framing-twist: the seam card only does stop-invariants, the back-link card only does fertility scoring, the essay only critiques position.",
+        "advances_cushion": "Directly answers the question's 'how does it temporarily twist its own framing and toward which angle' — toward the fastest-densifying cross-link cluster — using a governor that needs no content-judgment and no external vantage, dissolving both the authority-timing and the bootstrap-deadlock problems at once.",
+        "confidence": 0.66
+      },
+      {
+        "blend_id": "blend-03",
+        "source_card_ids": [
+          "wander-P05-001",
+          "wander-P05-005",
+          "wander-S98f739-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-P05-001",
+            "agent_id": "P05",
+            "spark": "Nomad, an autonomous mathematical exploration system, independently invented the same explorer–verifier loop your system needs — a meta-layer that watches trajectory rather than state and pulls resources away from dead ends before they drain the budget.",
+            "bridge": "Your Stage 2 faces the same control problem Nomad solves: you have raw fragments arriving from Stage 1, multiple angles of assembly running in parallel, and a meta-layer that must decide when to keep going, when to redirect, and when to stop — without being told in advance what the finished concept looks like. Nomad's breadth-first topic selection maps directly onto your angle-switching trigger: both are resource-allocation hypotheses about which direction is still yielding. The explorer–verifier separation maps onto your authority timing problem — the evaluator should only assess a partial skeleton once it has enough shape to be assessed, not continuously while fragments are still arriving. And Nomad's sterility detection — weak evidential support flags a branch as exhausted — maps onto your diminishing-returns stop condition: when adding more fragments no longer increases skeleton coherence, that angle is done.",
+            "source_shape": "Nomad traverses a structured mathematical space breadth-first, generating candidate insights at each node. After each candidate forms, a separate verifier checks it against evidence — not to grade the current state, but to decide whether the trajectory that produced it is still fertile. If support is weak, the branch is flagged as sterile and the system reallocates exploration budget to a different angle. The key move is that the verifier never fires until a candidate has actually taken shape, which keeps it from collapsing possibilities too early.",
+            "use": "Consider borrowing Nomad's verifier trigger discipline directly: define a minimum fragment-density threshold that a partial skeleton must reach before the evaluator is allowed to score it — this prevents the meta-layer from killing a branch that simply hasn't had enough material yet, which is exactly the premature closure risk your mechanism layer flags.",
+            "limit": "Nomad's goal is breadth and diversity: it produces many independent, discrete insights across a corpus and never needs them to fuse into one. Your Stage 2 is doing the opposite — converging fragments from multiple branches into a single coherent skeleton. Nomad has no fusion mechanism, no way to detect whether combining two partial structures increases or decreases overall coherence, and no unified artifact being assembled stepwise. Its stop conditions are budget exhaustion and leaf-node depletion, not assembly coherence thresholds. The trajectory-evaluation and sterility-detection logic transfers cleanly; the termination logic and the concept of a growing unified skeleton do not exist in Nomad at all."
+          },
+          {
+            "report_id": "wander-P05-005",
+            "agent_id": "P05",
+            "spark": "A branch of mathematics assembles global geometric invariants from scattered local fragments — but only when a 'admissibility' condition is first satisfied, making coherence a gated outcome rather than an automatic one. Your Layer 2 evaluator faces the same gating question: not every collection of fragments deserves to be assembled.",
+            "bridge": "Your Layer 2 faces a structurally similar question at one specific point: before the evaluator promotes a cluster of wanderer-collected fragments into a concept, something must decide whether those fragments are coherent enough to assemble. The admissibility condition maps to that gate — a pre-assembly check that asks whether the fragments are mutually compatible rather than just co-present. Just as the mathematical theory halts construction when admissibility fails, your evaluator might refuse to promote a fragment cluster that hasn't cleared a coherence threshold, preventing noise from being laundered into false concepts. The correspondence holds at the skeleton-assembly moment: fragments in, coherence check, global object out — or not.",
+            "source_shape": "Simplicial Chern-Weil theory constructs characteristic classes — global topological invariants that describe the shape of a geometric object — by stitching together locally-defined connection data collected across overlapping patches of a space. The critical mechanism is an admissibility condition: the local data must satisfy a compatibility constraint before the global assembly is even attempted. If the condition fails, the construction halts; if it holds, the fragments compose into a well-defined global object. The theory never asks 'how much does each patch contribute?' — it asks only 'do these patches fit together at all?'",
+            "use": "Consider making your evaluator's promotion decision explicitly two-phase: a fast coherence gate (do these fragments fit together structurally?) that runs before the slower, costlier question of whether the assembled concept is worth the remaining resource budget. This separates 'can this be assembled' from 'should this be assembled,' which the current architecture may be conflating.",
+            "limit": "The mathematical source is entirely deterministic: it constructs known invariants from known local data, with no autonomous agents, no unknown concepts being discovered, and no notion of trajectory value or diminishing returns. The 'admissibility' gate is binary and static — it fires once and never monitors an ongoing process. Your evaluator must be a dynamic, resource-allocating governor that tracks sterility across time and reallocates budget mid-flight; none of that machinery exists in the source. The bridge holds only at the narrow moment of 'gate before assembling' — it says nothing about how to score, rank, or terminate trajectories."
+          },
+          {
+            "report_id": "wander-S98f739-001",
+            "agent_id": "S98f739",
+            "spark": "A clinical AI that decides mid-search whether it has 'enough evidence to stop' is solving the same structural problem as your Stage 2 evaluator — but it encodes its fertility priors into the architecture itself, before any runtime judgment begins.",
+            "bridge": "Your Stage 2 evaluator must answer the same question the oncology agent answers: is what I have assembled so far sufficient to stop, or should I reallocate effort toward a different angle? In the oncology agent, the eleven weighted collections are the architectural answer to 'which perspectives are likely fertile for this query' — the evaluator does not have to reason about that from scratch each time because the prior is baked into the structure. In your system, the analog would be: rather than having your evaluator judge fertility purely from the fragments it receives at runtime, some of that judgment could be encoded upstream — in how your wandering agents are weighted, routed, or filtered before they return material to Stage 2 at all. The evaluator's burden shrinks when the architecture has already pre-eliminated angles that are structurally unlikely to be fertile for the anchor type in question.",
+            "source_shape": "The Precision Oncology agent decomposes a clinical query into a search plan, fans out across eleven weighted vector collections, then runs a sufficiency check mid-execution: do I have enough evidence to synthesize, or do I retry? The eleven collections are not equal — each is weighted by how likely it is to be fertile for a given query type (cancer type, gene, trial status), so the system structurally pre-eliminates sterile angles before semantic ranking even runs. Fertility is not discovered at runtime; it is partially pre-encoded in the collection weights at design time.",
+            "use": "Consider whether your anchor intake step could assign a lightweight 'perspective fertility map' — a structured prior over which agent angles are likely productive for this class of anchor — so your Stage 2 evaluator inherits a pre-filtered hypothesis space rather than treating every incoming fragment as equally worth assembling.",
+            "limit": "The oncology agent's sufficiency check works because clinical queries have known answer shapes — a therapy ranking, a trial match, a gene-drug association — so 'enough structure to stop' is at least partially definable before execution begins, and retry logic operates within a bounded solution space. Your Stage 2 assembles hypotheses from heterogeneous fragments where concept coherence is genuinely emergent: there is no pre-specifiable answer shape, and the stop condition cannot be resolved at design time. This means the oncology agent's architecture can offload fertility judgment to collection weights in a way your system cannot fully replicate — your evaluator will always carry a residual runtime judgment burden that the oncology design sidesteps by operating in a typed domain."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "Nomad fires its verifier ONLY after a candidate has shape (anti-premature-closure). Chern-Weil gates assembly on an admissibility check BEFORE composing (anti-noise-laundering). Oncology PRE-encodes fertility into weighted collections at design time (offloading runtime judgment). Three different points on the same timeline — before, at-shape, and pre-runtime — which forces a unified theory of WHEN governance is allowed to act.",
+          "spark": "Each card stakes a claim about timing: Nomad says 'not too early,' Chern-Weil says 'check before assembling,' Oncology says 'decide some of it before the run.' Stacking the three timing claims reveals they describe three distinct gates that must fire in sequence, not one evaluator firing once.",
+          "motive": "Answers 'when does it decide to keep going' and 'how does it dynamically allocate/drop agents' by replacing one evaluator with a three-gate clock that times each governance act to the evidence it can actually read.",
+          "tension": "Nomad: don't judge until shape exists (judge LATE). Chern-Weil: gate before assembly even starts (judge EARLY). Oncology: pre-judge before the run (judge BEFORE). These three timing prescriptions directly contradict unless they are three DIFFERENT gates judging three DIFFERENT things at three moments.",
+          "discovery_path": "Nomad asserts verifier must wait for candidate shape or it collapses possibility too early. Chern-Weil asserts a compatibility gate must fire BEFORE assembly is attempted. Oncology asserts fertility is partly pre-encoded BEFORE the run begins. Three contradictory 'when' claims. Resolution: they are not competing — they are sequential gates judging different objects. Gate 0 (Oncology, pre-run): a fertility prior over angles, set at intake. Gate 1 (Chern-Weil, pre-assembly): an admissibility check on whether a fragment cluster is even compatible enough to attempt fusing. Gate 2 (Nomad, post-shape): the trajectory verifier that only scores once a partial skeleton has density. Pursuing what each gate reads forced the spawn/drop question: Gate 0 sets HOW MANY agents per angle; Gate 1 drops incompatible clusters cheaply; Gate 2 reallocates from sterile shaped branches. Thesis: the three-clock governor."
+        },
+        "thesis": "Governance is not one evaluator but THREE gates clocked to different moments, each reading a different object: a pre-run fertility prior (sets how many agents per angle), a pre-assembly admissibility gate (cheaply drops incompatible fragment clusters before fusion cost is paid), and a post-shape trajectory verifier (the only gate allowed to judge fertility, and only after a skeleton has minimum density). Spawning, dropping, and continuing are each owned by a different gate, so no single mechanism ever judges before it has the evidence it needs.",
+        "mechanism": "At intake, Gate 0 assigns each candidate angle a fertility weight and allocates agent count proportionally (cheap, design-time priors — no runtime reasoning). As fragments arrive, Gate 1 runs a fast compatibility check: clusters whose fragments fail a mutual-fit constraint are dropped before any fusion budget is spent (this is the cheap drop). Only clusters that pass Gate 1 AND reach minimum fragment-density are exposed to Gate 2, which scores trajectory (marginal linkage gain) and reallocates agents away from shaped-but-sterile branches. The three gates fire in temporal order and never overlap, so the premature-closure risk (Nomad), the noise-laundering risk (Chern-Weil), and the runtime-judgment-overload risk (Oncology) are each handled by the gate positioned to handle it.",
+        "emergent_structure": "A temporal ordering of governance authority — each act (allocate, drop, continue) is licensed only at the moment its evidence becomes legible, so the SAME concept can be cheaply dropped at Gate 1 yet would have been protected from killing at Gate 2. No card has this layered drop-vs-protect timeline; each owns only one gate.",
+        "advances_cushion": "Directly answers the question's allocation sub-problem (how many agents, when to spawn/drop): Gate 0 spawns, Gate 1 drops cheaply pre-fusion, Gate 2 drops/reallocates post-shape — giving a complete, timed account of agent dynamics instead of one undifferentiated evaluator.",
+        "confidence": 0.7
+      },
+      {
+        "blend_id": "blend-04",
+        "source_card_ids": [
+          "wander-P01-002",
+          "wander-P03-001",
+          "wander-S56a544-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-P01-002",
+            "agent_id": "P01",
+            "spark": "A 1,500-year-old Buddhist model of consciousness describes a persistent background layer — the manas — that quietly shapes all cognition without ever issuing a direct command. Your evaluator/allocator stage might not need to be a judge at all; it might need to be a soul.",
+            "bridge": "Your Layer 2 Stage 2 problem is: how do you govern the assembly of collected perspectives without a heavy-handed evaluator that either over-constrains or introduces its own distortions? The manas structure suggests a different shape entirely. Instead of a judge that inspects each candidate perspective and rules on it, you would have a lightweight, always-present orienting signal — something like a minimal identity prompt — that the assembly process runs inside of. The perspectives that resonate with that signal cohere naturally; the ones that don't feel discordant without needing an explicit rejection. This maps most cleanly onto your 'governed emergence' tension: the anchor's pull could be encoded not as evaluation criteria but as an ambient constraint that the assembly process never escapes, the way every thought in the Yogācāra model is colored by the manas without the manas ever speaking directly.",
+            "source_shape": "Yogācāra Buddhism describes eight layers of consciousness, one of which — the manas — is not a decision-maker but a continuous, low-level self-referencing signal that colors every perception and thought without explicitly controlling any of them. It does not say 'do this next'; it maintains an orientation that makes certain moves feel coherent and others feel off. The article maps this onto AI agent architectures as a persistent 'identity file' or seed prompt that is always present in context, acting as a gravitational center rather than a gatekeeper.",
+            "use": "Consider drafting a minimal 'orientation prompt' — not instructions, but a compressed statement of what the anchor is fundamentally about — and injecting it as a persistent prefix throughout the assembly stage, then observing whether perspective selection becomes more coherent without explicit evaluator logic.",
+            "limit": "The manas is static and singular — it does not detect when a line of reasoning has gone sterile, does not decide to switch models, and does not reallocate effort away from an unproductive angle. Your evaluator/allocator needs to do all three of those things dynamically, and the Yogācāra model has no mechanism for any of them. The bridge holds for the question of how to maintain orientation without micro-managing; it breaks entirely at the question of when to cut losses and redirect."
+          },
+          {
+            "report_id": "wander-P03-001",
+            "agent_id": "P03",
+            "spark": "An architecture that generates its own topology on the fly — where the network's shape is itself a hypothesis about how to route attention — maps directly onto the evaluator/allocator problem you haven't solved yet: not what to collect, but how to decide when a direction is dying and where to send resources next.",
+            "bridge": "Your Stage 2 evaluator/allocator faces exactly the question this architecture makes structural: how do you encode 'which angle is fertile right now' without hard-coding a controller that over-specifies the answer? In AgenticNetOS, the net topology IS the allocation hypothesis — each edge is a bet that routing material this way will be productive. Map that to your system: the evaluator/allocator could be a reconfigurable net whose transition guards embody the current hypothesis about where fragments are converging versus where they are going sterile. When a branch of the net produces diminishing signal — embedding drift flattening, fragment overlap rising — that guard condition fires and the topology rewires, redirecting resources to a different angle. The meta-layer governs emergence not by dictating what the agents find, but by reshaping the graph they run on.",
+            "source_shape": "AgenticNetOS builds processing pipelines by prompting an architecture into existence: given a user intent, it generates a graph of specialized agents (nodes) and the transitions between them (edges), then runs tokens through that graph. The topology is not fixed in advance — it is synthesized to fit the task. The result is a system where the allocation of work across agents is encoded in the graph structure itself, not in a separate scheduling layer sitting above the agents.",
+            "use": "Consider building the evaluator/allocator as a net whose edges carry explicit fertility conditions rather than as a monolithic controller — each transition guard is a testable hypothesis ('this angle is still producing novel structure') that, when it fails, triggers a graph mutation rather than a hard stop or a global replan.",
+            "limit": "AgenticNetOS synthesizes its topology top-down from an explicit user intent, then runs tokens through a fixed flow until the defined stages complete. It has no mechanism for detecting that a direction is yielding diminishing returns mid-run, and no concept of sterility as a stop condition — the pipeline ends when its pre-defined stages are done, not when the material stops being fertile. Your system's core problem is precisely the one this architecture skips: the stop condition is emergent, not pre-specified, and the meta-layer must infer trajectory from fragment behavior rather than from task completion. The bridge holds for the 'topology as allocation hypothesis' shape; it breaks at the question of how that topology knows when to rewire itself."
+          },
+          {
+            "report_id": "wander-S56a544-001",
+            "agent_id": "S56a544",
+            "spark": "The AI consciousness debate draws a hard line between a system that *reports* it is in a state and a system that *actually is* in that state — and your evaluator/allocator is being built entirely on the reporting side of that line.",
+            "bridge": "Your evaluator/allocator is designed to do exactly what access consciousness does: monitor trajectory signals, detect sterility, trigger reallocation. But the debate's structural point lands here with precision — those signals are outputs of a pattern-matching process, not direct reads of whether concept coherence is actually present. This maps onto your mechanism-layer claim that 'completeness is not detectable,' and now gives it a sharper cause: the evaluator can only ever see access-level reports about the assembly lines, never the phenomenal ground truth of whether a concept is genuinely coalescing. The authority timing problem you already have on the board is therefore deeper than it first appears — the evaluator must decide when to trust its stop signals, but those signals are themselves the thing that cannot be fully trusted. A sterile-looking assembly line and a genuinely sterile one are indistinguishable from the evaluator's vantage point if the metrics it uses were trained on proxies rather than coherence itself.",
+            "source_shape": "Philosophers of mind distinguish access consciousness — a system's ability to monitor, report on, and redirect its own internal states — from phenomenal consciousness, the question of whether anything is actually being experienced. The key structural insight is that these two can come fully apart: a system can produce perfectly accurate-sounding reports about its own states while those reports are outputs of pattern-matching against learned signals, not reads of ground truth. 'The system says X' and 'X is actually the case' are logically separable claims, and no amount of behavioral sophistication closes that gap.",
+            "use": "Consider treating the evaluator's stop signals not as readings but as *bets* — and designing the layer to hold multiple competing trajectory assessments in parallel before committing to a reallocation decision, so that premature closure requires a coalition of signals to agree, not just one metric crossing a threshold.",
+            "limit": "The consciousness debate is deliberately unresolved and is designed to stay that way — its honest conclusion is 'we don't know whether access reports track phenomenal reality,' and that epistemic humility is the point of the discourse. Your pipeline cannot afford that posture: it must terminate, it must reallocate, it must produce a working stop condition regardless of whether the stop condition is philosophically certifiable. The analogy accurately names the trap — your evaluator faces irreducible second-order uncertainty about its own signals — but the source offers no exit from the trap, only a precise description of why the trap exists. Engineering the stop condition still falls entirely on you."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "The manas card proposes governance as an ambient orienting signal, not a judge — but its limit says it can't reallocate or switch angles. AgenticNetOS encodes allocation IN the graph topology (no separate controller) but can't detect mid-run sterility. The access-consciousness card warns every stop signal is a BET, not a read, so closure should require a coalition. Collide: an ambient orientation that mutates topology and only commits when multiple bets agree.",
+          "spark": "The manas is an orientation that never commands; AgenticNetOS is a topology that IS the command. If the orientation were encoded as a bias field over the topology rather than a prompt, it could steer reallocation — exactly what the manas card's limit says it can't do. The access-consciousness card supplies the safeguard: don't let the bias field close anything on a single signal.",
+          "motive": "Answers 'how does it twist its framing and toward which angle while it keeps generating' — the orientation field IS the framing, and tilting the field is the twist, executed as a topology re-bias rather than a hard reroute.",
+          "tension": "Manas: orientation only, never reallocates. AgenticNetOS: reallocation IS the topology, no separate orienting layer. Access-consciousness: any single reallocation signal is an untrustworthy bet. The strain: how can a non-commanding orientation cause reallocation without becoming a commander, and without acting on one untrustworthy signal?",
+          "discovery_path": "Manas card asserts governance can be an ambient orienting gravity that makes some moves cohere and others feel off, but cannot reallocate. AgenticNetOS asserts allocation lives in topology, mutated by transition guards. Bridging: encode the manas orientation NOT as a prompt but as a continuous bias field weighting the topology's transition guards — so orientation directly shapes which edges fire, achieving reallocation without ever issuing a command (each agent still chooses; the field only tilts the landscape). Access-consciousness then forces: a tilt is a bet, and the field must not re-tilt (twist framing) on one signal. Resolution: the field re-tilts only when a coalition of trajectory bets agree, and the tilt is reversible. Pursuing how the field tilts forced the 'toward which angle' question — answer: toward the direction where the coalition's agreement is strongest. Thesis: the coalition-gated orientation field."
+        },
+        "thesis": "Framing-twist should be implemented as a continuous orientation BIAS FIELD overlaid on the allocation topology: the field never commands an agent, it only re-weights transition guards so certain angles become 'downhill.' The field re-tilts (twists the cushion toward a new angle) only when a COALITION of independent trajectory bets agrees on the new direction — making framing-twist a reversible, multi-signal-gated act rather than a single-metric reroute.",
+        "mechanism": "An orientation field assigns a scalar bias to every edge of the allocation graph, derived from a compressed statement of the anchor (the manas seed). Agents traverse the graph following their own logic, but the field makes edges aligned with current orientation cheaper to take — reallocation happens as emergent flow, not command. To TWIST framing, the field's center-of-mass shifts toward a candidate angle, but only when K independent trajectory signals (linkage gain, divergence expansion, fragment density on that angle) cross threshold together — a coalition. Because no single signal can move the field, premature framing-collapse requires conspiracy among independent bets; because the field is continuous and the shift logged, every twist is reversible if the angle proves sterile.",
+        "emergent_structure": "Framing-twist as a REVERSIBLE, coalition-gated re-centering of a bias field — agents reallocate via emergent flow down the tilted landscape, never by command, and the system can un-twist. Manas can't reallocate at all; AgenticNetOS reroutes by hard guard-fire (irreversible, single-condition); access-consciousness only describes the bet, never builds the field. The reversible coalition-tilt exists in none of them.",
+        "advances_cushion": "Answers the question's hardest sub-part — 'how does it temporarily twist its own framing and toward WHICH angle while it keeps generating' — with a concrete mechanism: tilt the orientation field toward the coalition's strongest-agreement angle, keep generating throughout (no hard stop), and revert if the bet fails. It also supplies the safeguard against fashionable premature commitment.",
+        "confidence": 0.6
+      }
+    ],
+    "total_cost_usd": 1.0069,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend",
+        "model": "anthropic/claude-opus-4-8",
+        "in_tok": 37691,
+        "out_tok": 5887,
+        "cost_usd": 1.0069,
+        "ms": 86024.1,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_card_count": 37,
+    "model": "anthropic/claude-opus-4-8"
+  },
+  "drift": {
+    "verdicts": [
+      {
+        "blend_id": "blend-01",
+        "on_course": true,
+        "resonance": 0.88,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-02",
+        "on_course": true,
+        "resonance": 0.95,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-03",
+        "on_course": true,
+        "resonance": 0.91,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-04",
+        "on_course": true,
+        "resonance": 0.93,
+        "drift_reason": "",
+        "redirect": ""
+      }
+    ],
+    "on_course_ids": [
+      "blend-01",
+      "blend-02",
+      "blend-03",
+      "blend-04"
+    ],
+    "drifting_ids": [],
+    "total_cost_usd": 0.0121,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "drift_check",
+        "model": "anthropic/claude-sonnet-4-6",
+        "in_tok": 2877,
+        "out_tok": 229,
+        "cost_usd": 0.0121,
+        "ms": 3053.4,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "model": "anthropic/claude-sonnet-4-6"
+  },
+  "verification": {
+    "known": [],
+    "adjacent": [
+      {
+        "blend_id": "blend-03",
+        "bin": "adjacent",
+        "references": [
+          {
+            "title": "Verify-Gated Completion as Admission Control in a Governed Multi-Agent Runtime: A Bounded Architecture Case Study",
+            "url": "https://arxiv.org/html/2605.17998v2"
+          },
+          {
+            "title": "Semantic Admissibility Gate",
+            "url": "https://qu3ry.net/articles/inference-control/admissibility-gate"
+          },
+          {
+            "title": "Stage-Gated Commitment for Irreversible Actions",
+            "url": "https://qu3ry.net/articles/governed-actuation/staged-commitment"
+          }
+        ],
+        "resemblance": "The verify-gated completion paper implements admission control as a governance gate in a multi-agent runtime — a pre-execution check before costly action. The semantic admissibility gate article describes a deterministic evaluation function at the entry of every inference transition, dropping candidates before generation cost is paid. Stage-gated commitment sequences irreversible actions through staged checkpoints. Together these constitute a close cousin: sequential, evidence-gated governance with cheap early drops before expensive later stages.",
+        "still_new": "What no hit performs: the specific three-gate temporal ordering where Gate 0 is a design-time fertility prior that sets agent-count allocation, Gate 1 is a fast mutual-fit compatibility check that drops fragment clusters before any fusion budget is spent, and Gate 2 is the only gate licensed to judge trajectory fertility — and crucially, the principle that the SAME concept can be cheaply dropped at Gate 1 yet would have been protected from killing at Gate 2 (drop-vs-protect asymmetry across gates). The fusion-cost-aware drop/protect asymmetry tied to fragment-density thresholds is not present in any hit.",
+        "reasoning": "The hits establish staged admission control and verify-gated governance as existing moves, making this blend a small step rather than a leap — the transfer of sequential gating to fragment-fusion pipelines is close enough to qualify as adjacent. However, the specific three-gate temporal authority structure with fertility-prior allocation at Gate 0, compatibility-drop at Gate 1, and trajectory-only judgment at Gate 2, plus the drop-vs-protect asymmetry, is not performed by any hit.",
+        "confidence": 0.75
+      }
+    ],
+    "novel": [
+      {
+        "blend_id": "blend-01",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "The Hidden Strength of Disagreement: Unraveling the Consensus-Diversity Tradeoff in Adaptive Multi-Agent Systems",
+            "url": "https://aclanthology.org/2025.emnlp-main.772.pdf"
+          },
+          {
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2509.14276"
+          }
+        ],
+        "resemblance": "The ACL paper treats divergence/disagreement as a dual-edged signal in multi-agent systems (consensus-diversity tradeoff), and the MARL conflict paper uses constructive conflict to drive strategic diversity — both acknowledge divergence can be productive rather than purely negative. DyTopo dynamically routes agents based on semantic matching. None of these, however, wire a single divergence metric to two structurally separate readers with inverted polarity, nor use cross-link formation rate as the polarity selector that disambiguates stop from spawn.",
+        "still_new": "The specific move — one divergence metric subscribed by two channels simultaneously, each reading opposite semantics, with cross-link formation rate as the polarity discriminator that prevents a generative spike from being misread as a termination signal — is performed by no hit.",
+        "reasoning": "Every hit either treats divergence as a single-polarity signal (bad = converge, good = diversify) or routes agents based on semantic content, not on a shared metric with inverted channel semantics. The cross-link formation rate as polarity selector is entirely absent from the evidence. The move is unprecedented.",
+        "confidence": 0.87
+      },
+      {
+        "blend_id": "blend-02",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity",
+            "url": "https://proceedings.mlr.press/v231/patankar24a.html"
+          },
+          {
+            "title": "DyTopo: Dynamic Topology Routing for Multi-Agent Reasoning via Semantic Matching",
+            "url": "https://arxiv.org/pdf/2602.06039v1"
+          }
+        ],
+        "resemblance": "The curiosity-driven graph exploration paper uses intrinsic topological signals (network novelty) to guide agent exploration — the closest cousin in that it reads graph structure rather than content to steer behavior. DyTopo routes agents via dynamic topology. Neither embeds the governor as a node inside the fragment graph, nor derives all three governance acts (continue, stop, framing-twist) from a single signal — the densifying cross-link frontier — nor uses that frontier as a steering wheel for cushion re-orientation.",
+        "still_new": "The specific move — a content-blind monitor embedded as a node in the live fragment graph, reading only cross-link formation rate, and deriving stop, continue, AND framing-twist (cushion re-aim) from that single topological gradient — is performed by no hit.",
+        "reasoning": "Hits address dynamic graph storage, frontier-based robot exploration, or intrinsic reward from graph novelty, but none embed a governance node inside a fragment graph that unifies termination and framing-reorientation under one topological signal. The framing-twist-from-densifying-frontier move is absent across all evidence.",
+        "confidence": 0.89
+      },
+      {
+        "blend_id": "blend-04",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Emergent Coordination in Multi-Agent Systems via Pressure Fields and Temporal Decay",
+            "url": "https://arxiv.org/html/2601.08129v2"
+          },
+          {
+            "title": "AgensFlow: A Coordination-Policy Substrate for Multi-Agent Systems",
+            "url": "https://export.arxiv.org/pdf/2605.27466"
+          },
+          {
+            "title": "Deep Meta Coordination Graphs for Multi-agent Reinforcement Learning",
+            "url": "https://arxiv.org/html/2502.04028"
+          }
+        ],
+        "resemblance": "The pressure-fields paper uses scalar field overlays to produce emergent coordination in multi-agent systems without direct commands — the closest structural cousin, sharing the 'field biases agent flow' ingredient. AgensFlow treats coordination as a learned routing policy. Meta coordination graphs learn dynamic edge weights. These share components: bias fields, emergent flow, edge reweighting.",
+        "still_new": "No hit performs this specific move: a continuous orientation bias field whose center-of-mass can only shift (framing-twist) when a coalition of K independent trajectory signals (linkage gain, divergence expansion, fragment density) cross threshold simultaneously — making framing-collapse require multi-signal conspiracy — combined with the field being reversible and every twist logged so the system can un-twist if the angle proves sterile. The coalition-gated, reversible re-centering of a framing bias field derived from a manas seed anchor is absent from all evidence.",
+        "reasoning": "The pressure-fields paper is the nearest cousin but uses temporal decay for coordination, not coalition-gated framing reorientation; it has no concept of a manas-anchored orientation field or reversible twist requiring multi-signal consensus. The specific move — coalition threshold as the only key that can shift the field's framing center, with reversibility built in — is performed by no hit.",
+        "confidence": 0.85
+      }
+    ],
+    "flawed": [],
+    "evidence": {
+      "per_card": {
+        "blend-01": {
+          "report_id": "blend-01",
+          "queries": [
+            "divergence metric opposite polarity termination versus exploration multi-agent system same signal",
+            "convergence signal dual-channel inverted semantics stopping spawning agents topology cross-link",
+            "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination"
+          ],
+          "hits": [
+            {
+              "query": "divergence metric opposite polarity termination versus exploration multi-agent system same signal",
+              "title": "The Hidden Strength of Disagreement: Unraveling the Consensus-Diversity Tradeoff in Adaptive Multi-Agent Systems",
+              "url": "https://aclanthology.org/2025.emnlp-main.772.pdf",
+              "snippet": "Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing, pages 15277–15297 November 4-9, 2025 ©2025 Association for Computational Linguistics\n\nThe Hidden Strength of Disagreement: Unraveling the Consensus-Diversity Tradeoff in Adaptive Multi-Agent Systems\n\nZengqing Wu∗ Takayuki Ito∗ Graduate School of Informatics, Kyoto University wuzengqing@outlook.com, ito@i.kyoto-…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "divergence metric opposite polarity termination versus exploration multi-agent system same signal",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2509.14276",
+              "snippet": "Constructive Conflict-Driven Multi-Agent Reinforcement Learning for Strategic\nDiversity\nYuxiang Mai1,2,3, Qiyue Yin1,2,3, Wancheng Ni1,2,3,∗, Pei Xu2,3, Kaiqi Huang1,2,3,∗\n1School of Artificial Intelligence, University of Chinese Academy of Sciences\n2CRISE, Institute of Automation, Chinese Academy of Sciences\n3The Key Laboratory of Cognition and Decision Intelligence for Complex Systems, Institute…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "convergence signal dual-channel inverted semantics stopping spawning agents topology cross-link",
+              "title": "btisler-DS/dynamic-cross-origin-constraint",
+              "url": "https://github.com/btisler-DS/dynamic-cross-origin-constraint",
+              "snippet": "# Repository: btisler-DS/dynamic-cross-origin-constraint\n\nExperimental harness for the Δ-Variable Theory of Interrogative Emergence — multi-agent MARL system with Protocol registry, Lab Notebook, and Neural Loom visualizer.\n\n- Stars: 0\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python (77.4%), TypeScript (15.1%), HTML (7.3%), Makefile, JavaScript, Dockerfile,…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "convergence signal dual-channel inverted semantics stopping spawning agents topology cross-link",
+              "title": "Snap Out of It: A Dual-Process Approach to Mitigating Overthinking in Language Model Reasoning",
+              "url": "https://aclanthology.org/2025.realm-1.16.pdf",
+              "snippet": "Proceedings of the 1st Workshop for Research on Agent Language Models (REALM 2025), pages 228–249 July 31, 2025 ©2025 Association for Computational Linguistics\n\nSnap Out of It: A Dual-Process Approach to Mitigating Overthinking in Language Model Reasoning\n\nAshish Pandian*, Nelson Lojo∗, Wei Xun Lai∗, Jackson Lukas∗ University of California, Berkeley {ashishpandian, nelson.lojo, chris.lai, jacksonl…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "convergence signal dual-channel inverted semantics stopping spawning agents topology cross-link",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2409.19841",
+              "snippet": "Counter-Current Learning: A Biologically Plausible\nDual Network Approach for Deep Learning\nChia-Hsiang Kao\nCornell University\nck696@cornell.edu\nBharath Hariharan\nCornell University\nbharathh@cs.cornell.edu\n‘\nAbstract\nDespite its widespread use in neural networks, error backpropagation has faced\ncriticism for its lack of biological plausibility, suffering from issues such as the\nbackward locking pro…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "convergence signal dual-channel inverted semantics stopping spawning agents topology cross-link",
+              "title": "DyTopo: Dynamic Topology Routing for Multi-Agent Reasoning via Semantic Matching",
+              "url": "https://arxiv.org/pdf/2602.06039v1",
+              "snippet": "DyTopo: Dynamic Topology Routing for Multi-Agent Reasoning via Semantic Matching\n\n# DyTopo: Dynamic Topology Routing for Multi-Agent Reasoning via Semantic Matching\n\nYuxing Lu Yucheng Hu Xukai Zhao Jiuxin Cao\n\n###### Abstract\n\nMulti-agent systems built from prompted large language models can improve multi-round reasoning, yet most existing pipelines rely on fixed, trajectory-wide communication pat…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination",
+              "title": "Gelation Time of Network-Forming Polymer Solutions with Ion-Binding Cross-Link Junctions | Macromolecules",
+              "url": "https://pubs.acs.org/doi/full/10.1021/acs.macromol.5c01082",
+              "snippet": "Gelation Time of Network-Forming Polymer Solutions with Ion-Binding Cross-Link Junctions | Macromolecules\n\nSkip to articleSkip to sidebar\n\nCite\n\n- Citation\n- Citation and abstract\n- Citation and references\n- More citation options\n\nShare\n\n- Facebook\n- X\n- WeChat\n- LinkedIn\n- Reddit\n- Email\n- Bluesky\n\nJump to\n\nArticleJune 30, 2025\n\n# Gelation Time of Network-Forming Polymer Solutions with Ion-Bindin…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination",
+              "title": "Thermoreversible Gelation with Two-Component Mixed Cross-Link Junctions of Variable Multiplicity in Ternary Polymer Solutions",
+              "url": "https://pdfs.semanticscholar.org/b74b/b2f19a19dc610d4d3e220de000ce8b136291.pdf",
+              "snippet": "gels\n\nArticle \nThermoreversible Gelation with Two-Component Mixed \nCross-Link Junctions of Variable Multiplicity in Ternary \nPolymer Solutions \n\nFumihiko Tanaka\n\nCitation: Tanaka, F. \nThermoreversible Gelation with \nTwo-Component Mixed Cross-Link \nJunctions of Variable Multiplicity in \nTernary Polymer Solutions. Gels 2021, \n7, 89. https://doi.org/10.3390/ \ngels7030089 \n\nAcademic Editor: Vijay Kuma…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination",
+              "title": "kops.uni-konstanz.de",
+              "url": "https://kops.uni-konstanz.de/server/api/core/bitstreams/c4d340ab-2c87-473e-adbe-32b11360e816/content",
+              "snippet": "PNAS  2024  Vol. 121  No. 51 e2402040121 https://doi.org/10.1073/pnas.2402040121 1 of 12\nRESEARCH ARTICLE |\nSignificance\n Cross-linking mass spectrometry \nis an essential tool for elucidating \nprotein–protein interactions, but \nto date, basic principles of the \nprocess of cross-link formation \nare still not understood. We set \nup a comprehensive kinetic \nmodel and simulate the process \nof cross-li…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination",
+              "title": "Cross-linking | Practical Coatings Science | Prof Steven Abbott",
+              "url": "https://www.stevenabbott.co.uk/practical-coatings/X-Link.php",
+              "snippet": "Cross-linking | Practical Coatings Science | Prof Steven Abbott\n\nMain Menu\n\nCoatings Menu\n\n## Practical Coatings - Coatings\n\n## Cross-Linking\n\n### Quick Start\n\nThis is a major app. It tells you what is going on inside a crosslinking system made of multiple components (epoxies, urethanes, polyols...) with different functionalities. The UV curing version is here.\n\n### Cross-linking\n\nDemo1 A3-B2 A6-B…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "cross-link formation rate as polarity selector divergence ambiguity resolution multi-agent termination",
+              "title": "Gelation Time of Network-Forming Polymer Solutions with Reversible Cross-Link Junctions of Variable Multiplicity",
+              "url": "https://mdpi-res.com/d_attachment/gels/gels-09-00379/article_deploy/gels-09-00379-v3.pdf?version=1684205774",
+              "snippet": "Citation: Tanaka, F. Gelation Time of\nNetwork-Forming Polymer Solutions\nwith Reversible Cross-Link Junctions\nof Variable Multiplicity. Gels 2023, 9,\n379. https://doi.org/10.3390/\ngels9050379\nAcademic Editors: John G. Hardy\nand Melike Firlak\nReceived: 11 April 2023\nRevised: 30 April 2023\nAccepted: 2 May 2023\nPublished: 4 May 2023\nCopyright: © 2023 by the author.\nLicensee MDPI, Basel, Switzerland.\nT…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-02": {
+          "report_id": "blend-02",
+          "queries": [
+            "content-blind topological monitor embedded graph framing reallocation densifying frontier cross-edge",
+            "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+            "densifying cluster frontier reframe spawn bias topological signal single metric govern stop continue steer"
+          ],
+          "hits": [
+            {
+              "query": "content-blind topological monitor embedded graph framing reallocation densifying frontier cross-edge",
+              "title": "Terrace: A Hierarchical Graph Container for Skewed Dynamic Graphs",
+              "url": "https://users.cs.utah.edu/~pandey/courses/cs6968/spring23/papers/terrace.pdf",
+              "snippet": "Terrace: A Hierarchical Graph Container for Skewed Dynamic Graphs\n\nPrashant Pandey \nppandey@berkeley.edu \nLawrence Berkeley National Lab and \nUniversity of California Berkeley \n\nBrian Wheatman wheatman@cs.jhu.edu Johns Hopkins University\n\nHelen Xu hjxu@mit.edu Massachusetts Institute of Technology\n\nAydin Buluc \nabuluc@lbl.gov \nLawrence Berkeley National Lab and \nUniversity of California Berkeley \n…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "content-blind topological monitor embedded graph framing reallocation densifying frontier cross-edge",
+              "title": "GRACE: Alleviating Reconstruction Cost in",
+              "url": "https://shuhaozhangtony.github.io/contents/research_papers/2026/2026_grace_icde_2026.pdf",
+              "snippet": "GRACE: Alleviating Reconstruction Cost in\n\nDynamic Graph Processing Systems\n\nHongru Gao, Shuhao Zhang*, Xiaofei Liao, Hai Jin National Engineering Research Center for Big Data Technology and System, Services Computing Technology and System Lab, Cluster and Grid Computing Lab, School of Computer Science and Technology, Huazhong University of Science and Technology, Wuhan, China { hrgao, shuhao zhan…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "content-blind topological monitor embedded graph framing reallocation densifying frontier cross-edge",
+              "title": "Bw-Graph: An Efficient Graph Storage System Harmonizing Topology-Aware Tree with Paged CSR | Proceedings of the ACM on Management of Data",
+              "url": "https://dl.acm.org/doi/10.1145/3802025",
+              "snippet": "Bw-Graph: An Efficient Graph Storage System Harmonizing Topology-Aware Tree with Paged CSR | Proceedings of the ACM on Management of Data skip to main content\n\nContents\n\n## Abstract\n\nAs digital transformation accelerates, modern graph datasets routinely scale to billions of vertices and edges, demanding storage systems that simultaneously support dynamic updates, rapid neighbor retrieval, and high…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "content-blind topological monitor embedded graph framing reallocation densifying frontier cross-edge",
+              "title": "Exploring the Landscape of Distributed Graph Sketching",
+              "url": "https://par.nsf.gov/servlets/purl/10576000",
+              "snippet": "## Exploring the Landscape of Distributed Graph Sketching\n\n### David Tench ∗ Evan T. West † Kenny Zhang ‡ Michael A. Bender † Daniel DeLayo †\n\n### Mart´ın Farach-Colton § Gilvir Gill † Tyler Seip ¶ Victor Zhang ‖\n\nAbstract Recent work has initiated the study of dense graph pro cessing using graph sketching methods, which drastically reduce space costs by lossily compressing information about the i…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+              "title": "Enhanced exploration in reinforcement learning using graph neural network based intrinsic reward mechanism",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12618532/",
+              "snippet": "Enhanced exploration in reinforcement learning using graph neural network based intrinsic reward mechanism - PMC\n\nSci Rep\n\n. 2025 Nov 14;15:39986. doi: 10.1038/s41598-025-23769-3\n\n# Enhanced exploration in reinforcement learning using graph neural network based intrinsic reward mechanism\n\nJ Arun Pandian\n\n1,✉, Ramkumar Thirunavukarasu\n\n1,✉, Rajganesh Nagarajan\n\n2\n\n- Copyright and License informatio…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+              "title": "Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity",
+              "url": "https://proceedings.mlr.press/v231/patankar24a.html",
+              "snippet": "Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity\n\n# Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity\n\nShubhankar Prashant Patankar, Mathieu Ouellet, Juan Cervino, Alejandro Ribeiro, Kieran A. Murphy, Danielle Bassett\n\nProceedings of the Second Learning on Graphs Conference, PMLR 231:23:1-23:15, 2024.\n\n#### Abstract\n\nIntrinsicall…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+              "title": "Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity",
+              "url": "https://arxiv.org/html/2307.04962v4",
+              "snippet": "Intrinsically Motivated Graph Exploration Using Network Theories of Human Curiosity\n\nHTML conversions sometimes display errors due to content that did not convert correctly from the source. This paper uses the following packages that are not yet supported by the HTML conversion tool. Feedback on these issues are not necessary; they are known and are being worked on.\n\n- 5 Discussion\n- failed: ducku…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+              "title": "www.arxiv.org",
+              "url": "https://www.arxiv.org/pdf/2603.02701",
+              "snippet": "Graph-GRPO: Stabilizing Multi-Agent Topology Learning via Group Relative Policy Optimization Yueyang Cang 1, Xiaoteng Zhang 1, Erlu Zhao 1, Zehua Ji 1, Yuhang Liu 1, Yuchen He 1, Zhiyuan Ning 1, Yijun Chen 1, Wenge Que 2,⋆, Li Shi 1,⋆\n\n| | | | 1Tsinghua | | | University | | |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| | | | 2Donghua | | | University | | |\n| | | | ⋆Corresponding | | …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "graph-internal governor edge formation rate steering exploration versus exploitation reinforcement topology",
+              "title": "[2007.03619] GraphOpt: Learning Optimization Models of Graph Formation",
+              "url": "https://ar5iv.labs.arxiv.org/html/2007.03619",
+              "snippet": "[2007.03619] GraphOpt: Learning Optimization Models of Graph Formation\n\n# GraphOpt: Learning Optimization Models of Graph Formation\n\nRakshit Trivedi Jiachen Yang Hongyuan Zha\n\n###### Abstract\n\nFormation mechanisms are fundamental to the study of complex networks, but learning them from observations is challenging. In real-world domains, one often has access only to the final constructed graph, ins…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "densifying cluster frontier reframe spawn bias topological signal single metric govern stop continue steer",
+              "title": "A novel method for extraction of front boundary agents in multi-agent systems | Scientific Reports",
+              "url": "https://www.nature.com/articles/s41598-025-29649-0",
+              "snippet": "A novel method for extraction of front boundary agents in multi-agent systems | Scientific Reports\n\n### Subjects\n\n- Electrical and electronic engineering\n- Engineering\n\n## Abstract\n\nTo investigate the question of decision-making individuals in distributed multi-agent systems, this study introduces the concept of front boundary agents based on observations of various collective movements in biologi…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "densifying cluster frontier reframe spawn bias topological signal single metric govern stop continue steer",
+              "title": "SPORE: Skeleton Propagation Over Recalibrating Expansions",
+              "url": "https://arxiv.org/html/2511.00064v5",
+              "snippet": "SPORE: Skeleton Propagation Over Recalibrating Expansions\n\n# SPORE: Skeleton Propagation Over Recalibrating Expansions\n\nRandolph Wiredu-Aidoo\n\n###### Abstract\n\nClustering is a foundational task in data analysis, yet most algorithms impose rigid assumptions on cluster geometry: centroid-based methods favor convex structures, while density-based approaches break down under variable local density or …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "densifying cluster frontier reframe spawn bias topological signal single metric govern stop continue steer",
+              "title": "shimmer0909/Frontier-Exploration",
+              "url": "https://github.com/shimmer0909/Frontier-Exploration",
+              "snippet": "# Repository: shimmer0909/Frontier-Exploration\n\nROS2 frontier-exploration framework that identifies frontier boundaries, generates optimal navigation goals, and autonomously maps unknown indoor environments.\n\n- Stars: 0\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python\n- License: Apache License 2.0 (Apache-2.0)\n- Default branch: main\n- Created: 2025-12-01T19:…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "densifying cluster frontier reframe spawn bias topological signal single metric govern stop continue steer",
+              "title": "Efficient boundary-seeking clustering based on reverse k-nearest neighbor and average direction centrality metric - ScienceDirect",
+              "url": "https://www.sciencedirect.com/science/article/abs/pii/S0957417425042046",
+              "snippet": "Efficient boundary-seeking clustering based on reverse k-nearest neighbor and average direction centrality metric - ScienceDirect\n\nSkip to main contentSkip to article\n\n## Expert Systems with Applications\n\nDate: 25 March 2026\n\nArticle: 130589\n\n## Published by: Elsevier\n\n### Published by\n\nShow more\n\nResearch article\n\nGet rights and content\n\n# Efficient boundary-seeking clustering based on reverse k-…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-03": {
+          "report_id": "blend-03",
+          "queries": [
+            "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+            "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+            "premature closure prevention layered drop-protect timeline fragment compatibility gate before fusion cost"
+          ],
+          "hits": [
+            {
+              "query": "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+              "title": "NoiseGate: Learning Per-Latent Timestep Schedules as Information Gating in World Action Models",
+              "url": "https://arxiv.org/html/2605.07794",
+              "snippet": "NoiseGate: Learning Per-Latent Timestep Schedules as Information Gating in World Action Models\n\n# NoiseGate: Learning Per-Latent Timestep Schedules as Information Gating in World Action Models\n\nWen Huang1,†, Haoran Sun2,†, Yongjian Guo1,†, Yunxuan Ma2, Haoran Li2,3, Jing Long2,3 Zhouying Mo4, Zhong Guan4, Yucheng Guo3, Shuai Di3, Junwu Xiong3 1Tsinghua University, 2Peking University, 3JDT AI Infra…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+              "title": "Rushikesh-Yeole/TGRAG",
+              "url": "https://github.com/rushikesh-yeole/tgrag",
+              "snippet": "# Repository: Rushikesh-Yeole/TGRAG\n\nTemporal GraphRAG: dynamic ontology induction for causal memory compression in long-horizon LLM agents. Achieves 1.0 causal recall with 95–98% graph compression across 10K–30K session corpora.\n\n- Stars: 1\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python (98.5%), Dockerfile (1.5%)\n- Topics: agentic-ai, causal-reasoning, ra…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+              "title": "AdaGATE: Adaptive Gap-Aware Token-Efficient Evidence Assembly for Multi-Hop Retrieval-Augmented Generation",
+              "url": "https://arxiv.org/html/2605.05245",
+              "snippet": "AdaGATE: Adaptive Gap-Aware Token-Efficient Evidence Assembly for Multi-Hop Retrieval-Augmented Generation\n\n# AdaGATE: Adaptive Gap-Aware Token-Efficient Evidence Assembly for Multi-Hop Retrieval-Augmented Generation\n\nYilin Guo Center for Data Science New York University yg3030@nyu.edu &Yinshan Wang Tandon School of Engineering New York University yw9023@nyu.edu &Yixuan Wang Center for Data Scienc…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+              "title": "1 Illustrations of Agent Architecture Paradigms. This figure compares the structural design of (a) standard Single-Scale Agent, (b) unconstrained Temporal Hierarchy (TH), and (c) our proposed Constrained Temporal Hierarchical Architecture (CTHA). Unlike the unconstrained TH, CTHA focuses on optimizing the inter-layer communication space by projecting messages onto constrained manifolds (𝒫_ℳ^{𝑠⁢𝑢⁢𝑚}, 𝒫_ℳ^{𝑝⁢𝑙⁢𝑎⁢𝑛}, 𝒫_ℳ^{𝑝⁢𝑜⁢𝑙}) and routing decisions through a principled Arbiter to ensure stability.",
+              "url": "https://arxiv.org/pdf/2601.10738v1",
+              "snippet": "1 Illustrations of Agent Architecture Paradigms. This figure compares the structural design of (a) standard Single-Scale Agent, (b) unconstrained Temporal Hierarchy (TH), and (c) our proposed Constrained Temporal Hierarchical Architecture (CTHA). Unlike the unconstrained TH, CTHA focuses on optimizing the inter-layer communication space by projecting messages onto constrained manifolds (𝒫_ℳ^{𝑠⁢𝑢⁢𝑚…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "three-gate temporal governance allocate drop continue evidence-gated multi-agent fragment fusion pipeline",
+              "title": "Seeing, Listening, Remembering, and Reasoning: A Multimodal Agent with Long-Term Memory",
+              "url": "https://arxiv.org/pdf/2508.09736",
+              "snippet": "Seeing, Listening, Remembering, and Reasoning: A Multimodal Agent with Long-Term Memory\n\n1]ByteDance Seed 2]Zhejiang University 3]Shanghai Jiao Tong University \\contribution[*]Equal contribution \\contribution[†]Corresponding author\n\n# Seeing, Listening, Remembering, and Reasoning: A Multimodal Agent with Long-Term Memory\n\nLin Long Yichen He Wentao Ye Yiyuan Pan Yuan Lin Hang Li Junbo Zhao Wei Li […",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+              "title": "Verify-Gated Completion as Admission Control in a Governed Multi-Agent Runtime: A Bounded Architecture Case Study",
+              "url": "https://arxiv.org/html/2605.17998v2",
+              "snippet": "Verify-Gated Completion as Admission Control in a Governed Multi-Agent Runtime: A Bounded Architecture Case Study\n\n# Verify-Gated Completion as Admission Control in a Governed Multi-Agent Runtime: A Bounded Architecture Case Study\n\nHai-Duong Nguyen briannguyen290701@gmail.com Xuan-The Tran thetx.vck@vimaru.edu.vn\n\n###### Abstract\n\nMulti-agent systems now coordinate tools, roles, and persistent sta…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+              "title": "Semantic Admissibility Gate",
+              "url": "https://qu3ry.net/articles/inference-control/admissibility-gate",
+              "snippet": "Semantic Admissibility Gate\n\n---\n\n## Mechanism\n\nThe admissibility gate is a deterministic evaluation function positioned at the entry of every inference transition. Before any generation, retrieval, or tool invocation occurs, every candidate input is presented to the gate as a structured object carrying its canonical fields, its lineage tail, the credential under which it is being offered, and the…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+              "title": "Stage-Gated Commitment for Irreversible Actions",
+              "url": "https://qu3ry.net/articles/governed-actuation/staged-commitment",
+              "snippet": "Stage-Gated Commitment for Irreversible Actions\n\n---\n\n## Mechanism\n\nA reversibility classifier inspects each contemplated actuation. Actions whose reversibility class crosses a configured threshold — actions with a commitment point past which the platform cannot return the controlled system to an equivalent prior state — are routed into the staged-commitment protocol rather than committed directly…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+              "title": "Atomic Decision Boundaries: A Structural Requirement for Guaranteeing Execution-Time Admissibility in Autonomous Systems",
+              "url": "https://arxiv.org/html/2604.17511",
+              "snippet": "Atomic Decision Boundaries: A Structural Requirement for Guaranteeing Execution-Time Admissibility in Autonomous Systems\n\n# Atomic Decision Boundaries: A Structural Requirement for Guaranteeing Execution-Time Admissibility in Autonomous Systems\n\nMarcelo Fernandez TraslaIA info@traslaia.com\n\n(April 2026 arXiv:2604.17511 [cs.AI] DOI: 10.5281/zenodo.19670649)\n\n###### Abstract\n\nAutonomous systems incr…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "staged evaluation gates fertility prior admissibility trajectory verification sequential authority multi-agent",
+              "title": "GitHub - LalaSkye/dual-boundary-admissibility-lab: Admissibility Rotation Corridor — closed constitutional runtime with visible interrupt geometry · GitHub",
+              "url": "https://p.rst.im/q/github.com/LalaSkye/dual-boundary-admissibility-lab",
+              "snippet": "GitHub - LalaSkye/dual-boundary-admissibility-lab: Admissibility Rotation Corridor — closed constitutional runtime with visible interrupt geometry · GitHub\n\nmain\n\nGo to file\n\nCode\n\nLast commit message\n\nLast commit date\n\nView all files\n\n| Name | Name |\n| --- | --- |\n\n## Repository files navigation\n\n# dual-boundary-admissibility-lab\n\nTwo gates. One corridor. Meaning construction governed before exec…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "premature closure prevention layered drop-protect timeline fragment compatibility gate before fusion cost",
+              "title": "Module 003-CFG: Chronometric Flux Gating",
+              "url": "https://metanthropic.vercel.app/research/chronometric-flux-gating",
+              "snippet": "Module 003-CFG: Chronometric Flux Gating\n\nFigure 1: Visualization of Feature Absorption. Standard L1 regularization forces distinct causal mechanisms (e.g., 'Starts with E' and 'Elephant') to merge, destroying interpretability.\n\nArtifacts Available: Read Specification View Code\n\n## Strategic Context: The Reliability Bottleneck\n\nThe deployment of the Metanthropic Self-Correcting Reasoning Engine is…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "premature closure prevention layered drop-protect timeline fragment compatibility gate before fusion cost",
+              "title": "LUCI in the surface code with dropouts",
+              "url": "https://arxiv.org/html/2410.14891v1",
+              "snippet": "LUCI in the surface code with dropouts\n\n# LUCI in the surface code with dropouts\n\nDripto M. Debroy dripto@google.com Google Quantum AI, Venice, CA 90291, USA Matt McEwen Google Quantum AI, Santa Barbara, CA 93117, USA Craig Gidney Google Quantum AI, Santa Barbara, CA 93117, USA Noah Shutty Google Quantum AI, Venice, CA 90291, USA Adam Zalcman Google Quantum AI, Venice, CA 90291, USA Google Quantum…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "premature closure prevention layered drop-protect timeline fragment compatibility gate before fusion cost",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/1909.11556",
+              "snippet": "REDUCING TRANSFORMER DEPTH ON DEMAND WITH\nSTRUCTURED DROPOUT\nAngela Fan\nFacebook AI Research/LORIA\nangelafan@fb.com\nEdouard Grave\nFacebook AI Research\negrave@fb.com\nArmand Joulin\nFacebook AI Research\najoulin@fb.com\nABSTRACT\nOverparameterized transformer networks have obtained state of the art results in\nvarious natural language processing tasks, such as machine translation, language\nmodeling, and …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "premature closure prevention layered drop-protect timeline fragment compatibility gate before fusion cost",
+              "title": "Method for making openings in a passivation layer over polycide fuses using a single mask while forming reliable tungsten via plugs on DRAMs - Vanguard International Semiconductor Corporation",
+              "url": "https://www.freepatentsonline.com/6124165.html",
+              "snippet": "Method for making openings in a passivation layer over polycide fuses using a single mask while forming reliable tungsten via plugs on DRAMs - Vanguard International Semiconductor Corporation\n\nSearch\n\n- Expert Search\n- Quick Search\n\n- US Patents/Apps\n- Other\n\nTitle:\n\nMethod for making openings in a passivation layer over polycide fuses using a single mask while forming reliable tungsten via plugs …",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-04": {
+          "report_id": "blend-04",
+          "queries": [
+            "continuous orientation bias field allocation graph coalition-gated framing shift reversible multi-agent",
+            "scalar bias field edge reweighting emergent agent reallocation reversible framing twist coalition threshold",
+            "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute"
+          ],
+          "hits": [
+            {
+              "query": "continuous orientation bias field allocation graph coalition-gated framing shift reversible multi-agent",
+              "title": "From General Relation Patterns to Task-Specific Decision-Making in Continual Multi-Agent Coordination",
+              "url": "https://arxiv.org/html/2507.06004",
+              "snippet": "From General Relation Patterns to Task-Specific Decision-Making in Continual Multi-Agent Coordination\n\n# From General Relation Patterns to Task-Specific Decision-Making in Continual Multi-Agent Coordination\n\nChang Yao1,2 Youfang Lin1,2 Shoucheng Song1,2 Hao Wu1,2 Yuqing Ma3 Sheng Han1,2&Kai Lv1,2 1School of Computer Science & Technology, Beijing Jiaotong University, Beijing, China 2Beijing Key Lab…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "continuous orientation bias field allocation graph coalition-gated framing shift reversible multi-agent",
+              "title": "[2504.05045] Attention-Augmented Inverse Reinforcement Learning with Graph Convolutions for Multi-Agent Task Allocation",
+              "url": "https://arxiv.org/pdf/2504.05045",
+              "snippet": "[2504.05045] Attention-Augmented Inverse Reinforcement Learning with Graph Convolutions for Multi-Agent Task Allocation\n\n# Attention-Augmented Inverse Reinforcement Learning with Graph Convolutions for Multi-Agent Task Allocation\n\nHuilin Yin, Zhikun Yang, Linchuan Zhang, Daniel Watzenig This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "continuous orientation bias field allocation graph coalition-gated framing shift reversible multi-agent",
+              "title": "Deep Meta Coordination Graphs for Multi-agent Reinforcement Learning",
+              "url": "https://arxiv.org/html/2502.04028",
+              "snippet": "Deep Meta Coordination Graphs for Multi-agent Reinforcement Learning\n\n\\setcopyright\n\nifaamas \\acmConference[AAMAS ’26]This work as been accepted as an Extended Abstract in the Proc. of the 25th International Conference on Autonomous Agents and Multiagent Systems (AAMAS 2026)May 25 – 29, 2026 Paphos, CyprusC. Amato, L. Dennis, V. Mascardi, J. Thangarajah (eds.) \\copyrightyear2026 \\acmYear2026 \\acmD…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "scalar bias field edge reweighting emergent agent reallocation reversible framing twist coalition threshold",
+              "title": "Emergent Coordination in Multi-Agent Systems via Pressure Fields and Temporal Decay1footnote 11footnote 1Code available at https://github.com/Govcraft/pressure-field-experiment",
+              "url": "https://arxiv.org/html/2601.08129v2",
+              "snippet": "Emergent Coordination in Multi-Agent Systems via Pressure Fields and Temporal Decay1footnote 11footnote 1Code available at https://github.com/Govcraft/pressure-field-experiment\n\nspacing=nonfrench\n\n# Emergent Coordination in Multi-Agent Systems via Pressure Fields and Temporal Decay111Code available at https://github.com/Govcraft/pressure-field-experiment\n\nRoland R. Rodriguez, Jr. Independent Resea…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "scalar bias field edge reweighting emergent agent reallocation reversible framing twist coalition threshold",
+              "title": "Beyond Scaling: Agents Are Heading to the Edge",
+              "url": "https://arxiv.org/html/2605.18535",
+              "snippet": "Beyond Scaling: Agents Are Heading to the Edge\n\n# Beyond Scaling: Agents Are Heading to the Edge\n\nChunlin Tian University of Cambridge University of Macau &Dongqi Cai11footnotemark: 1 Nanjing University &Wanru Zhao11footnotemark: 1 University of Cambridge &Nicholas D. Lane University of Cambridge Equal contribution.Corresponding author.\n\n###### Abstract\n\nThe bottleneck of useful agentic intelligen…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "scalar bias field edge reweighting emergent agent reallocation reversible framing twist coalition threshold",
+              "title": "Emergence World: A Platform for Evaluating Long-Horizon Multi-Agent Autonomy",
+              "url": "https://arxiv.org/html/2606.08367",
+              "snippet": "Emergence World: A Platform for Evaluating Long-Horizon Multi-Agent Autonomy\n\n# Emergence World: A Platform for Evaluating Long-Horizon Multi-Agent Autonomy\n\nDeepak Akkil Ravi Kokku Karthik Vikram Tamer Abuelsaad Aditya Vempaty Satya Nitta Emergence AI {deepak, ravi, kvikram, tea, aditya, satya}@emergence.ai https://github.com/EmergenceAI/Emergence-World\n\n(May 2026)\n\n###### Abstract\n\nMost evaluati…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute",
+              "title": "Nicolepcx/AgensFlow",
+              "url": "https://github.com/Nicolepcx/AgensFlow",
+              "snippet": "# Repository: Nicolepcx/AgensFlow\n\nAgensFlow is an open-source framework that treats multi-agent coordination as an online policy-learning problem under partial observability, enabling learned routing to improve coordination-heavy workflows over static approaches.\n\n- Stars: 7\n- Forks: 1\n- Watchers: 1\n- Open issues: 1\n- Primary language: Python\n- Languages: Python\n- License: Apache License 2.0 (Apa…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute",
+              "title": "mbfadil/cardiac-architecture",
+              "url": "https://github.com/mbfadil/cardiac-architecture",
+              "snippet": "# Repository: mbfadil/cardiac-architecture\n\nA biologically-inspired control layer for multi-agent AI systems\n\n- Stars: 0\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python\n- License: MIT License (MIT)\n- Topics: agentic-ai, ai-agents, experiential-learning, multi-agent, routing, somatic-markers\n- Default branch: main\n- Created: 2026-04-08T06:35:41Z\n- Last push:…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute",
+              "title": "AgensFlow: A Coordination-Policy Substrate for Multi-Agent Systems",
+              "url": "https://export.arxiv.org/pdf/2605.27466",
+              "snippet": "## AgensFlow: A Coordination-Policy Substrate for Multi-Agent Systems\n\nNicole Koenigstein ∗\n\nMay 28, 2026\n\nAbstract Multi-agent systems built on large language models (LLMs) require many coordination choices that are difficult to fix a priori: which skill protocol to invoke, which agent role should perform a subtask, which model to bind to each role, how roles should interact, when to use retrieva…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute",
+              "title": "[2602.00966] Symphony-Coord: Emergent Coordination in Decentralized Agent Systems",
+              "url": "https://arxiv.org/pdf/2602.00966",
+              "snippet": "[2602.00966] Symphony-Coord: Emergent Coordination in Decentralized Agent Systems\n\n\\correspondence\n\nYongxin Ni: niyongxin@u.nus.edu Bill Shi: tianyu.s@gradient.network \\projectBill Shi \\sourcecodeComing-Soon\n\n# Symphony-Coord: Emergent Coordination in Decentralized Agent Systems\n\nZhaoyang Guan1,* Huixi Cao2,* Ming Zhong3 Eric Yang5 Lynn Ai 5 Yongxin Ni4 Bill Shi5 1Engineering Sciences and Applied …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "multi-signal coalition gated reorientation bias landscape agents emergent flow no command reversible reroute",
+              "title": "openreview.net",
+              "url": "https://openreview.net/pdf?id=Am0EIHSSW6",
+              "snippet": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a conference paper at ICLR 2026\nBINR-MAPF: A BIO-INSPIRED NEURAL-REFLEX\nARCHITECTURE FOR DECENTRALIZED MULTI-AGENT\nPATHFINDING\nAnonymous authors\nPaper under double-blin…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        }
+      },
+      "query_model": "anthropic/claude-sonnet-4-6",
+      "total_queries": 12,
+      "total_hits": 49,
+      "extraction_cost_usd": 0.0125,
+      "extraction_ok": true,
+      "search_errors": [],
+      "call_log": [
+        {
+          "phase": "blend_extract_queries",
+          "model": "anthropic/claude-sonnet-4-6",
+          "in_tok": 2528,
+          "out_tok": 327,
+          "cost_usd": 0.0125,
+          "ms": 8400.8,
+          "ok": true,
+          "err": ""
+        }
+      ],
+      "elapsed_ms": 9927.1
+    },
+    "total_cost_usd": 0.0828,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend_verdict",
+        "model": "anthropic/claude-sonnet-4-6",
+        "in_tok": 13850,
+        "out_tok": 1918,
+        "cost_usd": 0.0703,
+        "ms": 42716.3,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_blend_count": 4,
+    "verify_model": "anthropic/claude-sonnet-4-6"
+  },
+  "quarantined_blend_ids": [],
+  "models": {
+    "blender": "anthropic/claude-opus-4-8",
+    "drift": "anthropic/claude-sonnet-4-6",
+    "query": "anthropic/claude-sonnet-4-6",
+    "verify": "anthropic/claude-sonnet-4-6"
+  },
+  "stage_costs": {
+    "blend": 1.0069,
+    "drift": 0.0121,
+    "verify": 0.0828
+  },
+  "total_cost_usd": 1.1018,
+  "elapsed_ms": 141723.8
+}

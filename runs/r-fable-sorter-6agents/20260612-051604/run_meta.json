@@ -1,0 +1,50 @@
+{
+  "timestamp": "20260612-051604",
+  "git_sha": "22f8c558f93f765052b9276fa78a8428d70d088a",
+  "git_branch": "chaos-amp",
+  "wandering": {
+    "mode": "multi_pendulum",
+    "agent_count": 6,
+    "model_mix": [
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-sonnet-4-6"
+    ],
+    "time_budget_s": 1800,
+    "tokens_per_agent": 30000,
+    "session_token_cap": 1000000
+  },
+  "master_tier": {
+    "pipeline_mode": "sorter",
+    "sorter_model": "anthropic/claude-fable-5",
+    "cost_ceiling_usd": 8.0
+  },
+  "durations_seconds": {
+    "cushion_compose": 49.48,
+    "wandering": 319.81,
+    "dossier_build": 166.47,
+    "total": 535.75
+  },
+  "cohort_integrity_ok": true,
+  "cohort_integrity_problems": [],
+  "session_metrics": {
+    "report_count": 9,
+    "agent_count": 6,
+    "tokens_spent": 228534,
+    "expected_agents": 6,
+    "agent_errors": {}
+  },
+  "sort_metrics": {
+    "known": 0,
+    "invalid": 0,
+    "unplaced": 0,
+    "parser_demotions": 0,
+    "dropped": 9,
+    "total_cost_usd": 0.0698,
+    "truncated_by_budget": false
+  },
+  "output_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-fable-sorter-6agents/20260612-051604"
+}

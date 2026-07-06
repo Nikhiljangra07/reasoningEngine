@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "ga": [
+    "No card addresses how multiple independent gap-signals (structural hole, doubt-meter spike, coverage density, attempt-history) are fused into a single allocation priority score. Every card treats gap detection and gap routing as separate concerns; none proposes a fusion function, weighting scheme, or conflict-resolution rule when signals disagree \u2014 e.g., a gap that is structurally central but has a high attempt count.",
+    "No card addresses how to size the agent wave dispatched to a gap \u2014 i.e., the mapping from priority score or gap type to a concrete agent count and timing. The circuit-breaker card (P02-005) handles the stop decision per gap but says nothing about how many agents to commit before the breaker trips, or whether to send one probe agent first versus a full wave.",
+    "The attempt-history card (Sf706b1-004) establishes that history is necessary to classify a gap as dead vs. live, but no card specifies what observable signals in that history constitute evidence of unfillability versus under-attempt. The distinction is named but the discriminating features are left implicit \u2014 what pattern of failures, across what attempt types and depths, licenses the 'terminate' verdict?",
+    "No card touches question part (4) \u2014 how to bias re-exploration toward identified gaps without collapsing diversity and creating a monoculture of gap-filling agents that all converge on the same framing. The bias-injection card (S75bb3f-002) addresses context-drift bounding but not the mechanism for constructing a biased-but-diverse dispatch: what makes a re-exploration wave genuinely different from the first wave rather than a repetition with a different label?",
+    "No card addresses the feedback loop from re-assembled skeleton back to the gap-priority ranking \u2014 i.e., how a newly filled gap changes the priority of remaining gaps. The spider-graph card (P02-004) shows topology as information, but treats it statically. In a live loop, filling one gap may reveal new gaps, collapse others, or re-rank existing ones; the orchestrator needs a skeleton-diff mechanism that propagates structural changes into the priority queue after each cycle."
+  ],
+  "gb": [
+    {
+      "missing": "A mechanism that dynamically adjusts the bias injection budget based on the attempt-history-derived gap-type classification, ensuring that gaps classified as under-attempted receive higher bias allocation while unfillable gaps are deprioritized.",
+      "links": "[linguistics], [investigative_journalism], [medicine], [mathematics], [film], [trade]",
+      "domain": "adaptive bias scheduling"
+    },
+    {
+      "missing": "A fusion rule that combines the goal-aware and goal-blind gap detectors' signals into a unified priority ranking without cross-contamination, possibly by using different representations for each detector.",
+      "links": "[negotiation], [biographies], [human-AI collaboration toolkit], [trade]",
+      "domain": "epistemic signal fusion"
+    },
+    {
+      "missing": "A lifecycle phasing mechanism that transitions the session from divergent exploration to convergent commitment, using a saturation signal from the gap-type discriminator to determine when to reduce variance and increase depth.",
+      "links": "[medicine], [engineering], [poetry], [relationships]",
+      "domain": "exploration-exploitation phasing"
+    },
+    {
+      "missing": "A structural similarity metric that guides the wandering wave toward regions of the knowledge skeleton that are structurally incomplete, based on the topology of gaps rather than on goal-driven heuristics.",
+      "links": "[information_theory], [textile_arts], [indigenous_traditions], [sports]",
+      "domain": "topological gap guidance"
+    },
+    {
+      "missing": "A structural analogy validation mechanism that distinguishes real structural correspondences from superficial lexical matches, preventing the system from building on false bridges.",
+      "links": "[negotiation], [sports]",
+      "domain": "structural analogy verification"
+    },
+    {
+      "missing": "A mechanism that makes the flow governor's internal state, including temporary biases, visible as a structural artifact, enabling the system to introspect and revise its own orchestration rules.",
+      "links": "[linguistics], [engineering], [patents], [carpentry]",
+      "domain": "self-modeling orchestration"
+    }
+  ],
+  "matches": [
+    {
+      "auditor": 1,
+      "covered_by": "G2",
+      "agree": 3,
+      "of": 3
+    },
+    {
+      "auditor": 2,
+      "covered_by": null,
+      "agree": 3,
+      "of": 3
+    },
+    {
+      "auditor": 3,
+      "covered_by": "G1",
+      "agree": 2,
+      "of": 3
+    },
+    {
+      "auditor": 4,
+      "covered_by": null,
+      "agree": 2,
+      "of": 3
+    },
+    {
+      "auditor": 5,
+      "covered_by": null,
+      "agree": 2,
+      "of": 3
+    }
+  ],
+  "cost": 0.0384
+}

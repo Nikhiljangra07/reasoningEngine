@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2026-06-01",
+    "purpose": "Adversarial cross-domain analogical pairs for Constellation Interpreter validation. Should-match pairs share essence/mechanism across distant surface domains; should-not-match pairs share neither. The fingerprint+vector channel is expected to surface should-match pairs with cosine similarity > 0.5 and should-not-match pairs < 0.3.",
+    "match_threshold_should_match": 0.5,
+    "match_threshold_should_not_match": 0.3,
+    "counts": {
+      "should_match": 20,
+      "should_not_match": 10,
+      "total": 30
+    }
+  },
+  "pairs": [
+    {
+      "id": "match_001",
+      "should_match": true,
+      "essence_pattern": "bounded freedom — chaos that stays useful because constraint anchors it",
+      "side_a": {
+        "domain": "AI agent control",
+        "description": "An autonomous AI agent must explore the internet to research a user's problem while being constrained by tokens, a time budget, and a fixed anchor goal that prevents drift into unrelated territory."
+      },
+      "side_b": {
+        "domain": "jazz improvisation",
+        "description": "A jazz musician improvises melodies within a chord progression, creating unpredictable music that still fits the harmonic frame and serves the song's emotional arc."
+      },
+      "notes": "Both systems aim for unpredictable output under resource limits; both rely on soft structural constraint enabling rather than restricting emergence."
+    },
+    {
+      "id": "match_002",
+      "should_match": true,
+      "essence_pattern": "adaptation under fitness pressure — abandoning prior local optimum when environment shifts",
+      "side_a": {
+        "domain": "founder pivot",
+        "description": "A startup founder realizes the original product hypothesis is wrong and must abandon two years of work to chase a new market signal before runway runs out."
+      },
+      "side_b": {
+        "domain": "evolutionary speciation",
+        "description": "A population fragmented by environmental change diverges from its ancestral form, accumulating traits that fit the new niche while losing fitness for the old one."
+      },
+      "notes": "Both involve giving up locally-optimal configurations because the fitness landscape has shifted; both have a point of no return where reverting becomes costlier than committing."
+    },
+    {
+      "id": "match_003",
+      "should_match": true,
+      "essence_pattern": "keystone dependency — single node whose removal cascades through the whole network",
+      "side_a": {
+        "domain": "team trust",
+        "description": "One person on a small team holds the institutional context everyone else implicitly relies on; when they leave, decision velocity drops by 70% even though headcount only dropped 10%."
+      },
+      "side_b": {
+        "domain": "ecosystem keystone species",
+        "description": "Sea otters keep sea urchin populations in check; remove otters and urchins overgraze kelp forests; remove kelp and dozens of dependent species collapse — a cascade triggered by removing one node."
+      },
+      "notes": "Both networks have hidden dependencies on a single node whose contribution looks small until removal exposes the leverage."
+    },
+    {
+      "id": "match_004",
+      "should_match": true,
+      "essence_pattern": "exponential growth from small consistent inputs — compounding over time",
+      "side_a": {
+        "domain": "compound interest",
+        "description": "Money invested at a modest return rate grows imperceptibly for years, then accelerates as the base itself compounds, producing wealth that looks impossible to early observers."
+      },
+      "side_b": {
+        "domain": "skill mastery",
+        "description": "A practitioner's daily practice produces no visible improvement for months, then plateaus give way to sudden capability jumps as the substrate of mastery compounds against itself."
+      },
+      "notes": "Both reward consistency disproportionately in the late stages; both look unrewarding during the linear-growth phase that precedes the exponential one."
+    },
+    {
+      "id": "match_005",
+      "should_match": true,
+      "essence_pattern": "positive feedback loop with no natural damping — runaway divergence",
+      "side_a": {
+        "domain": "debt spiral",
+        "description": "A borrower takes on debt to service prior debt; interest compounds faster than income grows; each successive loan needs to be larger; no equilibrium exists short of default or external intervention."
+      },
+      "side_b": {
+        "domain": "political polarization",
+        "description": "Each side's extreme rhetoric provokes the other's extreme response; moderates lose elections to extremists; the median position drifts further apart each cycle with no mechanism pulling back to center."
+      },
+      "notes": "Both are unstable equilibria where every local action makes the global state worse; both require an exogenous shock to break the loop."
+    },
+    {
+      "id": "match_006",
+      "should_match": true,
+      "essence_pattern": "preserving function while restructuring substrate — surgery on a live system",
+      "side_a": {
+        "domain": "code refactoring",
+        "description": "A team rewrites the internals of a database query engine while it serves live traffic, swapping out the storage layer piece by piece without breaking compatibility with existing clients."
+      },
+      "side_b": {
+        "domain": "urban renewal",
+        "description": "A city replaces a 1950s highway with a tunnel and surface streets while keeping traffic flowing throughout, gradually relocating utilities and rerouting commutes without shutting down the corridor."
+      },
+      "notes": "Both face the constraint that the system can't stop serving its function during the transformation; both rely on parallel-running paths until the swap completes."
+    },
+    {
+      "id": "match_007",
+      "should_match": true,
+      "essence_pattern": "incomplete information game — strategic reveal under asymmetric uncertainty",
+      "side_a": {
+        "domain": "salary negotiation",
+        "description": "Each party knows their own walk-away point but not the other's; first to name a number anchors the range; bluffs about alternative offers shift the perceived BATNA."
+      },
+      "side_b": {
+        "domain": "poker",
+        "description": "Each player knows their hand but not the others'; bet size and timing reveal information players try to hide; pot odds determine when to fold strong cards or call with weak ones."
+      },
+      "notes": "Both games are won by reading the other player's information state from their actions, while controlling what your own actions reveal."
+    },
+    {
+      "id": "match_008",
+      "should_match": true,
+      "essence_pattern": "cascading failure from hidden dependencies — small trigger, total breakdown",
+      "side_a": {
+        "domain": "mental health crisis",
+        "description": "A person who has been sleeping less, skipping meals, and isolating socially loses their job; the job loss alone wouldn't have broken them, but combined with the eroded substrate triggers a collapse that takes months to recover from."
+      },
+      "side_b": {
+        "domain": "supply chain breakdown",
+        "description": "A factory fire in one specialized component supplier halts assembly lines worldwide because the dependency wasn't visible in anyone's risk model until it failed."
+      },
+      "notes": "Both systems had unmodeled fragility — the visible trigger was small, the actual fragility was load-bearing on hidden dependencies that no one was monitoring."
+    },
+    {
+      "id": "match_009",
+      "should_match": true,
+      "essence_pattern": "leaving stable suboptimal for uncertain better — irreversible commitment under incomplete information",
+      "side_a": {
+        "domain": "career change",
+        "description": "An engineer in a stable job they no longer find meaningful must decide whether to quit for an unknown startup; the current path's ceiling is visible, the new path's floor isn't."
+      },
+      "side_b": {
+        "domain": "migration",
+        "description": "A family in a stagnant economy must decide whether to leave their homeland for a country offering opportunity but stripping away network, language, and social standing."
+      },
+      "notes": "Both involve sunk cost in the current state, asymmetric information about the destination, and a one-way door once committed past a certain point."
+    },
+    {
+      "id": "match_010",
+      "should_match": true,
+      "essence_pattern": "finite resource racing finite opportunity — narrow window for action",
+      "side_a": {
+        "domain": "startup runway",
+        "description": "A startup has six months of cash and a market window before competitors catch up; they must ship and find product-market fit before runway runs out or the window closes."
+      },
+      "side_b": {
+        "domain": "mountain climbing weather window",
+        "description": "An expedition has a four-day window of acceptable weather to summit Everest; supplies, climbers' acclimatization, and conditions all decay; they must execute before any one constraint binds."
+      },
+      "notes": "Both face two clocks ticking simultaneously where success requires beating both; both have catastrophic outcomes if even one constraint binds before the goal is reached."
+    },
+    {
+      "id": "match_011",
+      "should_match": true,
+      "essence_pattern": "pricing in uncertainty by locking choice — irrevocable commitment as cost-of-information substitute",
+      "side_a": {
+        "domain": "marriage commitment",
+        "description": "Two people commit to staying together through unknown future shocks because the alternative — continuously re-evaluating the bond against new options — would itself erode the bond."
+      },
+      "side_b": {
+        "domain": "long-term financial bet",
+        "description": "An investor locks capital into a 10-year illiquid position because the discipline of being unable to react to short-term noise is itself the source of returns."
+      },
+      "notes": "Both leverage commitment as a way of making future-self's defection impossible, accepting the foreclosure of options as the price of compounding."
+    },
+    {
+      "id": "match_012",
+      "should_match": true,
+      "essence_pattern": "local optimization producing global gridlock — many rational micro-decisions, collective failure",
+      "side_a": {
+        "domain": "writer's block",
+        "description": "A writer rewrites the opening paragraph fifty times trying to make it perfect; each rewrite is locally rational, but the cumulative effect is a manuscript that never advances past page one."
+      },
+      "side_b": {
+        "domain": "traffic jam",
+        "description": "Each driver brakes slightly when the car ahead does; each individual reaction is rational; the cumulative effect propagates backward as a standing wave of stopped traffic with no actual obstacle."
+      },
+      "notes": "Both produce emergent collective failure from individually-defensible micro-decisions; both require breaking the local rationality to escape."
+    },
+    {
+      "id": "match_013",
+      "should_match": true,
+      "essence_pattern": "drawing faster than replenishment over hidden time — stock depletion masquerading as flow",
+      "side_a": {
+        "domain": "burnout",
+        "description": "A high-performer keeps shipping at the same pace for years; recovery time per unit of stress shrinks; cognitive flexibility decays; the breakdown comes long after the substrate ran out, looking sudden but actually delayed."
+      },
+      "side_b": {
+        "domain": "aquifer depletion",
+        "description": "A farming region pumps groundwater at a rate that looked sustainable for decades because the aquifer's recharge time is centuries; wells run dry abruptly even though the warning was building for generations."
+      },
+      "notes": "Both confuse a slow-recharge stock for a fast-flow resource; both fail catastrophically when the buffer is depleted, even though the warning was visible to anyone measuring the stock."
+    },
+    {
+      "id": "match_014",
+      "should_match": true,
+      "essence_pattern": "fundamental reconfiguration triggered by environment mismatch — outgrowing the form that produced you",
+      "side_a": {
+        "domain": "identity crisis",
+        "description": "A person built their identity around being the youngest, smartest, most promising; that identity stops fitting in their thirties when context shifts, triggering a painful reconfiguration of what they're for."
+      },
+      "side_b": {
+        "domain": "business pivot",
+        "description": "A company built its capability stack around being the best at one thing; that capability stops mattering as the market shifts, requiring rebuild from a deeper layer rather than incremental adjustment."
+      },
+      "notes": "Both face the failure of optimization-fit when environment changes the function being optimized; both require returning to first principles rather than tweaking the existing form."
+    },
+    {
+      "id": "match_015",
+      "should_match": true,
+      "essence_pattern": "tacit knowledge transfer via proximity — what cannot be written down",
+      "side_a": {
+        "domain": "mentorship",
+        "description": "A founder learns judgment from working alongside an experienced operator for two years — none of which could be conveyed in a book because the knowledge lives in pattern-matching against situations as they arise."
+      },
+      "side_b": {
+        "domain": "apprenticeship in traditional knife-making",
+        "description": "An apprentice spends five years next to a master smith; the temperature of the steel at the right moment, the sound of the hammer on the anvil, the feel of edge alignment — none of this is in the instruction manual."
+      },
+      "notes": "Both rely on extended physical co-presence because the knowledge being transmitted is not articulable; both fail when compressed into written form or short engagement."
+    },
+    {
+      "id": "match_016",
+      "should_match": true,
+      "essence_pattern": "exponential propagation through network with R₀ > 1 — runaway spread",
+      "side_a": {
+        "domain": "viral content",
+        "description": "A meme is shared by 1.2 people on average per view; growth is initially imperceptible, then doubles every cycle until the network is saturated and ad-revenue inflates ten thousand-fold from baseline."
+      },
+      "side_b": {
+        "domain": "epidemic spread",
+        "description": "A pathogen with reproductive number 1.2 in a susceptible population doubles every few cycles; cases that looked rare last week dominate the news next month; saturation arrives only when the susceptible pool runs out."
+      },
+      "notes": "Both follow the same exponential math; both face the same trajectory of imperceptible-then-overwhelming-then-saturated; both end when the substrate they're growing into is consumed."
+    },
+    {
+      "id": "match_017",
+      "should_match": true,
+      "essence_pattern": "local fit failure cascading through ensemble — single misfit destabilizes whole",
+      "side_a": {
+        "domain": "hiring mistakes",
+        "description": "A wrong hire in a five-person team doesn't just produce one underperforming employee; it forces other team members to compensate, erodes the trust substrate the team relied on, and changes how decisions get made for years."
+      },
+      "side_b": {
+        "domain": "casting the wrong actor",
+        "description": "A miscast lead doesn't just produce one weak performance; it disrupts the ensemble's chemistry, forces directors to compensate in editing, and changes how the entire film reads to audiences."
+      },
+      "notes": "Both are ensemble systems where one wrong member doesn't add linearly to dysfunction; the system absorbs and propagates the misfit through every other relationship."
+    },
+    {
+      "id": "match_018",
+      "should_match": true,
+      "essence_pattern": "sympathetic nervous system overwhelm — body's defense system misfiring at non-threats",
+      "side_a": {
+        "domain": "public speaking fear",
+        "description": "A speaker's body treats a friendly audience like a predator; heart races, voice tightens, attention narrows; the freeze-or-flight response designed for physical danger fires for social judgment."
+      },
+      "side_b": {
+        "domain": "deer in headlights",
+        "description": "A deer's freeze response, evolved for predators that lose interest in motionless prey, becomes lethal when the threat is a vehicle that doesn't lose interest; the defense and the danger are mismatched."
+      },
+      "notes": "Both involve a defense system originally evolved for ancestral threats now firing in modern contexts where the response itself causes the harm it tries to prevent."
+    },
+    {
+      "id": "match_019",
+      "should_match": true,
+      "essence_pattern": "defensive resource boundary against unbounded demand — protecting the producer from being consumed",
+      "side_a": {
+        "domain": "saying no",
+        "description": "A consultant must refuse some clients to preserve the quality of work for the rest; without the boundary, every client gets degraded service; the boundary is the precondition for the value being asked for."
+      },
+      "side_b": {
+        "domain": "closing a port on a server",
+        "description": "A web server must refuse some incoming requests to preserve responsiveness for the rest; without rate limiting, every connection degrades; the limit is the precondition for the service being accessed."
+      },
+      "notes": "Both face unbounded demand that, if accommodated, destroys the resource the demand is for; both require an explicit boundary at the producer side to prevent that collapse."
+    },
+    {
+      "id": "match_020",
+      "should_match": true,
+      "essence_pattern": "small low-signal cause becoming load-bearing — overlooked detail as critical infrastructure",
+      "side_a": {
+        "domain": "minor habit",
+        "description": "A morning routine that seemed unimportant — fifteen minutes of journaling — turns out to be load-bearing for everything else; when it slips, decision quality across the day quietly degrades."
+      },
+      "side_b": {
+        "domain": "single legacy dependency",
+        "description": "A small utility library no one has touched in a decade turns out to be imported by half the production codebase; when it breaks, services no one connected to it fail in confusing ways."
+      },
+      "notes": "Both involve under-noticed components whose smallness made them invisible to attention while their connectedness made them critical to function."
+    },
+    {
+      "id": "no_match_001",
+      "should_match": false,
+      "essence_pattern": "none — surface domains both exist, no shared structural mechanism",
+      "side_a": {
+        "domain": "AI agent control",
+        "description": "An autonomous AI agent navigating the internet under token, time, and goal constraints."
+      },
+      "side_b": {
+        "domain": "tax policy",
+        "description": "A government setting progressive income tax brackets to balance revenue against work incentive distortions."
+      },
+      "notes": "Surface domains both involve constraints and trade-offs, but the underlying structural pattern (bounded freedom vs revenue/incentive trade-off) is unrelated."
+    },
+    {
+      "id": "no_match_002",
+      "should_match": false,
+      "essence_pattern": "none — same buzzword (information) does not imply same mechanism",
+      "side_a": {
+        "domain": "jazz improvisation",
+        "description": "Real-time musical creation within a harmonic frame, balancing surprise and resolution."
+      },
+      "side_b": {
+        "domain": "database indexing",
+        "description": "Constructing B-tree or hash structures to accelerate point-lookup queries over large rows."
+      },
+      "notes": "Both relate to 'information' in some sense but mechanism differs entirely — performance art vs precomputed access paths."
+    },
+    {
+      "id": "no_match_003",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "team trust",
+        "description": "Social capital built between coworkers through repeated low-stakes cooperation."
+      },
+      "side_b": {
+        "domain": "inflation rates",
+        "description": "Aggregate price-level changes driven by money supply, expectations, and supply shocks."
+      },
+      "notes": "Different scale, different domain, different mechanism. Should not match at essence or mechanism layer."
+    },
+    {
+      "id": "no_match_004",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "code refactoring",
+        "description": "Restructuring program internals without changing observable behavior."
+      },
+      "side_b": {
+        "domain": "ocean tides",
+        "description": "Gravitational pull of moon and sun producing periodic sea-level oscillation."
+      },
+      "notes": "Both involve cyclical or repeated processes but mechanism (intentional engineering vs gravitational physics) is unrelated."
+    },
+    {
+      "id": "no_match_005",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "career change",
+        "description": "An individual deciding to switch professional fields."
+      },
+      "side_b": {
+        "domain": "printer drivers",
+        "description": "Software interfaces translating OS print commands to specific hardware protocols."
+      },
+      "notes": "Topical and mechanistic distance is large. Should produce near-zero similarity."
+    },
+    {
+      "id": "no_match_006",
+      "should_match": false,
+      "essence_pattern": "none — both have a 'rate' in their description but the underlying dynamics differ",
+      "side_a": {
+        "domain": "compound interest",
+        "description": "Money invested earns return that itself earns return, producing exponential growth over time."
+      },
+      "side_b": {
+        "domain": "traffic signal timing",
+        "description": "Civil engineers optimize green-light durations to maximize vehicle throughput at intersections."
+      },
+      "notes": "Compound interest is exponential growth from base-on-base reinvestment; traffic timing is constraint-optimization for flow. Different math, different mechanism."
+    },
+    {
+      "id": "no_match_007",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "salary negotiation",
+        "description": "Two parties with private information exchanging signals about their alternative options to converge on a number."
+      },
+      "side_b": {
+        "domain": "photosynthesis",
+        "description": "Plants converting sunlight, CO2, and water into glucose and oxygen via chlorophyll-mediated reactions."
+      },
+      "notes": "Both involve exchange in some metaphorical sense but the structural mechanism (strategic reveal vs energy chemistry) is unrelated."
+    },
+    {
+      "id": "no_match_008",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "mental health crisis",
+        "description": "Personal psychological collapse triggered by accumulated stress and depleted coping reserves."
+      },
+      "side_b": {
+        "domain": "HTML rendering",
+        "description": "A browser parses HTML, builds a DOM tree, applies CSS, and paints pixels to a screen."
+      },
+      "notes": "No structural overlap. Should match at zero across all layers."
+    },
+    {
+      "id": "no_match_009",
+      "should_match": false,
+      "essence_pattern": "none",
+      "side_a": {
+        "domain": "startup runway",
+        "description": "A new company's remaining cash divided by burn rate gives months until insolvency."
+      },
+      "side_b": {
+        "domain": "shoe manufacturing",
+        "description": "An industrial process converting leather, rubber, and adhesives into footwear at scale."
+      },
+      "notes": "Surface distance is large. Should not match."
+    },
+    {
+      "id": "no_match_010",
+      "should_match": false,
+      "essence_pattern": "none — superficial 'slowness' in both but mechanism differs",
+      "side_a": {
+        "domain": "procrastination",
+        "description": "Deliberately delaying a task whose value the procrastinator acknowledges, often driven by anticipatory anxiety or attention misallocation."
+      },
+      "side_b": {
+        "domain": "glacier formation",
+        "description": "Compacted snow accumulating over centuries, recrystallizing into dense ice that flows under its own weight."
+      },
+      "notes": "Both involve slow timescales but the underlying mechanism (motivated delay vs geophysical compression) is unrelated. Should not match."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": false,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 5,
+  "edges_found": 1,
+  "probes_used": 8,
+  "emergence_rate_series": [
+    1
+  ],
+  "decisions": [
+    {
+      "round": 1,
+      "r_series": [
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 1,
+      "findings": 4,
+      "probes_used": 6,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781707446.934039
+    }
+  ],
+  "final_action": "REALLOCATE"
+}

@@ -1,0 +1,522 @@
+{
+  "known": [],
+  "adjacent": [
+    {
+      "blend_id": "blend-01",
+      "bin": "adjacent",
+      "references": [
+        {
+          "title": "A Uniform Model of Computational Conceptual Blending",
+          "url": "https://www.iiia.csic.es/~enric/papers/UniformModelBlending.pdf"
+        },
+        {
+          "title": "d-nb.info",
+          "url": "https://d-nb.info/1251396909/34"
+        }
+      ],
+      "resemblance": "Computational conceptual blending frameworks (Schorlemmer & Plaza; Eppe et al.) already treat the generic space as a formal mathematical object constructed via morphisms between input spaces, and the CISUC large-scale CB system uses multi-objective optimization to discover blend spaces. These works handle morphism construction and generic-space derivation algorithmically.",
+      "still_new": "The specific mechanism of making the generic space an emergent colimit that is constructed INCREMENTALLY and RETROSPECTIVELY by the act of scoring resonance during traversal — where each accepted candidate adds morphism edges and the diagram stabilizes as output rather than being supplied as input — is not present in any hit. Existing CB systems pre-specify or simultaneously optimize the generic space; none treat the scoring act itself as the morphism-building process.",
+      "reasoning": "The hits confirm that morphism-based computational blending and incremental generic-space construction are active research areas, making this clearly adjacent rather than novel. However, no hit describes a traversal agent that discovers the generic space retrospectively as a byproduct of per-candidate resonance scoring, with the colimit crystallizing from edge accumulation.",
+      "confidence": 0.78
+    },
+    {
+      "blend_id": "blend-02",
+      "bin": "adjacent",
+      "references": [
+        {
+          "title": "[1809.11142] EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE",
+          "url": "https://ar5iv.labs.arxiv.org/html/1809.11142"
+        },
+        {
+          "title": "arxiv.org",
+          "url": "https://arxiv.org/pdf/2602.06818"
+        }
+      ],
+      "resemblance": "EDDI (Partial VAE) directly addresses dynamic, budget-constrained acquisition of high-value information given partial observations, computing expected information gain per unobserved feature to prioritize queries. The active concept learning paper (Chari & Pattanaik) addresses uncertainty-reduction query selection for concept learning. Both are structurally close to the leverage-weighted gap-probe mechanism.",
+      "still_new": "Neither EDDI nor the active concept learning work applies this information-gain weighting to the SEMANTIC structural dimensions of a user's half-formed, vague concept anchor — where the 'features' are open joints in an underspecified creative/research concept and the 'queries' are domain traversal directions for finding prior work. The application of acquisition-function logic to concept-gap navigation in a knowledge-wander context is not present in the hits.",
+      "reasoning": "EDDI is a near-structural cousin: it weights queries by expected information gain over unobserved dimensions of a partial observation, which is the core mechanism described. The blend is not novel in its mathematical skeleton but is potentially novel in its semantic domain (vague concept gaps as the partial state, literature traversal as the query action).",
+      "confidence": 0.82
+    },
+    {
+      "blend_id": "blend-03",
+      "bin": "adjacent",
+      "references": [
+        {
+          "title": "[2409.14634] Scideator: Human-LLM Scientific Idea Generation Grounded in Research-Paper Facet Recombination",
+          "url": "https://arxiv.org/pdf/2409.14634"
+        },
+        {
+          "title": "Iterative Research Idea Development Through Evolving and Composing Idea Facets with Literature-Grounded Feedback",
+          "url": "https://ar5iv.labs.arxiv.org/html/2410.04025"
+        }
+      ],
+      "resemblance": "Scideator explicitly decomposes research papers into facets and recombines them to generate new ideas, with human-LLM interaction. The iterative facet-evolution paper develops ideas by composing and evolving facets with literature-grounded feedback. Both work with facet-level partial matches between a concept and prior literature to drive generation.",
+      "still_new": "Neither system treats the UNMATCHED facets (the low-membership fuzzy gap) as the primary generative input slots — both use matched/recombined facets as the generative material. The specific inversion — where the 0.4 gap (not the 0.6 match) becomes the generation driver, and user reactions to generated drafts re-weight which joints stay open — is not documented in the hits.",
+      "reasoning": "Scideator and the facet-evolution paper are close structural cousins operating on the same domain (research idea generation via facet decomposition against literature), making NOVEL untenable. The inversion of using unmatched facets as generation slots rather than matched facets as recombination material is the residual novel claim.",
+      "confidence": 0.8
+    },
+    {
+      "blend_id": "blend-04",
+      "bin": "adjacent",
+      "references": [
+        {
+          "title": "Transport Novelty Distance: A Distributional Metric for Evaluating Material Generative Models",
+          "url": "https://arxiv.org/html/2512.09514v1"
+        },
+        {
+          "title": "[2005.10696] Novel Policy Seeking with Constrained Optimization",
+          "url": "https://ar5iv.labs.arxiv.org/html/2005.10696"
+        }
+      ],
+      "resemblance": "Transport Novelty Distance combines a corpus-distance measure with quality/structural constraints to score generative outputs — structurally similar to the two-component (recognition + transcendence) scorer. Novel Policy Seeking uses a repulsive baseline (existing policies) while maintaining task-relevance constraints, which mirrors the 'repulsive corpus baseline along an attractive skeleton' mechanism.",
+      "still_new": "Neither work applies this dual-component scoring to a literature-retrieval/concept-advancement context where the 'skeleton' is a user's anchor concept inherited from a prior published work and the corpus-distance measure evolves dynamically as the user accepts/rejects finds. The specific framing of the inherited prior work as a simultaneously attractive structural skeleton AND a repulsive novelty baseline within a single evolving retrieval scorer is not present in the hits.",
+      "reasoning": "The repulsive-baseline-with-structural-constraint pattern exists in RL (novel policy seeking) and generative evaluation (TNovD), making the core mechanism known in adjacent domains. The application to concept-advancement retrieval with a user-adaptive evolving measure is the residual novel element, but the structural resemblance is real enough to preclude NOVEL.",
+      "confidence": 0.75
+    }
+  ],
+  "novel": [],
+  "flawed": [],
+  "evidence": {
+    "per_card": {
+      "blend-01": {
+        "report_id": "blend-01",
+        "queries": [
+          "\"generic space\" construction incremental morphism scoring conceptual blending algorithm",
+          "partial morphism discovery traversal analogy mapping emergent structure colimit",
+          "\"conceptual blending\" generic space inferred retrospectively candidate scoring diagram output"
+        ],
+        "hits": [
+          {
+            "query": "\"generic space\" construction incremental morphism scoring conceptual blending algorithm",
+            "title": "d-nb.info",
+            "url": "https://d-nb.info/1251396909/34",
+            "snippet": "Artificial Intelligence 256 (2018) 105–129\nContents lists available at ScienceDirect\nArtificial Intelligence\nwww.elsevier.com/locate/artint\nA computational framework for conceptual blending\nManfred Eppe a,b,∗, Ewen Maclean d, Roberto Confalonieri e,c, Oliver Kutz e,\nMarco Schorlemmer c, Enric Plaza c, Kai-Uwe Kühnberger f\na University of Hamburg, Germany b International Computer Science Institute,…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"generic space\" construction incremental morphism scoring conceptual blending algorithm",
+            "title": "www.cisuc.uc.pt",
+            "url": "https://www.cisuc.uc.pt/download-file/16525/5zdBL0j6PwMzC0D8Srmm",
+            "snippet": "A Large-Scale Computational Model of Conceptual Blending Using Multiple\nObjective Optimisation\nJoão Gonçalves*1, Pedro Martins1, and Amílcar Cardoso1\n1University of Coimbra, CISUC, DEI\n{jcgonc@dei.uc.pt, pjmm@dei.uc.pt, amilcar@dei.uc.pt}\nAbstract\nWe present a Computational Creativity (CC) system 1based\non Conceptual Blending (CB) theory. To obtain diverse out\u0002put – in the form of blend spaces – i…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"generic space\" construction incremental morphism scoring conceptual blending algorithm",
+            "title": "A Uniform Model of Computational Conceptual Blending",
+            "url": "https://www.iiia.csic.es/~enric/papers/UniformModelBlending.pdf",
+            "snippet": "A Uniform Model of Computational Conceptual Blending\n\nMarco Schorlemmer and Enric Plaza Artificial Intelligence Reserach Institute, IIIA-CSIC Bellaterra (Barcelona), Catalonia, Spain\n\nAbstract We present a mathematical model for the cognitive operation of conceptual blending that aims at being uniform across di↵erent representation formalisms, while capturing the relevant structure of this operati…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "partial morphism discovery traversal analogy mapping emergent structure colimit",
+            "title": "[2006.11100] Additive Partial Matchings Induced by Persistence Morphisms",
+            "url": "https://ar5iv.labs.arxiv.org/html/2006.11100",
+            "snippet": "[2006.11100] Additive Partial Matchings Induced by Persistence Morphisms\n\n# Additive Partial Matchings Induced by Persistence Morphisms\n\nRocio Gonzalez-Diaz 111Universidad de Sevilla, Spain (rogodi@us.es, https://personal.us.es/rogodi/)., Manuel Soriano-Trigueros 222Institute of Science and Technology Austria, Austria, and Universidad de Sevilla, Spain (msoriano@ist.ac.at, https://soriano-triguero…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "partial morphism discovery traversal analogy mapping emergent structure colimit",
+            "title": "[2102.10581] Patterns of Cognition: Cognitive Algorithms as Galois Connections Fulfilled by Chronomorphisms On Probabilistically Typed Metagraphs",
+            "url": "https://ar5iv.labs.arxiv.org/html/2102.10581",
+            "snippet": "[2102.10581] Patterns of Cognition: Cognitive Algorithms as Galois Connections Fulfilled by Chronomorphisms On Probabilistically Typed Metagraphs\n\n# Patterns of Cognition: Cognitive Algorithms as Galois Connections Fulfilled by Chronomorphisms On Probabilistically Typed Metagraphs\n\nBen Goertzel\n\n###### Abstract\n\nIt is argued that a broad class of AGI-relevant algorithms can be expressed in a commo…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "partial morphism discovery traversal analogy mapping emergent structure colimit",
+            "title": "[2504.06789] When is the partial map classifier a Sierpiński cone?This work was funded by the United States Air Force Office of Scientific Research under grant FA9550-23-1-0728 (New Spaces for Denotational Semantics; Dr Tristan Nguyen, Program Manager). Views and opinions expressed are however those of the authors only and do not necessarily reflect those of AFOSR.",
+            "url": "https://arxiv.org/pdf/2504.06789v1",
+            "snippet": "[2504.06789] When is the partial map classifier a Sierpiński cone?This work was funded by the United States Air Force Office of Scientific Research under grant FA9550-23-1-0728 (New Spaces for Denotational Semantics; Dr Tristan Nguyen, Program Manager). Views and opinions expressed are however those of the authors only and do not necessarily reflect those of AFOSR.\n\nmnomx’164 mnomx’171 mnomx’245 m…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "partial morphism discovery traversal analogy mapping emergent structure colimit",
+            "title": "[2010.15182] Latent Fibrations: Fibrations for Categories of Partial Maps",
+            "url": "https://ar5iv.labs.arxiv.org/html/2010.15182",
+            "snippet": "[2010.15182] Latent Fibrations: Fibrations for Categories of Partial Maps\n\n# Latent Fibrations: Fibrations for Categories of Partial Maps\n\nRobin Cockett, Geoff Cruttwell, Jonathan Gallagher, and Dorette Pronk Partially supported by NSERC, Canada.\n\n###### Abstract\n\nLatent fibrations are an adaptation, appropriate for categories of partial maps (as presented by restriction categories), of the usual …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "partial morphism discovery traversal analogy mapping emergent structure colimit",
+            "title": "[1804.10894] Trees in Partial Higher Dimensional AutomataThe author was supported by ERATO HASUO Metamathematics for Systems Design 27 Project (No. JPMJER1603), JST.",
+            "url": "https://ar5iv.labs.arxiv.org/html/1804.10894",
+            "snippet": "[1804.10894] Trees in Partial Higher Dimensional AutomataThe author was supported by ERATO HASUO Metamathematics for Systems Design 27 Project (No. JPMJER1603), JST.\n\n11institutetext: National Institute of Informatics, Tokyo, Japan22institutetext: Japanese-French Laboratory for Informatics, Tokyo, Japan 22email: dubut@nii.ac.jp\n\n# Trees in Partial Higher Dimensional Automata††thanks: The author wa…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"conceptual blending\" generic space inferred retrospectively candidate scoring diagram output",
+            "title": "d-nb.info",
+            "url": "https://d-nb.info/1251396909/34",
+            "snippet": "Artificial Intelligence 256 (2018) 105–129\nContents lists available at ScienceDirect\nArtificial Intelligence\nwww.elsevier.com/locate/artint\nA computational framework for conceptual blending\nManfred Eppe a,b,∗, Ewen Maclean d, Roberto Confalonieri e,c, Oliver Kutz e,\nMarco Schorlemmer c, Enric Plaza c, Kai-Uwe Kühnberger f\na University of Hamburg, Germany b International Computer Science Institute,…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"conceptual blending\" generic space inferred retrospectively candidate scoring diagram output",
+            "title": "Conceptual Projection and Middle Spaces",
+            "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1290862.",
+            "snippet": "Conceptual Projection and Middle Spaces by Gilles Fauconnier, Mark B. Turner :: SSRN\n[Skip to main content](#maincontent)\n**\n**\n[](#)\n[![PDF icon](https://static.ssrn.com/cfincludes/img/icons/icon-adobe-pdf.svg \"PDF icon\")Download This Paper](Delivery.cfm/SSRN_ID1290862_code1058129.pdf?abstractid=1290862.&mirid=1)\n[Open PDF in Browser](Delivery.cfm/SSRN_ID1290862_code1058129.pdf?abstractid=1290862…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"conceptual blending\" generic space inferred retrospectively candidate scoring diagram output",
+            "title": "Conceptual Integration Networks",
+            "url": "https://onlinelibrary.wiley.com/doi/10.1207/s15516709cog2202_1",
+            "snippet": "Conceptual Integration Networks - Fauconnier - 1998 - Cognitive Science - Wiley Online Library\nOpens in a new windowOpens an external websiteOpens an external website in a new window\nClose this dialog\nThis website utilizes technologies such as cookies to enable essential site functionality, as well as for analytics, personalization, and targeted advertising.To learn more, view the following link:[…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"conceptual blending\" generic space inferred retrospectively candidate scoring diagram output",
+            "title": "BLENDING AS A CENTRAL PROCESS OF GRAMMAR",
+            "url": "https://markturner.org/centralprocess.WWW/centralprocess.html",
+            "snippet": "BLENDING AS A CENTRAL PROCESS OF GRAMMAR\n\n---\n\nHome Page: Mark Turner Home Page: Gilles Fauconnier Blending As A Central Process of Grammar\n\ncopyright © Gilles Fauconnier and Mark Turner, 1998\n\n---\n\nThis is an expanded web version of Fauconnier and Turner. 1996. \"Blending as a Central Process of Grammar\" in Conceptual Structure, Discourse, and Language. Edited by Adele Goldberg. Stanford: Center f…",
+            "provider": "exa-neural"
+          }
+        ],
+        "searched": true,
+        "found_anything": true,
+        "note": ""
+      },
+      "blend-02": {
+        "report_id": "blend-02",
+        "queries": [
+          "information gain weighted exploration partial concept gap measurement budget allocation",
+          "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+          "active learning acquisition function semantic gap uncertainty reduction concept completion"
+        ],
+        "hits": [
+          {
+            "query": "information gain weighted exploration partial concept gap measurement budget allocation",
+            "title": "[1809.11142] EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE",
+            "url": "https://ar5iv.labs.arxiv.org/html/1809.11142",
+            "snippet": "[1809.11142] EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE\n\n# EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE\n\nChao Ma Sebastian Tschiatschek Konstantina Palla José Miguel Hernández-Lobato Sebastian Nowozin Cheng Zhang\n\n###### Abstract\n\nMany real-life decision making situations allow further relevant information to be acquired at a specif…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "information gain weighted exploration partial concept gap measurement budget allocation",
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2602.06818",
+            "snippet": "Under review\nWILD GUESSES AND MILD GUESSES IN ACTIVE CON\u0002CEPT LEARNING\nAnirudh Chari\nMassachusetts Institute of Technology\nCambridge, MA, USA\nanichari@mit.edu\nNeil Pattanaik\nUniversity of California, Berkeley\nBerkeley, CA, USA\nneil pattanaik@berkeley.edu\nABSTRACT\nHuman concept learning is typically active: learners choose which instances to\nquery or test in order to reduce uncertainty about an und…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "information gain weighted exploration partial concept gap measurement budget allocation",
+            "title": "[2106.05065] Multi-layered Network Exploration via Random Walks: From Offline Optimization to Online Learning",
+            "url": "https://ar5iv.labs.arxiv.org/html/2106.05065",
+            "snippet": "[2106.05065] Multi-layered Network Exploration via Random Walks: From Offline Optimization to Online Learning\n\n# Multi-layered Network Exploration via Random Walks: From Offline Optimization to Online Learning\n\nXutong Liu Jinhang Zuo Xiaowei Chen Wei Chen John C.S. Lui\n\n###### Abstract\n\nMulti-layered network exploration (MuLaNE) problem is an important problem abstracted from many applications. In…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "information gain weighted exploration partial concept gap measurement budget allocation",
+            "title": "[1804.07059] Exploring Partially Observed Networks with Nonparametric Bandits",
+            "url": "https://ar5iv.labs.arxiv.org/html/1804.07059",
+            "snippet": "[1804.07059] Exploring Partially Observed Networks with Nonparametric Bandits\n\n11institutetext: Tokyo Institute of Technology, Ookayama, Meguro-ku, Tokyo 152-8552, Japan 11email: kaushalya@net.c.titech.ac.jp, murata@c.titech.ac.jp http://www.net.c.titech.ac.jp\n\n# Exploring Partially Observed Networks with Nonparametric Bandits\n\nKaushalya Madhawa 11 Tsuyoshi Murata 11\n\n###### Abstract\n\nReal-world n…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+            "title": "Polar probe linearly decodes semantic structures from LLMs",
+            "url": "https://arxiv.org/html/2605.14125",
+            "snippet": "Polar probe linearly decodes semantic structures from LLMs\n\n# Polar probe linearly decodes semantic structures from LLMs\n\nPablo J. Diego-Simón1 Pierre Orhan2 Emmanuel Chemla3 Yair Lakretz1 Jean-Rémi King4 1 LSCP, ENS, PSL, EHESS, CNRS, Paris, France 2 Paris Brain Institute, Paris, France 3 Earth Species Project, Berkeley, California, USA 4 Meta AI, Paris, France Correspondence: pablo-diego.simon@p…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+            "title": "[2307.15054] A Geometric Notion of Causal Probing",
+            "url": "https://ar5iv.labs.arxiv.org/html/2307.15054",
+            "snippet": "[2307.15054] A Geometric Notion of Causal Probing\n\n# A Geometric Notion of Causal Probing\n\nClément Guerner Anej Svete Tianyu Liu Alexander Warstadt Ryan Cotterell $\\{$ cguerner, anej.svete, tianyu.liu, awarstadt, ryan.cotterell$\\}$ @inf.ethz.ch\n\n###### Abstract\n\nLarge language models rely on real-valued representations of text to make their predictions. These representations contain information le…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+            "title": "Hyperdimensional Probe: Decoding LLM Representations via Vector Symbolic Architectures",
+            "url": "https://arxiv.org/html/2509.25045v2",
+            "snippet": "Hyperdimensional Probe: Decoding LLM Representations via Vector Symbolic Architectures\n\n# Hyperdimensional Probe: Decoding LLM Representations via Vector Symbolic Architectures\n\nMarco Bronzini University of Trento, Trento, Italy Ipazia S.p.A., Milan, Italy &Carlo Nicolini Ipazia S.p.A., Milan, Italy &Bruno Lepri Fondazione Bruno Kessler (FBK), Trento, Italy Ipazia S.p.A., Milan, Italy &Jacopo Stai…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+            "title": "{ Peru)}",
+            "url": "https://people.eecs.berkeley.edu/~russell/papers/russell-iclr25-probes.pdf",
+            "snippet": "MONITORING LATENT WORLD STATES IN LANGUAGE MODELS WITH PROPOSITIONAL PROBES\n\nJiahai Feng∗, Stuart Russell & Jacob Steinhardt UC Berkeley\n\nABSTRACT\n\nLanguage models (LMs) are susceptible to bias, sycophancy, backdoors, and other tendencies that lead to unfaithful responses to the input context. Interpreting inter nal states of LMs could help monitor and correct unfaithful behavior. We hypothe size …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"diagnostic address\" inferential leverage unspecified dimensions semantic gap probe weighting",
+            "title": "Intrinsic Probing through Dimension Selection",
+            "url": "https://aclanthology.org/2020.emnlp-main.15.pdf",
+            "snippet": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing, pages 197–216, November 16–20, 2020. c 2020 Association for Computational Linguistics\n\nIntrinsic Probing through Dimension Selection\n\nLucas Torroba Hennigen Adina Williams Ryan Cotterell , Québec Artificial Intelligence Institute (Mila) University of Cambridge Facebook AI Research ETH Zürich lucas.torroba-henni…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "active learning acquisition function semantic gap uncertainty reduction concept completion",
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2603.17566",
+            "snippet": "KA2L: A Knowledge-Aware Active Learning Framework for LLMs\nHaoxuan Yina, Bojian Liua, Chen Tangb, Yangfan Wanga, Lian Yanaand Jingchi Jianga,c,∗\naFaculty of Computing, Harbin Institute of Technology, Harbin, 150001, China\nb\nInstitute for Advanced Algorithms Research, Shanghai, 201306, China\ncNational Key Laboratory of Smart Farm Technologies and Systems, Harbin, 150001, China\nA R T I C L E I N F O…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "active learning acquisition function semantic gap uncertainty reduction concept completion",
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2602.06818",
+            "snippet": "Under review\nWILD GUESSES AND MILD GUESSES IN ACTIVE CON\u0002CEPT LEARNING\nAnirudh Chari\nMassachusetts Institute of Technology\nCambridge, MA, USA\nanichari@mit.edu\nNeil Pattanaik\nUniversity of California, Berkeley\nBerkeley, CA, USA\nneil pattanaik@berkeley.edu\nABSTRACT\nHuman concept learning is typically active: learners choose which instances to\nquery or test in order to reduce uncertainty about an und…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "active learning acquisition function semantic gap uncertainty reduction concept completion",
+            "title": "LLM-ASSISTED SEMANTIC REASONING FOR OPEN SET ACTIVE LEARNING",
+            "url": "https://openreview.net/pdf?id=VWf0YUD6w0",
+            "snippet": "000 \n001 \n002 \n003 \n004 \n005 \n006 \n007 \n008 \n009 \n010 \n011 \n012 \n013 \n014 \n015 \n016 \n017 \n018 \n019 \n020 \n021 \n022 \n023 \n024 \n025 \n026 \n027 \n028 \n029 \n030 \n031 \n032 \n033 \n034 \n035 \n036 \n037 \n038 \n039 \n040 \n041 \n042 \n043 \n044 \n045 \n046 \n047 \n048 \n049 \n050 \n051 \n052 \n053 \nUnder review as a conference paper at ICLR 2026 \n\n## LLM-ASSISTED SEMANTIC REASONING FOR OPEN SET ACTIVE LEARNING\n\nAnonymous autho…",
+            "provider": "exa-neural"
+          }
+        ],
+        "searched": true,
+        "found_anything": true,
+        "note": ""
+      },
+      "blend-03": {
+        "report_id": "blend-03",
+        "queries": [
+          "fuzzy partial match unmatched facets generative slots concept articulation draft",
+          "\"open joints\" unmatched features generation analogical reasoning concept completion",
+          "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton"
+        ],
+        "hits": [
+          {
+            "query": "fuzzy partial match unmatched facets generative slots concept articulation draft",
+            "title": "Iterative Research Idea Development Through Evolving and Composing Idea Facets with Literature-Grounded Feedback",
+            "url": "https://ar5iv.labs.arxiv.org/html/2410.04025",
+            "snippet": "Iterative Research Idea Development Through Evolving and Composing Idea Facets with Literature-Grounded Feedback\n\n\\setcctype\n\nby \\setlistdepth9\n\n# Iterative Research Idea Development Through Evolving and Composing Idea Facets with Literature-Grounded Feedback\n\nKevin Pu jpu@dgp.toronto.edu University of TorontoCanada , K. J. Kevin Feng kjfeng@uw.edu University of WashingtonUSA , Tovi Grossman tovi@…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy partial match unmatched facets generative slots concept articulation draft",
+            "title": "[2409.14634] Scideator: Human-LLM Scientific Idea Generation Grounded in Research-Paper Facet Recombination",
+            "url": "https://arxiv.org/pdf/2409.14634",
+            "snippet": "[2409.14634] Scideator: Human-LLM Scientific Idea Generation Grounded in Research-Paper Facet Recombination\n\n# Scideator: Human-LLM Scientific Idea Generation Grounded in Research-Paper Facet Recombination\n\nMarissa Radensky radensky@cs.washington.edu University of WashingtonUSA , Simra Shahid AdobeIndia , Raymond Fok University of WashingtonUSA , Pao Siangliulue Allen Institute for AIUSA , Tom Hop…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy partial match unmatched facets generative slots concept articulation draft",
+            "title": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling",
+            "url": "https://ar5iv.labs.arxiv.org/html/2108.13934",
+            "snippet": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\n# Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\nMichael Glass, Gaetano Rossiello, Md Faisal Mahbub Chowdhury, Alfio Gliozzo IBM Research AI Thomas J. Watson Research Center, NY\n\n###### Abstract\n\nAutomatically inducing high quality knowledge graphs from a given collection of documents still remains a …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy partial match unmatched facets generative slots concept articulation draft",
+            "title": "yogsoth-ai/creative-ideation",
+            "url": "https://github.com/yogsoth-ai/creative-ideation",
+            "snippet": "# Repository: yogsoth-ai/creative-ideation\n\nCreative Generation Engine — transforms research hypotheses into diverse solution spaces via 10 parallel creativity campaigns spanning structural, analogical, destructive, and combinatorial methods.\n\n- Stars: 2\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- License: Apache License 2.0 (Apache-2.0)\n- Topics: ai-research, biomimicry, claude-code, creative-ide…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy partial match unmatched facets generative slots concept articulation draft",
+            "title": "Piece it Together: Part-Based Concepting with IP-Priors",
+            "url": "https://arxiv.org/html/2503.10365",
+            "snippet": "Piece it Together: Part-Based Concepting with IP-Priors\n\n# Piece it Together: Part-Based Concepting with IP-Priors\n\nElad Richardson1 Kfir Goldberg1,2 Yuval Alaluf1 Daniel Cohen-Or1 1Tel Aviv University 2Bria AI\n\n###### Abstract\n\nAdvanced generative models excel at synthesizing images but often rely on text-based conditioning. Visual designers, however, often work beyond language, directly drawing …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"open joints\" unmatched features generation analogical reasoning concept completion",
+            "title": "[2110.13577] Open Rule Induction",
+            "url": "https://ar5iv.labs.arxiv.org/html/2110.13577",
+            "snippet": "[2110.13577] Open Rule Induction\n\n# Open Rule Induction\n\nWanyun Cui, Xingran Chen Shanghai University of Finance and Economics cui.wanyun@sufe.edu.cn, xingran.chen.sufe@gmail.com\n\n###### Abstract\n\nRules have a number of desirable properties. It is easy to understand, infer new knowledge, and communicate with other inference systems. One weakness of the previous rule induction systems is that they …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"open joints\" unmatched features generation analogical reasoning concept completion",
+            "title": "JoinLink - OpenCog",
+            "url": "https://wiki.opencog.org/w/JoinLink",
+            "snippet": "JoinLink - OpenCog\n\n## Anonymous\n\n### Search\n\n# JoinLink\n\nThe JoinLink is a Link type that can match (and rewrite) the contents of Links in the AtomSpace, when only some of the subgraphs of the Link have been specified. The goal is to be able to search for unknown containing graphs that contain known subgraphs. This is in contrast to, and \"opposite\" of MeetLink, which is used to specify a search f…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"open joints\" unmatched features generation analogical reasoning concept completion",
+            "title": "[2108.09241] Open Relation Modeling: Learning to Define Relations between Entities",
+            "url": "https://ar5iv.labs.arxiv.org/html/2108.09241",
+            "snippet": "[2108.09241] Open Relation Modeling: Learning to Define Relations between Entities\n\n# Open Relation Modeling: Learning to Define Relations between Entities\n\nJie Huang1 Kevin Chen-Chuan Chang1 Jinjun Xiong2 Wen-mei Hwu1,3 1University of Illinois at Urbana-Champaign, USA 2University at Buffalo, USA 3NVIDIA, USA {jeffhj, kcchang, w-hwu}@illinois.edu jinjun@buffalo.edu\n\n###### Abstract\n\nRelations betw…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton",
+            "title": "AISFG: Abundant Information Slot Filling Generator",
+            "url": "https://aclanthology.org/2022.naacl-main.308.pdf",
+            "snippet": "Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, pages 4180 - 4187 July 10-15, 2022 ©2022 Association for Computational Linguistics\n\nAISFG: Abundant Information Slot Filling Generator\n\nYang Yan∗, Junda Ye∗, Zhongbao Zhang, Liwen Wang Beijing University of Posts and Telecommunications, Beijing, China {yan…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton",
+            "title": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling",
+            "url": "https://ar5iv.labs.arxiv.org/html/2108.13934",
+            "snippet": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\n# Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\nMichael Glass, Gaetano Rossiello, Md Faisal Mahbub Chowdhury, Alfio Gliozzo IBM Research AI Thomas J. Watson Research Center, NY\n\n###### Abstract\n\nAutomatically inducing high quality knowledge graphs from a given collection of documents still remains a …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton",
+            "title": "Knowledge-Aware Audio-Grounded Generative Slot Filling for Limited Annotated Data",
+            "url": "https://arxiv.org/html/2307.01764",
+            "snippet": "Knowledge-Aware Audio-Grounded Generative Slot Filling for Limited Annotated Data\n\n\\fnmark\n\n[1]\n\n1]organization=University of Cambridge Department of Engineering, addressline=Trumpington Street, city=Cambridge, postcode=CB2 1PZ, country=United Kingdom\n\n\\cormark\n\n[1]\n\n2]organization=PolyAI Ltd., address=10 York Rd, city=London, postcode=SE1 7ND, country=United Kingdom\n\n3]organization=Tsinghua Unive…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton",
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2307.02830",
+            "snippet": "Generative Zero-Shot Prompt Learning for Cross-Domain Slot Filling with\nInverse Prompting\nXuefeng Li1∗, Liwen Wang1∗, Guanting Dong1∗,\nKeqing He2, Jinzheng Zhao3, Hao Lei1, Jiachi Liu1, Weiran Xu1\n1Beijing University of Posts and Telecommunications, Beijing, China\n2Meituan Group, Beijing, China\n3School of Computer Science and Electronic Engineering, University of Surrey, UK\n{lixuefeng,w_liwen,dong…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "fuzzy membership gap-driven generation slot filling vague concept articulation skeleton",
+            "title": "QA-Driven Zero-shot Slot Filling with Weak Supervision Pretraining",
+            "url": "https://aclanthology.org/2021.acl-short.83.pdf",
+            "snippet": "QA-Driven Zero-shot Slot Filling with Weak Supervision Pretraining\n\n| | Du∗ Xinya | Luheng | | | He | | | | | | | Qi Li | | | |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| | Cornell University | Google | Research | | | | | | | | Google | Assistant | | | |\n| | xdu@cs.cornell.edu | luheng@google.com | | | | | | | | | qilqil@google.com | | | | |…",
+            "provider": "exa-neural"
+          }
+        ],
+        "searched": true,
+        "found_anything": true,
+        "note": ""
+      },
+      "blend-04": {
+        "report_id": "blend-04",
+        "queries": [
+          "novelty scoring repulsive baseline corpus distance reward gradient anchor skeleton",
+          "\"transcendence score\" structural distance prior work novelty measure evolving retrieval",
+          "divergence reward anchored skeleton corpus-distance maximize find scoring construct map"
+        ],
+        "hits": [
+          {
+            "query": "novelty scoring repulsive baseline corpus distance reward gradient anchor skeleton",
+            "title": "ZhengxuYan/NoveltyRank",
+            "url": "https://github.com/ZhengxuYan/NoveltyRank",
+            "snippet": "# Repository: ZhengxuYan/NoveltyRank\n\n- Stars: 1\n- Forks: 0\n- Watchers: 1\n- Open issues: 0\n- Primary language: Python\n- Languages: Python (89.7%), JavaScript (10.0%), CSS (0.3%), TypeScript\n- Default branch: main\n- Created: 2025-10-26T02:52:12Z\n- Last push: 2025-12-06T01:04:29Z\n- Contributors: 3 (top: ZhengxuYan, Harry20030331, ChristineLH01)\n\n---\n\n# NoveltyRank\n\n \n \n \n \n \n 🚀 Discover the Most Inn…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "novelty scoring repulsive baseline corpus distance reward gradient anchor skeleton",
+            "title": "NOVEL POLICY SEEKING WITH CONSTRAINED OPTI MIZATION",
+            "url": "https://openreview.net/pdf?id=iEcqwosBEgx",
+            "snippet": "### NOVEL POLICY SEEKING WITH CONSTRAINED OPTI MIZATION\n\nAnonymous authors Paper under double-blind review\n\nABSTRACT\n\nWe address the problem of seeking novel policies in reinforcement learning tasks. Instead of following the multi-objective framework commonly used in existing methods, we propose to rethink the problem under a novel perspective of con strained optimization. We first introduce a new…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "novelty scoring repulsive baseline corpus distance reward gradient anchor skeleton",
+            "title": "[2005.10696] Novel Policy Seeking with Constrained Optimization",
+            "url": "https://ar5iv.labs.arxiv.org/html/2005.10696",
+            "snippet": "[2005.10696] Novel Policy Seeking with Constrained Optimization\n\n# Novel Policy Seeking with Constrained Optimization\n\nHao Sun DAMTP, Cambridge &Zhenghao Peng CS, UCLA &Bo Dai Shanghai AI Lab &Dahua Lin IE, CUHK &Bolei Zhou CS, UCLA hs789@cam.ac.uk\n\n###### Abstract\n\nIn problem-solving, we humans tend to come up with different novel solutions to the same problem. However, conventional reinforcement…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "novelty scoring repulsive baseline corpus distance reward gradient anchor skeleton",
+            "title": "When Distance Distracts: Representation Distance Bias in BT-Loss for Reward Models",
+            "url": "https://arxiv.org/html/2512.06343",
+            "snippet": "When Distance Distracts: Representation Distance Bias in BT-Loss for Reward Models\n\n# When Distance Distracts: Representation Distance Bias in BT-Loss for Reward Models\n\nTong Xie Andrew Bai Yuanhao Ban Yunqi Hong Haoyu Li Cho-Jui Hsieh\n\n###### Abstract\n\nReward models are central to Large Language Model (LLM) alignment within the framework of RLHF. The standard objective used in reward modeling is …",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"transcendence score\" structural distance prior work novelty measure evolving retrieval",
+            "title": "BAMeScience/TransportNoveltyDistance",
+            "url": "https://github.com/BAMeScience/TransportNoveltyDistance",
+            "snippet": "# Repository: BAMeScience/TransportNoveltyDistance\n\nTNovD evaluates novelty and quality simultaneously by combining contrastive GNN embeddings with Optimal Transport (OT). It captures both \"quality\" and \"novelty\" for generative material models.\n\n- Stars: 11\n- Forks: 0\n- Watchers: 11\n- Open issues: 0\n- Primary language: Python\n- Languages: Python\n- Topics: evaluation-metrics, generative-model, mate…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"transcendence score\" structural distance prior work novelty measure evolving retrieval",
+            "title": "Transport Novelty Distance: A Distributional Metric for Evaluating Material Generative Models",
+            "url": "https://arxiv.org/html/2512.09514v1",
+            "snippet": "Transport Novelty Distance: A Distributional Metric for Evaluating Material Generative Models\n\n# Transport Novelty Distance: A Distributional Metric for Evaluating Material Generative Models\n\nPaul Hagemann1 Simon Müller1 Janine George1,2,∗ and Philipp Benner1,∗ 1 Bundesanstalt für Materialforschung und -prüfung (BAM) 2 Friedrich-Schiller-Universität Jena $*$ Correspondence should be addressed to p…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"transcendence score\" structural distance prior work novelty measure evolving retrieval",
+            "title": "www.arxiv.org",
+            "url": "https://www.arxiv.org/pdf/2409.09249v2",
+            "snippet": "NOVASCORE : A New Automated Metric for\nEvaluating Document Level Novelty\nLin Ai1,2, Ziwei Gong1,2, Harshsaiprasad Deshpande1, Alexander Johnson1,\nEmmy Phung1, Ahmad Emami1, Julia Hirschberg2\n1Machine Learning Center of Excellence, JPMorgan Chase & Co.\n2Department of Computer Science, Columbia University\n{lin.ai, sara.ziweigong, julia}@cs.columbia.edu,\nAbstract\nThe rapid expansion of online content…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "\"transcendence score\" structural distance prior work novelty measure evolving retrieval",
+            "title": "Inferring transposons activity chronology by TRANScendence - TEs database and de-novo mining tool",
+            "url": "https://bmcbioinformatics.biomedcentral.com/counter/pdf/10.1186/s12859-017-1824-4.pdf",
+            "snippet": "The Author(s) BMC Bioinformatics 2017, 18(Suppl 12):422\nDOI 10.1186/s12859-017-1824-4\nRESEARCH Open Access\nInferring transposons activity chronology\nby TRANScendence – TEs database and\nde-novo mining tool\nMichał Piotr Startek1, Jakub Nogły1, Agnieszka Gromadka1, Dariusz Grzebelus2 and Anna Gambin1*\nFrom 12th International Symposium on Bioinformatics Research and Applications (ISBRA 2016)\nMinsk, Be…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "divergence reward anchored skeleton corpus-distance maximize find scoring construct map",
+            "title": "Diversity-Incentivized Exploration for Versatile Reasoning",
+            "url": "https://arxiv.org/pdf/2509.26209",
+            "snippet": "Diversity-Incentivized Exploration for Versatile Reasoning\n\n# Diversity-Incentivized Exploration for Versatile Reasoning\n\nZican Hu12 $\\ast$ Shilin Zhang12 $\\ast$ Yafu Li24 $\\dagger$ 🖂 Jianhao Yan23 Xuyang Hu2 Leyang Cui3 Xiaoye Qu2 Chunlin Chen1 Yu Cheng4🖂 Zhi Wang12🖂 1 Nanjing University 2 Shanghai AI Laboratory 3 Westlake University 4 The Chinese University of Hong Kong {zicanhu,shilinzhang}@sma…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "divergence reward anchored skeleton corpus-distance maximize find scoring construct map",
+            "title": "DISCOVER: Automated Curricula for Sparse-Reward Reinforcement Learning",
+            "url": "https://arxiv.org/pdf/2505.19850",
+            "snippet": "DISCOVER: Automated Curricula for Sparse-Reward Reinforcement Learning\n\n# DISCOVER: Automated Curricula for Sparse-Reward Reinforcement Learning\n\nLeander Diaz‐Bone ,1 Marco Bagatella11footnotemark: 1 ,1,2 Jonas Hübotter11footnotemark: 1 ,1 Andreas Krause1 1ETH Zürich, Switzerland 2Max Planck Institute for Intelligent Systems, Germany Equal contribution. Correspondence to Leander Diaz‐Bone.\n\n######…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "divergence reward anchored skeleton corpus-distance maximize find scoring construct map",
+            "title": "DecomposeR: Planner-Centric Reinforcement Learning for Deep Research with Structure-Aware Reward",
+            "url": "https://arxiv.org/html/2605.30824",
+            "snippet": "DecomposeR: Planner-Centric Reinforcement Learning for Deep Research with Structure-Aware Reward\n\n# DecomposeR: Planner-Centric Reinforcement Learning for Deep Research with Structure-Aware Reward\n\nMustafa Anis Hussain, Xinle Wu, Yao Lu National University of Singapore {mustafah,wuxl,luyao}@comp.nus.edu.sg\n\n###### Abstract\n\nDeep research tasks require LLMs to plan what to investigate, retrieve evi…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "divergence reward anchored skeleton corpus-distance maximize find scoring construct map",
+            "title": "NJU-RL/DIVER",
+            "url": "https://github.com/NJU-RL/DIVER",
+            "snippet": "# Repository: NJU-RL/DIVER\n\n[ICLR 2026] The Official Implementation of DIVER\n\n- Stars: 31\n- Forks: 1\n- Watchers: 31\n- Open issues: 0\n- Primary language: Python\n- Languages: Python (98.5%), Shell (1.5%)\n- Topics: reasoning, rl\n- Default branch: diver\n- Homepage: https://www.arxiv.org/abs/2509.26209\n- Created: 2025-05-26T12:03:05Z\n- Last push: 2026-03-05T02:54:42Z\n- Contributors: 1 (top: huzican)\n\n-…",
+            "provider": "exa-neural"
+          },
+          {
+            "query": "divergence reward anchored skeleton corpus-distance maximize find scoring construct map",
+            "title": "THU-KEG/LongTraceRL",
+            "url": "https://github.com/THU-KEG/LongTraceRL",
+            "snippet": "# Repository: THU-KEG/LongTraceRL\n\nLongTraceRL: Learning Long-Context Reasoning from Search Agent Trajectories with Rubric Rewards\n\n- Stars: 26\n- Forks: 1\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python (86.5%), Shell (12.5%), Cuda (0.7%), Dockerfile (0.3%), Just\n- Default branch: main\n- Created: 2026-05-27T16:23:31Z\n- Last push: 2026-06-01T04:58:25Z\n- Contributors: 1…",
+            "provider": "exa-neural"
+          }
+        ],
+        "searched": true,
+        "found_anything": true,
+        "note": ""
+      }
+    },
+    "query_model": "anthropic/claude-sonnet-4-6",
+    "total_queries": 12,
+    "total_hits": 50,
+    "extraction_cost_usd": 0.0102,
+    "extraction_ok": true,
+    "search_errors": [],
+    "call_log": [
+      {
+        "phase": "blend_extract_queries",
+        "model": "anthropic/claude-sonnet-4-6",
+        "in_tok": 2298,
+        "out_tok": 218,
+        "cost_usd": 0.0102,
+        "ms": 6252.4,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "elapsed_ms": 7763.8
+  },
+  "total_cost_usd": 0.076,
+  "cost_ceiling_usd": 8.0,
+  "truncated_by_budget": false,
+  "parser_notes": [],
+  "call_log": [
+    {
+      "phase": "blend_verdict",
+      "model": "anthropic/claude-sonnet-4-6",
+      "in_tok": 13387,
+      "out_tok": 1711,
+      "cost_usd": 0.0658,
+      "ms": 41128.6,
+      "ok": true,
+      "err": ""
+    }
+  ],
+  "input_blend_count": 4,
+  "verify_model": "anthropic/claude-sonnet-4-6"
+}

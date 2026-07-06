@@ -33,19 +33,25 @@ runtime; this module hands back an in-memory CushionGraph.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
 import time
 from typing import Any
 
+from src.bridge.embedding_service import EmbeddingResult, GeminiEmbeddingService
+from src.identity import RECOVER_GOAL_PROBE, compose_system_prompt
+from src.identity.disciplines.goal_supremacy import surface_real_goal
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.cushion import (
     CushionField,
     CushionGraph,
     CushionInput,
     CushionLayer,
+    CushionNode,
     SkipReason,
+    make_cushion_node_id,
 )
 
 log = logging.getLogger("constellax.wandering.composer")
@@ -147,24 +153,68 @@ organizational, mechanical) that operates by the same causal primitive.
 
 # OUTPUT FORMAT
 
-Return ONE valid JSON object with this exact shape:
+Return ONE valid JSON object. Each node is an OBJECT with three fields,
+not a bare string:
 
 {
   "actual": {
     "summary": "one paragraph",
-    "nodes": ["node 1", "node 2", "node 3", ...]
+    "nodes": [
+      {
+        "text": "wandering AI agents",
+        "embedding_text": "autonomous agents exploring under structural constraint",
+        "search_queries": ["agentic AI exploration", "autonomous research agents", "bounded autonomous behavior"]
+      },
+      ...
+    ]
   },
   "essence": {
     "summary": "one paragraph",
-    "nodes": ["dynamic 1", "tension 2", "force 3", ...]
+    "nodes": [
+      {
+        "text": "bounded freedom",
+        "embedding_text": "freedom emerging within fixed structural limits — chaos that stays useful because constraint anchors it",
+        "search_queries": ["constraint as enabler", "bounded chaos productive", "structure enabling creativity"]
+      },
+      ...
+    ]
   },
   "mechanism": {
     "summary": "one paragraph",
-    "nodes": ["causal primitive 1", "causal primitive 2", ...]
+    "nodes": [
+      {
+        "text": "soft constraint enables emergence",
+        "embedding_text": "systems aiming for unpredictable output under resource limits require structural rather than imperative constraint",
+        "search_queries": ["soft constraint systems", "structural constraint vs hard rules", "emergence under bounded resources"]
+      },
+      ...
+    ]
   }
 }
 
+FIELD CONVENTIONS:
+
+  text — the canonical short label for the node (1-5 words for actual/essence,
+         1 short sentence acceptable for mechanism). This is what the user
+         and operator see; keep it tight.
+
+  embedding_text — a one-sentence structural rephrasing of the node in
+         language that would naturally appear in content from ANY domain
+         exhibiting this pattern. This is what gets embedded for the
+         vector channel; it must read like prose, not like a label.
+         Default to the text itself if no better rephrasing comes to mind.
+
+  search_queries — 2-4 distinct queries an internet search engine could
+         consume to find content exhibiting this pattern. Vary the
+         vocabulary so different queries surface different domains;
+         do NOT just rephrase the text three ways.
+
 No prose preamble. No code fences. JUST the JSON object.
+
+LEGACY FORMAT (still accepted, but please use the OBJECT form above):
+You MAY return nodes as plain strings instead of objects — the parser
+tolerates it for backward compatibility. But the new format unlocks
+cross-domain retrieval; prefer it.
 """
 
 
@@ -255,39 +305,116 @@ def _extract_json_object(text: str) -> str:
     raise ValueError("unterminated JSON object in extraction response")
 
 
-def _parse_layer(name: str, raw: Any) -> CushionLayer:
+def _parse_node_entry(layer_name: str, entry: Any, *, session_id: str) -> CushionNode | None:
+    """Parse one node entry into a CushionNode.
+
+    Accepts BOTH the new dual-artifact object form
+        {"text": "...", "embedding_text": "...", "search_queries": [...]}
+    and the legacy bare-string form
+        "node text"
+
+    Returns None if the entry is malformed or has no text — the caller
+    filters Nones out before count validation.
+
+    Constellation Interpreter (2026-06-01).
+    """
+    if isinstance(entry, str):
+        text = entry.strip()
+        if not text:
+            return None
+        return CushionNode(
+            id=make_cushion_node_id(session_id, layer_name, text),
+            text=text,
+            layer=layer_name,
+            embedding_text=text,  # default — same as text when LLM didn't rephrase
+        )
+
+    if isinstance(entry, dict):
+        text = str(entry.get("text", "")).strip()
+        if not text:
+            return None
+        emb_text_raw = entry.get("embedding_text")
+        emb_text = str(emb_text_raw).strip() if emb_text_raw else text
+
+        sq_raw = entry.get("search_queries") or []
+        if not isinstance(sq_raw, list):
+            sq_raw = []
+        search_queries = tuple(
+            str(q).strip() for q in sq_raw
+            if isinstance(q, (str, int, float)) and str(q).strip()
+        )
+
+        return CushionNode(
+            id=make_cushion_node_id(session_id, layer_name, text),
+            text=text,
+            layer=layer_name,
+            search_queries=search_queries,
+            embedding_text=emb_text,
+        )
+
+    return None
+
+
+def _parse_layer(name: str, raw: Any, *, session_id: str = "") -> CushionLayer:
     """Convert one layer's JSON payload into a CushionLayer. Tolerant of
     minor schema drift (extra keys, slight type wobbles) but strict about
-    node counts."""
+    node counts.
+
+    Constellation Interpreter (2026-06-01): each layer now carries both
+    the canonical `nodes: list[str]` (text only, backward-compat) AND a
+    parallel `node_records: list[CushionNode]` with the dual-artifact
+    metadata. The records' `embedding` field is left as None here; the
+    caller populates it after parsing via the embedding service.
+    """
     if not isinstance(raw, dict):
         raise ValueError(f"layer {name!r} is not a JSON object")
 
     nodes_raw = raw.get("nodes", [])
     if not isinstance(nodes_raw, list):
         raise ValueError(f"layer {name!r} has non-list 'nodes' field")
-    nodes = [str(n).strip() for n in nodes_raw if str(n).strip()]
 
-    if len(nodes) < MIN_NODES_PER_LAYER:
+    records: list[CushionNode] = []
+    for entry in nodes_raw:
+        rec = _parse_node_entry(name, entry, session_id=session_id)
+        if rec is not None:
+            records.append(rec)
+
+    if len(records) < MIN_NODES_PER_LAYER:
         raise ValueError(
-            f"layer {name!r} has {len(nodes)} nodes; "
+            f"layer {name!r} has {len(records)} nodes; "
             f"minimum is {MIN_NODES_PER_LAYER}"
         )
-    if len(nodes) > MAX_NODES_PER_LAYER:
+    if len(records) > MAX_NODES_PER_LAYER:
         # Truncate rather than reject — the model overshot; keep first N.
-        nodes = nodes[:MAX_NODES_PER_LAYER]
+        records = records[:MAX_NODES_PER_LAYER]
         log.debug(
             "layer %r had >%d nodes; truncating",
             name,
             MAX_NODES_PER_LAYER,
         )
 
+    nodes_text = [r.text for r in records]
     summary = str(raw.get("summary", "")).strip()
 
-    return CushionLayer(name=name, nodes=nodes, summary=summary)
+    return CushionLayer(
+        name=name,
+        nodes=nodes_text,
+        summary=summary,
+        node_records=records,
+    )
 
 
-def parse_extraction_response(response_text: str) -> dict[str, CushionLayer]:
+def parse_extraction_response(
+    response_text: str,
+    *,
+    session_id: str = "",
+) -> dict[str, CushionLayer]:
     """Parse Sonnet's JSON output into three CushionLayers.
+
+    `session_id` scopes the deterministic node ids generated for each
+    CushionNode. Default "" produces session-less ids — fine for tests
+    and for graphs that won't be persisted. The Neo4j upsert path
+    regenerates ids with the real session_id when persisting.
 
     Raises ValueError if the response can't be parsed into a well-formed
     three-layer structure. Callers should catch and degrade (e.g., re-prompt
@@ -309,10 +436,75 @@ def parse_extraction_response(response_text: str) -> dict[str, CushionLayer]:
         raise ValueError(f"extraction missing required layer(s): {missing}")
 
     return {
-        "actual": _parse_layer("actual", payload["actual"]),
-        "essence": _parse_layer("essence", payload["essence"]),
-        "mechanism": _parse_layer("mechanism", payload["mechanism"]),
+        "actual":    _parse_layer("actual",    payload["actual"],    session_id=session_id),
+        "essence":   _parse_layer("essence",   payload["essence"],   session_id=session_id),
+        "mechanism": _parse_layer("mechanism", payload["mechanism"], session_id=session_id),
     }
+
+
+# ---------------------------------------------------------------------------
+# Per-node embedding — Constellation Interpreter (2026-06-01)
+# ---------------------------------------------------------------------------
+
+
+async def _embed_layer_nodes(
+    layers: dict[str, CushionLayer],
+    embedder: GeminiEmbeddingService,
+) -> None:
+    """In-place: populate each CushionNode.embedding via the embedding
+    service. Runs all embeddings concurrently for latency.
+
+    Nodes without a non-empty embedding_text are skipped (their
+    embedding stays None). Embedding-call failures are logged at WARNING
+    and the node's embedding stays None — the matcher's vector channel
+    will skip those nodes but the rest of the cushion still works.
+
+    The matcher's vector channel is degradation-tolerant by design: a
+    cushion where 2 of 12 nodes failed to embed still scores fine on
+    the 10 that succeeded.
+    """
+    # Collect every node across all layers, paired with its record so we
+    # can write the embedding back into the right slot.
+    targets: list[CushionNode] = []
+    for layer in layers.values():
+        if layer.node_records:
+            for rec in layer.node_records:
+                if rec.embedding_text and rec.embedding_text.strip():
+                    targets.append(rec)
+
+    if not targets:
+        return
+
+    # Parallel embed. `gather` with return_exceptions=True keeps one
+    # failure from sinking the whole batch.
+    results = await asyncio.gather(
+        *(embedder.embed(rec.embedding_text) for rec in targets),
+        return_exceptions=True,
+    )
+
+    fail_count = 0
+    for rec, result in zip(targets, results, strict=False):
+        if isinstance(result, BaseException):
+            log.warning("embed() raised for node %r: %s", rec.text[:40], result)
+            fail_count += 1
+            continue
+        if not isinstance(result, EmbeddingResult):
+            fail_count += 1
+            continue
+        if result.success and result.vector:
+            rec.embedding = result.vector
+        else:
+            log.warning(
+                "embed() returned failure for node %r: %s",
+                rec.text[:40], result.error or "no_vector",
+            )
+            fail_count += 1
+
+    if fail_count:
+        log.warning(
+            "embedding partial: %d/%d nodes failed to embed",
+            fail_count, len(targets),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +546,9 @@ async def compose_cushion(
     client: LLMClient,
     *,
     user_id: str | None = None,
+    session_id: str = "",
     auto_enrich: bool = True,
+    embedder: GeminiEmbeddingService | None = None,
 ) -> CushionGraph:
     """Build a CushionGraph from the user's four-field intake.
 
@@ -362,8 +556,20 @@ async def compose_cushion(
       1. Auto-enrich the input with project memory context (if user_id known)
       2. Validate minimal viability (problem field must be filled)
       3. Call Sonnet via the synthesizer route to extract three layers
-      4. Parse the JSON response into CushionLayers
-      5. Construct and return the CushionGraph
+      4. Parse the JSON response into CushionLayers (now dual-artifact)
+      5. Embed each node's embedding_text via Gemini (parallel)
+      6. Construct and return the CushionGraph
+
+    `session_id` scopes deterministic node ids. Pass it when the cushion
+    will be persisted to Neo4j — without it, node ids collide across
+    sessions sharing the same node text (still correct for in-memory
+    use, just degraded uniqueness for persistence).
+
+    `embedder` defaults to a freshly-constructed GeminiEmbeddingService.
+    If embedding fails entirely (no API key, network down), the cushion
+    is still returned with all CushionNode.embedding = None — the new
+    matcher's vector channel will skip those nodes; the rest of the
+    pipeline keeps working.
 
     Raises:
       ValueError — if the input is not minimally viable (problem skipped)
@@ -385,7 +591,7 @@ async def compose_cushion(
 
     # Step 3: call Sonnet
     response: LLMResponse = await client.call(
-        system_prompt=_EXTRACTION_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_EXTRACTION_SYSTEM_PROMPT, mode="cushion_compose"),
         user_message=user_message,
         domain=EXTRACTION_DOMAIN,
         concept=EXTRACTION_CONCEPT,
@@ -396,10 +602,19 @@ async def compose_cushion(
             f"cushion extraction LLM call failed: {response.error}"
         )
 
-    # Step 4: parse
-    layers = parse_extraction_response(response.content)
+    # Step 4: parse (with session_id for deterministic node ids)
+    layers = parse_extraction_response(response.content, session_id=session_id)
 
-    # Step 5: assemble the graph
+    # Step 5: embed each node — Constellation Interpreter (2026-06-01).
+    # Failures here are non-fatal; nodes without embeddings just won't
+    # participate in the vector channel of the new matcher.
+    try:
+        emb = embedder or GeminiEmbeddingService()
+        await _embed_layer_nodes(layers, emb)
+    except Exception as e:  # pragma: no cover — embedder construction failure
+        log.warning("cushion node embedding step skipped: %s", e)
+
+    # Step 6: assemble the graph
     graph = CushionGraph(
         actual=layers["actual"],
         essence=layers["essence"],
@@ -414,6 +629,31 @@ async def compose_cushion(
             "extracted cushion is not well-formed (a layer is empty); "
             "Sonnet did not honor the schema"
         )
+
+    # Step 6: identity-layer metadata — check whether the user's stated
+    # problem contradicts other signals in their brief. Pure-Python
+    # heuristic, no LLM. When it fires, the rendered probe is attached
+    # to the graph and the frontend may show it to the user before
+    # committing to the wander. The wander itself is not gated by this
+    # — the graph is built and shipped either way; the probe is a hint.
+    try:
+        stated = input_data.problem.content
+        # `question` is intentionally NOT in the signal set — it is a
+        # judge-facing checkpoint, not anchor/goal-contradiction material.
+        signals = tuple(filter(None, (
+            input_data.context.content,
+            input_data.vision.content,
+            input_data.hunches.content,
+        )))
+        recovered = surface_real_goal(stated, signals)
+        if recovered.surfaced:
+            graph.real_goal_probe = RECOVER_GOAL_PROBE.format(
+                stated=recovered.stated,
+                alternative=recovered.real,
+            )
+    except Exception:  # pragma: no cover — surface_real_goal is pure
+        log.exception("surface_real_goal raised; leaving real_goal_probe empty")
+        graph.real_goal_probe = None
 
     return graph
 

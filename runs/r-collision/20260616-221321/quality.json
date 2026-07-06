@@ -1,0 +1,70 @@
+{
+  "ranked": [
+    {
+      "blend_id": "blend-04",
+      "rank": 1,
+      "tied": false,
+      "score": 0.88,
+      "advancement": 0.88,
+      "advancement_note": "directly answers Q3 by making the unfillable/under-attempted/contested distinction a computable read from typed null-receipts rather than an inference from absence, and feeds Q5 with a board-level termination condition",
+      "blind_spots_addressed": [
+        "G2",
+        "G8"
+      ],
+      "opens_new_gap": "no protocol for resolving conflicting null-receipts on the same slot from the same method-class (two agents, same scope, same method, opposite confidence)",
+      "novelty_bin": "adjacent",
+      "rationale": "The most targeted move in the set — it operationalizes the single hardest sub-question (Q3) with a concrete, self-generating observable, and the mechanism is fully specified enough to be built."
+    },
+    {
+      "blend_id": "blend-02",
+      "rank": 2,
+      "tied": false,
+      "score": 0.82,
+      "advancement": 0.82,
+      "advancement_note": "directly answers Q1 with a computable two-vector fusion that preserves divergence as a ranking dimension rather than averaging it away, and the contested-slot output feeds Q4",
+      "blind_spots_addressed": [
+        "G1",
+        "G6"
+      ],
+      "opens_new_gap": "the weight w in the magnitude formula is declared tunable but no initialization or update rule is given — the fusion is only as good as w, and w is left unanchored",
+      "novelty_bin": "novel",
+      "rationale": "Cleanest answer to Q1 in the set; the lexicographic collapse is a real design choice that avoids the averaging error, though the unspecified loss-of-signal threshold (G14) remains open."
+    },
+    {
+      "blend_id": "blend-01",
+      "rank": 3,
+      "tied": false,
+      "score": 0.76,
+      "advancement": 0.76,
+      "advancement_note": "answers Q3 and Q5 with a method-diversity-exhaustion stop rule that is oracle-free and computable from the system's own logs",
+      "blind_spots_addressed": [
+        "G8",
+        "G13"
+      ],
+      "opens_new_gap": "method-class taxonomy is assumed to exist but never defined — the system cannot enforce 'structurally different agent type' without a prior classification of what counts as a distinct method-class",
+      "novelty_bin": "novel",
+      "rationale": "Solid on Q3 and the session-stop condition, but the mechanism's load-bearing concept (method-diversity) is left without an operationalized boundary, which is the same gap it was meant to close in G13."
+    },
+    {
+      "blend_id": "blend-03",
+      "rank": 4,
+      "tied": false,
+      "score": 0.71,
+      "advancement": 0.71,
+      "advancement_note": "answers Q2 (agent count per gap = closure-lane share × marginal gain) and Q4 (diversity survives via a constitutionally protected budget lane) with a concrete budget split",
+      "blind_spots_addressed": [
+        "G3",
+        "G7",
+        "G9"
+      ],
+      "opens_new_gap": "the diversity dividend's findings have no specified re-entry path — whether they update the gap-rank, feed the skeleton, or are discarded is undefined, so the dividend may produce structurally invisible output (G12 persists)",
+      "novelty_bin": "adjacent",
+      "rationale": "Advances Q2 and Q4 more concretely than any other blend, but the re-entry protocol gap (G12) means the diversity lane's output may not close the loop it was designed to close."
+    }
+  ],
+  "model": "anthropic/claude-sonnet-4-6",
+  "total_cost_usd": 0.0242,
+  "ok": true,
+  "note": "",
+  "parser_notes": []
+}

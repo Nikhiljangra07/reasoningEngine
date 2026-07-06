@@ -1,0 +1,69 @@
+{
+  "ranked": [
+    {
+      "blend_id": "blend-03",
+      "rank": 1,
+      "tied": true,
+      "score": 0.82,
+      "advancement": 0.82,
+      "advancement_note": "directly answers Q1 by specifying a deterministic fusion mechanism with a self-correcting meta-layer that guards against the exact failure mode (motivated convergence) the question implies",
+      "blind_spots_addressed": [
+        "G6",
+        "G3"
+      ],
+      "opens_new_gap": "no specification of what the forced precedence inversion does to in-flight agent waves already dispatched under the prior precedence order",
+      "novelty_bin": "novel",
+      "rationale": "The most direct answer to Q1 of the four blends — it names the fusion rule, names the conflict-resolution logic, and names the drift-detection mechanism that keeps the rule honest; the other questions are not its focus but it does not contradict them."
+    },
+    {
+      "blend_id": "blend-01",
+      "rank": 1,
+      "tied": true,
+      "score": 0.78,
+      "advancement": 0.78,
+      "advancement_note": "directly answers Q3 by giving a two-axis, judge-free observable rule that discriminates unfillable from under-attempted — the hardest fork in the question",
+      "blind_spots_addressed": [
+        "G8",
+        "G4"
+      ],
+      "opens_new_gap": "approach-vector entropy is undefined as a measurable unit — what constitutes a distinct 'approach class' and who assigns fingerprints to classes is unspecified",
+      "novelty_bin": "novel",
+      "rationale": "Cleanly advances Q3 and partially Q2 (forced-novel dispatch implies a sizing decision), but leaves Q1 and Q4 untouched; the entropy operationalization gap (G12) is real and load-bearing for the mechanism to function."
+    },
+    {
+      "blend_id": "blend-04",
+      "rank": 3,
+      "tied": false,
+      "score": 0.74,
+      "advancement": 0.74,
+      "advancement_note": "directly answers the halt-condition sub-problem (Q3 termination branch and the conflict between coverage-complete and diminishing-returns) with a concrete three-signal consensus rule",
+      "blind_spots_addressed": [
+        "G5",
+        "G15"
+      ],
+      "opens_new_gap": "veto logic with latency-mismatched signals can produce indefinite non-termination if one slow-updating signal (e.g. DoD) is structurally stuck below threshold — no floor on how long a single veto can hold",
+      "novelty_bin": "novel",
+      "rationale": "Strong on the termination question but narrow — Q1, Q2, and Q4 are not advanced; the latency mismatch it partially addresses (G15) is real but the veto-deadlock risk it opens is equally real."
+    },
+    {
+      "blend_id": "blend-02",
+      "rank": 4,
+      "tied": false,
+      "score": 0.65,
+      "advancement": 0.65,
+      "advancement_note": "advances Q4 (diversity preservation during re-exploration) and partially Q2 (agent-count sizing falls out of the routing-cost mechanics) without a separate policing module",
+      "blind_spots_addressed": [
+        "G9",
+        "G13"
+      ],
+      "opens_new_gap": "the decay function's shape and the track-record metric are both unspecified — the self-defeating property only holds if the routing-cost rise is calibrated correctly, and no signal tells the orchestrator when that calibration has drifted",
+      "novelty_bin": "novel",
+      "rationale": "Genuinely novel on diversity self-restoration and advances Q4 more than any other blend, but its contribution to Q1, Q3, and the halt decision is indirect at best; the unspecified decay calibration is a real implementation gap."
+    }
+  ],
+  "model": "anthropic/claude-sonnet-4-6",
+  "total_cost_usd": 0.0248,
+  "ok": true,
+  "note": "",
+  "parser_notes": []
+}

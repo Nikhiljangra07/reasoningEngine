@@ -40,6 +40,7 @@ from src.wandering.agent import (
 )
 from src.wandering.cushion import CushionGraph
 from src.wandering.report import Confidence, ExplorationReport
+from src.wandering.session_state import SessionState
 from src.wandering.trace import StepKind, TraceStep
 
 
@@ -123,6 +124,9 @@ async def run_subagent(
     *,
     fetcher: FetchFn = stub_fetcher,
     parent_clock=None,
+    session_state: SessionState | None = None,
+    tracker=None,
+    sub_model: str | None = None,
 ) -> SpawnResult:
     """Execute one sub-agent under the given SpawnRequest.
 
@@ -130,6 +134,11 @@ async def run_subagent(
     smaller budget and the same cushion. The starting position
     (focus_area / starting_domain) influences ONLY the first step;
     after that, the standard chaos policy applies.
+
+    `session_state` is the shared per-wander state from the parent
+    SessionResult. When provided, the sub-agent participates in the same
+    URL dedup set and follow-on queue as the root agents — avoids
+    re-fetching pages the parent wander already read.
     """
     sub_id = f"S{uuid.uuid4().hex[:6]}"
 
@@ -141,6 +150,7 @@ async def run_subagent(
             token_budget=request.distance_budget_tokens,
             max_steps=30,
         ),
+        session_state=session_state,
     )
 
     # Seed the trace with a SPAWNED_SUBAGENT origin marker so the
@@ -156,9 +166,23 @@ async def run_subagent(
         ),
     ))
 
+    # Pin the sub-agent onto its OWN model (the Haiku nuance layer) the same way
+    # roots are pinned. The dig calls pass model=None with concept="wandering_dig_*",
+    # which resolve_model() routes to WANDER_DIG_MODEL (DeepSeek) — so without an
+    # override a sub-agent runs DeepSeek, not Haiku. Wrapping the raw client in an
+    # AgentScopedLLMClient with default_model=sub_model overrides every such call to
+    # Haiku and shares the parent's tracker (one ledger, per-call logging intact).
+    # No tracker / no sub_model (e.g. interactive dig-deeper) → raw client untouched.
+    run_client = client
+    if sub_model and tracker is not None:
+        from src.wandering.call_tracker import AgentScopedLLMClient
+        state.model_slug = sub_model
+        run_client = AgentScopedLLMClient(
+            base=client, tracker=tracker, agent_id=sub_id, default_model=sub_model)
+
     clock = parent_clock or _time.time
     try:
-        await run_agent(state, client, fetcher=fetcher, clock=clock)
+        await run_agent(state, run_client, fetcher=fetcher, clock=clock)
     except Exception as e:
         log.warning("subagent %s crashed: %s", sub_id, e)
         return SpawnResult(

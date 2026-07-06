@@ -31,6 +31,8 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from src.identity import compose_system_prompt
+from src.identity.disciplines.goal_supremacy import ServeScore
 from src.llm.client import LLMClient, LLMResponse
 from src.wandering.report import Confidence, ExplorationReport
 
@@ -78,7 +80,23 @@ class ArticulatedCard:
     citations: list[dict] = field(default_factory=list)
     match_strength: float = 0.0  # 0.0–1.0, total_matched / total_cushion
 
+    # Identity-layer metadata (additive — does not gate band placement
+    # or filter the card). Populated by `goal_supremacy.discriminate()`
+    # in `build_dossier` against the cushion's real goal. The frontend
+    # can render this as a "this card serves your real goal" badge or
+    # a "serves stated goal but not real goal" warning. Engine logic
+    # does not branch on it. See doctrine §10 "discipline metadata".
+    serve_score: ServeScore | None = None
+
     def to_dict(self) -> dict:
+        sscore: dict | None = None
+        if self.serve_score is not None:
+            sscore = {
+                "score":                  float(self.serve_score.score),
+                "verdict":                str(self.serve_score.verdict),
+                "reasons":                list(self.serve_score.reasons),
+                "serves_attachment_only": bool(self.serve_score.serves_attachment_only),
+            }
         return {
             "report_id": self.report_id,
             "agent_id": self.agent_id,
@@ -92,6 +110,7 @@ class ArticulatedCard:
             "confidence_detail": self.confidence_detail,
             "citations": list(self.citations),
             "match_strength": float(self.match_strength),
+            "serve_score": sscore,
         }
 
 
@@ -110,29 +129,65 @@ Your job: render it into the SIX-FIELD card the user actually reads.
 
 # THE SIX FIELDS
 
-  Spark        — ONE sentence describing the surprising connection the
-                 agent noticed. Be specific. ("Jazz improvisation operates
-                 inside harmonic constraint.")
+  Be EXPRESSIVE. The reader needs to fully visualize the bridge — a card
+  that ends before the mapping is clear is useless. Explain the actual
+  mechanism, not just assert that a resemblance exists. Length targets
+  below are minimums for clarity, not caps; never pad, but never cut the
+  explanation short either.
 
-  Source Shape — ONE-TO-TWO sentences describing the structure the source
-                 has, in the source's own terms. ("Soloists choose notes
-                 freely within the chord changes; the changes constrain
-                 the freedom and make musical sense possible.")
+  Spark        — ONE-TO-TWO sentences naming the surprising connection the
+                 agent noticed. Be specific and vivid. ("Jazz improvisation
+                 produces unpredictable melodies, yet every note is chosen
+                 inside the song's harmonic constraints — freedom and
+                 structure are not opposites here, they are the same
+                 mechanism.")
 
-  Bridge       — ONE-TO-TWO sentences mapping the source structure to the
-                 user's problem. ("Your wandering agents face the same
-                 shape — they need bounded freedom that constrains
-                 without dictating.")
+  Source Shape — TWO-TO-THREE sentences describing the structure the source
+                 has, in the source's own terms. Explain HOW the source
+                 mechanism actually works, enough that someone unfamiliar
+                 with the domain understands it. ("In jazz, soloists choose
+                 notes freely, but only notes that fit the underlying chord
+                 changes sound musical. The chord progression is a moving
+                 constraint — it never tells the soloist which note to play,
+                 it only tells them which notes are available right now. The
+                 result is improvisation that is genuinely free yet never
+                 random.")
 
-  Use          — ONE specific, concrete thing the user might do with this
-                 insight. ("Consider designing the agent's drift radius
-                 as a 'harmonic frame' — not a cage.")
+  Bridge       — THREE-TO-FOUR sentences mapping the source structure to the
+                 user's problem, STEP BY STEP. This is the most important
+                 field. Walk the reader through the mapping: what in the
+                 source corresponds to what in their problem, and why the
+                 correspondence holds. Do not merely assert "your problem is
+                 the same shape" — show the reader EACH point of contact so
+                 they can see the bridge, not just be told it exists. ("Your
+                 wandering agents face this exact shape. The user's anchor is
+                 the chord progression — a constraint that bounds where the
+                 agents can go without dictating the path. The agents'
+                 traversal is the solo: free to be surprising, but only
+                 'musical' when it stays in harmonic relationship with the
+                 anchor. And just as a soloist who ignores the changes
+                 produces noise, an agent that drifts past the anchor's pull
+                 produces irrelevance — the constraint is what makes the
+                 freedom productive rather than random.")
 
-  Limit        — Render the report's what_does_not_map field directly.
-                 This is the honest brake on the analogy. DO NOT soften
-                 it. ("Jazz operates in real-time emergent ensemble; your
-                 agents run async in parallel — coordination
-                 patterns differ.")
+  Use          — ONE-TO-TWO sentences naming a specific, concrete thing the
+                 user might do with this insight. Make it actionable enough
+                 that they could start tomorrow. ("Consider designing the
+                 agent's drift radius as a 'harmonic frame' rather than a
+                 hard cage — a soft, always-present pull toward the anchor
+                 that bounds the wander without ever forbidding a direction.")
+
+  Limit        — TWO-TO-THREE sentences rendering the report's
+                 what_does_not_map field. This is the honest brake on the
+                 analogy. DO NOT soften it — explain clearly where the
+                 mapping breaks and why, so the reader knows exactly how far
+                 to trust the bridge. ("Jazz operates as real-time emergent
+                 ensemble: musicians hear each other and adjust in the
+                 moment. Your agents run async in parallel with no live
+                 mutual listening, so the coordination that makes a jazz
+                 group cohere has no direct analog here. The bridge holds for
+                 the freedom-within-constraint shape, but breaks at the
+                 question of how independent voices stay coherent.")
 
   Confidence   — Use the confidence value from the report (LOW/MEDIUM/HIGH).
                  Don't override it.
@@ -154,11 +209,11 @@ Your job: render it into the SIX-FIELD card the user actually reads.
 Return ONE JSON object:
 
 {
-  "spark": "<one sentence>",
-  "source_shape": "<one-to-two sentences>",
-  "bridge": "<one-to-two sentences>",
-  "use": "<one sentence — concrete possibility>",
-  "limit": "<one-to-two sentences from what_does_not_map>"
+  "spark": "<one-to-two sentences>",
+  "source_shape": "<two-to-three sentences explaining the source mechanism>",
+  "bridge": "<three-to-four sentences walking the mapping step by step>",
+  "use": "<one-to-two sentences — concrete, actionable possibility>",
+  "limit": "<two-to-three sentences from what_does_not_map>"
 }
 
 No prose preamble. No code fences. Just JSON.
@@ -317,7 +372,7 @@ async def articulate_report(
     """
     user_message = build_articulation_user_message(report)
     response: LLMResponse = await client.call(
-        system_prompt=_ARTICULATE_SYSTEM_PROMPT,
+        system_prompt=compose_system_prompt(_ARTICULATE_SYSTEM_PROMPT, mode="card_articulation"),
         user_message=user_message,
         domain=ARTICULATE_DOMAIN,
         concept=ARTICULATE_CONCEPT,

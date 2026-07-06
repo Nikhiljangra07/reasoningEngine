@@ -1,0 +1,649 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "created_at": "2026-06-01",
+    "purpose": "Independent adversarial fixture for validating the Heisenberg-inversion calibration. The v1 fixture (30 pairs) was both the source of the inverted-Heisenberg discovery AND the only test of it — that's overfitting risk. This v2 fixture uses 30 mechanism types deliberately different from v1 (no jazz/AI, no apprenticeship/mentorship, no debt-spiral/polarization). The should-not-match pairs share surface KEYWORDS but not structural mechanisms — a different fake-similarity pattern than v1 which mostly shared topical surface.",
+    "design_principles": [
+      "30 should-match pairs span 30 distinct mechanism types (phase transition, diminishing returns, network effects, cascade failure, theory of constraints, trust asymmetric loss, information asymmetry, tragedy of commons, path dependence, power law, survivorship bias, sunk cost, delayed feedback overshoot, compound growth, stigmergy, anchoring, Schelling segregation, crowding out, Lindy effect, Goodhart's law, negative externalities, endowment effect, selection pressure, loss aversion, bullwhip, hindsight bias, status quo bias, hot-cold empathy gap, recency effect, halo effect).",
+      "15 should-not-match pairs use shared surface keywords (branch, inflation, decay, stress, pressure, capacity, flow, resistance, cycle, drift, spread, wave, bubble, spring, crash) where the underlying mechanism differs structurally.",
+      "Side descriptions kept to ~150-250 chars for consistent Haiku fingerprint length."
+    ],
+    "counts": {
+      "should_match": 30,
+      "should_not_match": 15,
+      "total": 45
+    }
+  },
+  "pairs": [
+    {
+      "id": "match_v2_001",
+      "should_match": true,
+      "essence_pattern": "phase transition — slow buildup, then sudden state change",
+      "side_a": {
+        "domain": "physics",
+        "description": "Water at 99.9°C remains liquid; at 100°C it begins to boil. Energy accumulates with no visible change until a threshold is crossed and the molecular order shifts abruptly into a new state."
+      },
+      "side_b": {
+        "domain": "sociology",
+        "description": "A social movement gains supporters gradually with no visible institutional change. When supporter density crosses a critical fraction, the regime suddenly capitulates or collapses."
+      },
+      "notes": "Threshold dynamics: slow accumulation, abrupt regime shift."
+    },
+    {
+      "id": "match_v2_002",
+      "should_match": true,
+      "essence_pattern": "diminishing returns — each additional unit produces less marginal value",
+      "side_a": {
+        "domain": "learning",
+        "description": "A student practicing a piano piece improves rapidly in the first hour, more slowly in the second, and barely at all in the fifth. The same effort yields shrinking gains."
+      },
+      "side_b": {
+        "domain": "marketing",
+        "description": "A company's first ad campaign in a market drives strong customer acquisition. The fifth campaign in the same market converts almost no new customers — the audience is saturated."
+      },
+      "notes": "Concavity of return on identical inputs over time."
+    },
+    {
+      "id": "match_v2_003",
+      "should_match": true,
+      "essence_pattern": "network effects — value grows superlinearly with adoption",
+      "side_a": {
+        "domain": "communication tech",
+        "description": "A single telephone is useless. Two telephones permit one connection. A thousand telephones permit hundreds of thousands of connections — each new node multiplies utility for every existing node."
+      },
+      "side_b": {
+        "domain": "linguistics",
+        "description": "A language with one speaker is dead. With ten million speakers it sustains literature, commerce, and identity. Each new speaker preserves the language for every other speaker."
+      },
+      "notes": "Utility per node scales with population it can connect to."
+    },
+    {
+      "id": "match_v2_004",
+      "should_match": true,
+      "essence_pattern": "cascade failure — single point failure propagates through coupled system",
+      "side_a": {
+        "domain": "infrastructure",
+        "description": "A transmission line in Ohio fails. The load redistributes to neighboring lines, which exceed capacity and trip. Within three hours, fifty million people across eight states lose power."
+      },
+      "side_b": {
+        "domain": "finance",
+        "description": "Lehman Brothers cannot meet its obligations. Counterparties' books revalue, triggering margin calls. Money market funds 'break the buck.' Credit freezes globally within weeks."
+      },
+      "notes": "Tightly coupled networks where local stress redistributes catastrophically."
+    },
+    {
+      "id": "match_v2_005",
+      "should_match": true,
+      "essence_pattern": "theory of constraints — system throughput limited by single bottleneck",
+      "side_a": {
+        "domain": "manufacturing",
+        "description": "A factory produces 1000 units/day. Six machines run at 1500 unit capacity, but the seventh runs at 1000. Investing in the six fast machines changes nothing; only the slow machine matters."
+      },
+      "side_b": {
+        "domain": "project management",
+        "description": "A software project has 12 parallel work streams. Eleven complete on time, but one — the security review — takes three weeks longer. The release date is determined entirely by the slow review."
+      },
+      "notes": "Throughput is governed by the slowest stage, not the average."
+    },
+    {
+      "id": "match_v2_006",
+      "should_match": true,
+      "essence_pattern": "trust — slow to build, fast to lose, asymmetric replacement",
+      "side_a": {
+        "domain": "relationships",
+        "description": "Two friends build mutual trust over a decade of small kept promises. One betrayal — a leaked confidence — undoes the foundation in a single conversation. Rebuilding takes years."
+      },
+      "side_b": {
+        "domain": "corporate reputation",
+        "description": "A company spends thirty years building a brand of reliability. A single product safety scandal collapses customer trust within a quarter. Market cap takes a decade to recover, if at all."
+      },
+      "notes": "Reputation capital — concave growth, convex loss."
+    },
+    {
+      "id": "match_v2_007",
+      "should_match": true,
+      "essence_pattern": "information asymmetry — seller knows more than buyer, market unravels",
+      "side_a": {
+        "domain": "used car market",
+        "description": "Sellers know whether their car is a lemon or a peach. Buyers can't tell. Buyers offer average prices. Peach owners refuse to sell. Only lemons remain on the market."
+      },
+      "side_b": {
+        "domain": "medicine",
+        "description": "Doctors know the actual prognosis. Patients can't independently verify. Without disclosure norms, the patient population assumes worst-case and underconsumes care, while doctors capture rent on the gap."
+      },
+      "notes": "Akerlof market for lemons generalized: hidden quality drives equilibrium."
+    },
+    {
+      "id": "match_v2_008",
+      "should_match": true,
+      "essence_pattern": "tragedy of the commons — private incentive degrades shared resource",
+      "side_a": {
+        "domain": "ecology",
+        "description": "Each shepherd gains by adding one more sheep to the village commons. The marginal grazing damage is shared by all. Every shepherd reasons identically; the commons is destroyed."
+      },
+      "side_b": {
+        "domain": "climate",
+        "description": "Each nation gains by emitting one more ton of carbon. The marginal atmospheric warming is shared globally. Every nation reasons identically; the atmosphere is destabilized."
+      },
+      "notes": "Hardin's commons: privatized gain, socialized loss, ruined collective."
+    },
+    {
+      "id": "match_v2_009",
+      "should_match": true,
+      "essence_pattern": "path dependence — early arbitrary choices lock in suboptimal outcomes",
+      "side_a": {
+        "domain": "technology",
+        "description": "The QWERTY keyboard was designed to slow typists down so jammed typewriter keys wouldn't collide. The mechanical reason vanished decades ago. Every modern device still uses QWERTY because every typist is trained on QWERTY."
+      },
+      "side_b": {
+        "domain": "biology",
+        "description": "The vertebrate eye routes nerve fibers through the retina before reaching the brain, creating a blind spot. Cephalopod eyes route correctly. Vertebrate evolution committed to the inferior layout 500M years ago and cannot back out."
+      },
+      "notes": "Frozen accident: early branching choice persists despite suboptimality."
+    },
+    {
+      "id": "match_v2_010",
+      "should_match": true,
+      "essence_pattern": "power law distribution — small number of extremes dominate the total",
+      "side_a": {
+        "domain": "urbanism",
+        "description": "Most countries have a few enormous cities and thousands of small towns. The largest city is roughly twice the size of the second largest, three times the third — a Zipfian rank-size pattern across geographies."
+      },
+      "side_b": {
+        "domain": "wealth",
+        "description": "In most economies, the wealthiest 1% holds more than the bottom 50%. The top 0.1% holds more than the next 0.9%. The distribution has no characteristic scale — magnitudes recur fractally."
+      },
+      "notes": "Scale-free distributions with heavy tails; mean far above median."
+    },
+    {
+      "id": "match_v2_011",
+      "should_match": true,
+      "essence_pattern": "survivorship bias — analyzing only winners distorts conclusions",
+      "side_a": {
+        "domain": "WWII engineering",
+        "description": "Statisticians analyzing returning bomber planes saw bullet holes concentrated on wings and fuselage. The recommendation seemed obvious: armor those areas. Abraham Wald realized: the planes that returned had been hit there and survived. Armor where the returned planes WEREN'T hit — that's where downed planes were hit."
+      },
+      "side_b": {
+        "domain": "business journalism",
+        "description": "Interviewing successful startup founders to extract their winning principles ignores the thousands of failed startups that followed identical principles. The advice is shaped by selection on the dependent variable."
+      },
+      "notes": "Conditioning on success while ignoring failures inverts the truth."
+    },
+    {
+      "id": "match_v2_012",
+      "should_match": true,
+      "essence_pattern": "sunk cost fallacy — past unrecoverable cost contaminates forward decisions",
+      "side_a": {
+        "domain": "consumer behavior",
+        "description": "A person buys a concert ticket for $80, then on the day of the show realizes they hate the artist and would rather stay home. They go anyway because they 'already paid.' The $80 is unrecoverable either way."
+      },
+      "side_b": {
+        "domain": "venture funding",
+        "description": "A VC has put $20M into a struggling startup. The next round requires another $5M with low odds of recovery. The VC continues funding because pulling out 'wastes the $20M' — the $20M is gone either way."
+      },
+      "notes": "Forward decisions should depend on forward expected value, not history."
+    },
+    {
+      "id": "match_v2_013",
+      "should_match": true,
+      "essence_pattern": "delayed feedback overshoot — control systems with lag oscillate around target",
+      "side_a": {
+        "domain": "HVAC",
+        "description": "A thermostat reads 65°F, target 70°F, heater turns on. By the time the room reaches 70°F, the heater has injected enough thermal mass to keep climbing to 74°F. The system overshoots, then undershoots."
+      },
+      "side_b": {
+        "domain": "monetary policy",
+        "description": "Inflation rises above target, central bank raises rates. By the time rates take effect 12-18 months later, inflation has already turned, and the tight policy pushes the economy below trend. Recession overshoots."
+      },
+      "notes": "Negative-feedback controllers with significant lag produce damped oscillations."
+    },
+    {
+      "id": "match_v2_014",
+      "should_match": true,
+      "essence_pattern": "compound growth — small consistent rate produces exponential trajectory",
+      "side_a": {
+        "domain": "finance",
+        "description": "A dollar invested at 7% annual return doubles every 10 years. $1 in 1970 grew to $16 by 2010 with no further input. The trajectory is invisible at short horizons and overwhelming at long ones."
+      },
+      "side_b": {
+        "domain": "epidemiology",
+        "description": "A pathogen with R₀=1.5 produces one new case from each previous case in a week. After three months, a single original case generates millions. The early curve looks flat; the late curve is catastrophic."
+      },
+      "notes": "Geometric series with constant multiplier yields exponential time profile."
+    },
+    {
+      "id": "match_v2_015",
+      "should_match": true,
+      "essence_pattern": "stigmergy — coordination through environmental traces, not direct communication",
+      "side_a": {
+        "domain": "biology",
+        "description": "Ants don't tell each other where food is. An ant that finds food leaves a chemical trail home. Other ants follow the trail; if they also find food, they reinforce it. The trail with the most reinforcement becomes the path."
+      },
+      "side_b": {
+        "domain": "software",
+        "description": "Wikipedia editors don't coordinate explicitly. Each edits articles that look incomplete or wrong, leaving improvements behind. Later editors see better articles and edit them further. The encyclopedia emerges from sequential trace modification."
+      },
+      "notes": "Indirect coordination via environmental modification rather than message-passing."
+    },
+    {
+      "id": "match_v2_016",
+      "should_match": true,
+      "essence_pattern": "anchoring — first number contaminates subsequent estimates regardless of relevance",
+      "side_a": {
+        "domain": "negotiation",
+        "description": "A car listed at $30,000 sells for $25,000 — the buyer feels they negotiated well. The same car listed at $22,000 sells for $20,000 — the same buyer feels they paid retail. The first number set the frame."
+      },
+      "side_b": {
+        "domain": "hiring",
+        "description": "A candidate stating their current salary as $80K receives offers around $90K. The same candidate refusing to state current salary receives offers around $110K, scaled to the role's market value. The mention of $80K became the reference."
+      },
+      "notes": "Cognitive anchoring: initial values bias subsequent estimates."
+    },
+    {
+      "id": "match_v2_017",
+      "should_match": true,
+      "essence_pattern": "Schelling segregation — mild local preference produces sharp global sorting",
+      "side_a": {
+        "domain": "housing",
+        "description": "If residents only mildly prefer to have at least 30% of their neighbors share their group, neighborhoods that started 50/50 mixed spontaneously segregate into ~90/10 enclaves over time. No racist intent — just iterated mild preference."
+      },
+      "side_b": {
+        "domain": "online social",
+        "description": "If Twitter users only mildly prefer their feed contain at least 30% in-group voices, follow/unfollow choices over months produce near-totally polarized echo chambers. No conscious tribalism — just iterated mild filtering."
+      },
+      "notes": "Schelling 1971: local preferences aggregate into far stronger global outcomes."
+    },
+    {
+      "id": "match_v2_018",
+      "should_match": true,
+      "essence_pattern": "crowding out — introducing extrinsic incentive destroys intrinsic motivation",
+      "side_a": {
+        "domain": "behavioral economics",
+        "description": "A daycare introduces a small fine for late pickups. Lateness increases — parents reframe lateness as a paid service. When the fine is removed, lateness stays high; the moral norm has been replaced."
+      },
+      "side_b": {
+        "domain": "creative work",
+        "description": "An artist paid commission for personally meaningful work begins producing what sells. Years later, when commercial pressure is removed, the connection to intrinsic taste does not return. The motivation system was overwritten."
+      },
+      "notes": "Extrinsic incentives substitute for, rather than augment, intrinsic ones."
+    },
+    {
+      "id": "match_v2_019",
+      "should_match": true,
+      "essence_pattern": "Lindy effect — for non-perishable things, expected remaining lifespan grows with age",
+      "side_a": {
+        "domain": "literature",
+        "description": "A book that has been read for 400 years (Shakespeare) is statistically more likely to be read another 400 years than a book that has been popular for 4 years. The longer it has survived, the more robust it has proven."
+      },
+      "side_b": {
+        "domain": "technology",
+        "description": "A unix command that has been used unchanged since 1970 (grep, sed) is more likely to still be used in 2070 than a fashionable framework that launched in 2020. Longevity itself is the evidence of fit."
+      },
+      "notes": "Antifragility through time-tested existence; survival as a predictor of future survival."
+    },
+    {
+      "id": "match_v2_020",
+      "should_match": true,
+      "essence_pattern": "Goodhart's law — a measure used as a target ceases to be a good measure",
+      "side_a": {
+        "domain": "education",
+        "description": "Standardized test scores were used to evaluate schools. Schools shifted resources to test prep, narrowed curriculum, taught to the test. Scores went up; actual student learning did not."
+      },
+      "side_b": {
+        "domain": "corporate",
+        "description": "Sales teams measured on call volume began making short pointless calls to hit quota. Calls went up; revenue did not. The metric was gamed because rewards depended on it."
+      },
+      "notes": "When the metric becomes the goal, the metric stops measuring the underlying thing."
+    },
+    {
+      "id": "match_v2_021",
+      "should_match": true,
+      "essence_pattern": "negative externalities — actor receives gain, third parties absorb cost",
+      "side_a": {
+        "domain": "industrial pollution",
+        "description": "A factory dumps waste into a river upstream of a town. The factory keeps the cost savings; the town pays in health costs, water treatment, and lost fisheries. The factory's accounting doesn't see the downstream loss."
+      },
+      "side_b": {
+        "domain": "social media design",
+        "description": "A platform designs for engagement (revenue). Users develop attention disorders, sleep loss, anxiety. The platform keeps the ad revenue; the users and their relationships pay in mental health. The platform's books don't see the loss."
+      },
+      "notes": "Cost externalization: gain captured, cost socialized."
+    },
+    {
+      "id": "match_v2_022",
+      "should_match": true,
+      "essence_pattern": "endowment effect — owning a thing inflates its valuation",
+      "side_a": {
+        "domain": "behavioral econ experiment",
+        "description": "Subjects given a coffee mug demand on average $7 to sell it. Subjects asked how much they would pay to buy the same mug offer on average $3. Ownership doubled the perceived value of an identical object."
+      },
+      "side_b": {
+        "domain": "investing",
+        "description": "An investor holding a stock they bought at $50 refuses to sell at $40 ('I'd be locking in a loss'). The same investor would not buy the same stock at $40 today. Ownership has flipped their valuation."
+      },
+      "notes": "Possession alters perceived value asymmetrically — loss aversion variant."
+    },
+    {
+      "id": "match_v2_023",
+      "should_match": true,
+      "essence_pattern": "selection pressure — variation plus differential survival shifts population over time",
+      "side_a": {
+        "domain": "biology",
+        "description": "In a hospital, antibiotic use kills susceptible bacteria. Resistant variants survive and reproduce. Over years, the bacterial population becomes dominantly resistant. The drug itself shaped the evolved resistance."
+      },
+      "side_b": {
+        "domain": "business",
+        "description": "A market with intense price competition kills high-cost producers. Low-cost producers survive and grow. Over decades the industry becomes dominated by lean operators. The market itself shaped the evolved business model."
+      },
+      "notes": "Variation + selection + reproduction = directional evolution."
+    },
+    {
+      "id": "match_v2_024",
+      "should_match": true,
+      "essence_pattern": "loss aversion — losses feel ~2x as bad as equivalent gains feel good",
+      "side_a": {
+        "domain": "behavioral econ",
+        "description": "Subjects offered a coin flip for +$100 or -$100 mostly refuse. To accept, they require +$200 against -$100. The same dollar amount weighs more as a loss than as a gain."
+      },
+      "side_b": {
+        "domain": "negotiation",
+        "description": "A union offered '$2 raise' negotiates harder than the same union offered 'avoid a $2 cut.' The two are mathematically identical against the current wage; the framing as loss-to-avoid versus gain-to-secure changes resistance."
+      },
+      "notes": "Kahneman-Tversky asymmetric utility curve around the reference point."
+    },
+    {
+      "id": "match_v2_025",
+      "should_match": true,
+      "essence_pattern": "bullwhip effect — small variation in demand amplifies upstream",
+      "side_a": {
+        "domain": "supply chain",
+        "description": "A retailer sees 5% extra Christmas demand. Wholesalers, hedging, order 15% more. Manufacturers, hedging further, produce 30% more. Raw material suppliers ramp 60%. Small downstream noise becomes large upstream swings."
+      },
+      "side_b": {
+        "domain": "information",
+        "description": "A celebrity tweets a vague concern. Bloggers amplify it. News sites cite the bloggers. Wire services cite the news sites. By the time it reaches mainstream, the original signal has become a confident claim of fact."
+      },
+      "notes": "Amplification through serial uncertainty hedging in coupled systems."
+    },
+    {
+      "id": "match_v2_026",
+      "should_match": true,
+      "essence_pattern": "hindsight bias — outcome knowledge makes the past look predictable",
+      "side_a": {
+        "domain": "post-incident review",
+        "description": "After a plane crashes, investigators reading pre-flight logs find 'obvious' warning signs the pilot missed. In the moment, those warnings were buried in hundreds of normal signals. After the fact they stand out."
+      },
+      "side_b": {
+        "domain": "political forecasting",
+        "description": "After an election, commentators explain the result through factors they did not weight before voting. The same factors were available to forecasters who weighted them differently and got different (often wrong) predictions."
+      },
+      "notes": "Outcome-knowledge biases retrospective probability assessment toward inevitability."
+    },
+    {
+      "id": "match_v2_027",
+      "should_match": true,
+      "essence_pattern": "status quo bias — defaults persist far beyond active preference",
+      "side_a": {
+        "domain": "public health",
+        "description": "Countries with opt-in organ donation have ~15% donor rates. Countries with opt-out (presumed consent) have ~90% donor rates. The underlying preference is identical; the default determines outcome."
+      },
+      "side_b": {
+        "domain": "consumer software",
+        "description": "Default privacy settings determine 95%+ of user behavior. Users who would object to public sharing if asked accept the default that does it. The default's gravitational pull dominates active choice."
+      },
+      "notes": "Defaults function as endowments — preserved by inertia, not preference."
+    },
+    {
+      "id": "match_v2_028",
+      "should_match": true,
+      "essence_pattern": "hot-cold empathy gap — calm state cannot accurately model future hot state",
+      "side_a": {
+        "domain": "addiction",
+        "description": "A recovering smoker says calmly 'I'd never smoke at a party' — and means it. At the actual party, three drinks in, with cigarettes visible, the visceral pull overwhelms the prior decision. The calm-state model was incomplete."
+      },
+      "side_b": {
+        "domain": "incident response",
+        "description": "An engineering team designs runbooks calmly. During the actual outage, panicked, sleep-deprived, with executives watching, they skip steps they 'knew' were important. The calm-state procedure assumed calm-state execution."
+      },
+      "notes": "Loewenstein hot-cold empathy gap: state-dependent predictions fail across state."
+    },
+    {
+      "id": "match_v2_029",
+      "should_match": true,
+      "essence_pattern": "recency effect — most recent observations dominate evaluation regardless of base rate",
+      "side_a": {
+        "domain": "investing",
+        "description": "An investor's portfolio has averaged 10% returns for a decade but lost 5% in the last quarter. The investor sells in panic. The single recent quarter dominates their assessment of a ten-year trend."
+      },
+      "side_b": {
+        "domain": "media",
+        "description": "Crime rates in a city are at a 30-year low. A single high-profile attack dominates the news cycle for two weeks. Residents report feeling 'crime is out of control' — recent vividness overrides decade-long statistics."
+      },
+      "notes": "Salience-of-recent overweights the latest observation against the base rate."
+    },
+    {
+      "id": "match_v2_030",
+      "should_match": true,
+      "essence_pattern": "halo effect — one positive trait biases evaluation of unrelated traits",
+      "side_a": {
+        "domain": "social psychology",
+        "description": "Subjects rating a person's intelligence rate them as more intelligent when shown an attractive photo, even though the verbal evidence is identical. One trait (appearance) contaminates assessment of an independent trait (intelligence)."
+      },
+      "side_b": {
+        "domain": "corporate analysis",
+        "description": "Analysts rating a company's strategy rate it as more sound when the company's recent stock returns are high. The strategic decisions are identical; the price trajectory contaminates the strategy evaluation."
+      },
+      "notes": "Global impression contaminates trait-specific judgments — Thorndike halo."
+    },
+    {
+      "id": "no_match_v2_001",
+      "should_match": false,
+      "essence_pattern": "none — same word 'branch' but biological growth vs logical control flow",
+      "side_a": {
+        "domain": "biology",
+        "description": "A tree branches by splitting its growing tip into two daughter shoots. Each daughter inherits the parent's vascular system and grows outward, seeking light. The pattern is shaped by hormonal gradients and phototropism."
+      },
+      "side_b": {
+        "domain": "computer science",
+        "description": "A program branches when an if-statement evaluates a condition and selects one of two execution paths. The selection is deterministic given the input, and only one path executes per evaluation."
+      },
+      "notes": "Shared keyword 'branch' with no shared mechanism."
+    },
+    {
+      "id": "no_match_v2_002",
+      "should_match": false,
+      "essence_pattern": "none — same word 'inflation' but monetary supply vs gas pressure",
+      "side_a": {
+        "domain": "economics",
+        "description": "Inflation occurs when the money supply grows faster than the supply of goods, causing prices to rise across the economy. Driven by monetary policy, credit creation, and aggregate demand."
+      },
+      "side_b": {
+        "domain": "physics",
+        "description": "Inflation of a balloon occurs when injected gas increases the internal pressure above ambient. The elastic membrane stretches until tension balances pressure. Driven by the ideal gas law."
+      },
+      "notes": "Shared keyword 'inflation' with no shared mechanism."
+    },
+    {
+      "id": "no_match_v2_003",
+      "should_match": false,
+      "essence_pattern": "none — same word 'decay' but stochastic nuclear vs gradual relational erosion",
+      "side_a": {
+        "domain": "physics",
+        "description": "Radioactive decay is a memoryless stochastic process. Each unstable nucleus has a fixed probability per unit time of emitting a particle. The half-life is constant regardless of when the nucleus was formed."
+      },
+      "side_b": {
+        "domain": "interpersonal",
+        "description": "A friendship can decay through accumulated small slights, missed events, and divergent life circumstances. The erosion is path-dependent: which incidents in which order matter."
+      },
+      "notes": "Shared keyword 'decay'; nuclear is Markovian and stationary, relationship is path-dependent."
+    },
+    {
+      "id": "no_match_v2_004",
+      "should_match": false,
+      "essence_pattern": "none — same word 'stress' but mechanical force vs psychological load",
+      "side_a": {
+        "domain": "materials science",
+        "description": "Stress on a metal beam is force per unit cross-sectional area. Below the yield point, deformation is elastic and reversible. Above it, the metal yields and cannot return to its original shape."
+      },
+      "side_b": {
+        "domain": "psychology",
+        "description": "Psychological stress is the experienced response to perceived demands exceeding coping resources. It involves cortisol, sympathetic nervous activation, and subjective appraisal — not a measurable physical quantity."
+      },
+      "notes": "Shared keyword 'stress'; mechanical is a continuum physics quantity, psychological is a perception-mediated biological response."
+    },
+    {
+      "id": "no_match_v2_005",
+      "should_match": false,
+      "essence_pattern": "none — same word 'pressure' but atmospheric vs social conformity",
+      "side_a": {
+        "domain": "atmospheric science",
+        "description": "Atmospheric pressure is the weight of air above a point, decreasing with altitude. It drives wind from high to low pressure regions and is measured in pascals or millibars."
+      },
+      "side_b": {
+        "domain": "social",
+        "description": "Peer pressure is the influence of a reference group on individual behavior. It operates through identity, belonging, status threat, and conformity norms — none of which involve a quantitative force or gradient."
+      },
+      "notes": "Shared keyword 'pressure'; physical is a measurable field, social is an identity-mediated behavioral phenomenon."
+    },
+    {
+      "id": "no_match_v2_006",
+      "should_match": false,
+      "essence_pattern": "none — same word 'capacity' but warehouse cubic feet vs working memory slots",
+      "side_a": {
+        "domain": "logistics",
+        "description": "Warehouse capacity is the cubic volume available for storage, governed by floor area, ceiling height, and rack systems. It is measured in cubic feet or pallet positions and scales linearly with physical infrastructure."
+      },
+      "side_b": {
+        "domain": "cognition",
+        "description": "Working memory capacity is the number of discrete chunks a person can hold actively in mind. Approximately 4-7 chunks. Governed by prefrontal cortex bandwidth, not storage volume, and does not scale with effort or training."
+      },
+      "notes": "Shared keyword 'capacity'; physical is volumetric storage, cognitive is a fundamentally different attentional bottleneck."
+    },
+    {
+      "id": "no_match_v2_007",
+      "should_match": false,
+      "essence_pattern": "none — same word 'flow' but fluid dynamics vs psychological absorption state",
+      "side_a": {
+        "domain": "fluid dynamics",
+        "description": "Water flow through a pipe is governed by pressure differential, viscosity, pipe geometry, and turbulence regime. Reynolds number distinguishes laminar from turbulent flow. Continuous physical movement of fluid mass."
+      },
+      "side_b": {
+        "domain": "psychology",
+        "description": "Csikszentmihalyi's 'flow state' is a phenomenology of complete absorption in a task, with skill matching challenge. It involves time distortion, loss of self-consciousness, and intrinsic reward — no fluid involved."
+      },
+      "notes": "Shared keyword 'flow'; physical mass transport vs subjective attentional state."
+    },
+    {
+      "id": "no_match_v2_008",
+      "should_match": false,
+      "essence_pattern": "none — same word 'resistance' but electrical impedance vs political opposition",
+      "side_a": {
+        "domain": "electrical engineering",
+        "description": "Electrical resistance is a material property measured in ohms, opposing current flow according to Ohm's law (V=IR). Driven by electron scattering in the conductor lattice. Linear, temperature-dependent, scalar."
+      },
+      "side_b": {
+        "domain": "political science",
+        "description": "Political resistance is organized collective opposition to a governing power. It operates through coalitions, framing, civil disobedience, and strategic disruption — qualitative dynamics with no analogous scalar quantity."
+      },
+      "notes": "Shared keyword 'resistance'; physical material property vs strategic collective behavior."
+    },
+    {
+      "id": "no_match_v2_009",
+      "should_match": false,
+      "essence_pattern": "none — same word 'cycle' but biological circadian rhythm vs macroeconomic expansion/contraction",
+      "side_a": {
+        "domain": "chronobiology",
+        "description": "The circadian cycle is a ~24h endogenous biological rhythm regulating sleep, hormone secretion, and metabolism. Driven by the suprachiasmatic nucleus and entrained by light. Deterministic and species-typical."
+      },
+      "side_b": {
+        "domain": "macroeconomics",
+        "description": "The business cycle is the alternation between expansion and recession in aggregate output. Driven by credit dynamics, inventory swings, policy lag, and animal spirits. Emergent, irregular period, heavily state-dependent."
+      },
+      "notes": "Shared keyword 'cycle'; biological clock vs emergent macroeconomic oscillation."
+    },
+    {
+      "id": "no_match_v2_010",
+      "should_match": false,
+      "essence_pattern": "none — same word 'drift' but ocean currents vs genetic allele frequency",
+      "side_a": {
+        "domain": "oceanography",
+        "description": "Ocean drift is the slow horizontal movement of surface water driven by wind shear, Coriolis force, and density gradients. Directional, measurable in centimeters per second, and persistent across days to seasons."
+      },
+      "side_b": {
+        "domain": "population genetics",
+        "description": "Genetic drift is the random change in allele frequency in a finite population due to sampling variance across generations. Stronger in small populations. No direction, no force — pure stochastic sampling."
+      },
+      "notes": "Shared keyword 'drift'; oceanic is a directional fluid mechanics phenomenon, genetic is stochastic sampling."
+    },
+    {
+      "id": "no_match_v2_011",
+      "should_match": false,
+      "essence_pattern": "none — same word 'spread' but financial bid-ask vs epidemiological transmission",
+      "side_a": {
+        "domain": "finance",
+        "description": "The bid-ask spread is the difference between the highest price a buyer offers and the lowest a seller accepts. It reflects market liquidity, dealer inventory risk, and information asymmetry. Static at a moment; not propagating."
+      },
+      "side_b": {
+        "domain": "epidemiology",
+        "description": "Disease spread is the temporal propagation of an infectious agent through a population via contact networks. Driven by R₀, contact rates, and susceptibility. Inherently dynamic and network-structured."
+      },
+      "notes": "Shared keyword 'spread'; financial is a static price-pair gap, epidemic is a dynamic propagation process."
+    },
+    {
+      "id": "no_match_v2_012",
+      "should_match": false,
+      "essence_pattern": "none — same word 'wave' but mechanical oscillation vs hand gesture",
+      "side_a": {
+        "domain": "physics",
+        "description": "An ocean wave is a periodic disturbance propagating through water, transferring energy without net mass movement. Governed by wavelength, frequency, and water depth. Mechanical oscillation in a continuous medium."
+      },
+      "side_b": {
+        "domain": "social signaling",
+        "description": "A hand wave is a learned cultural gesture signaling greeting or farewell. It involves voluntary motor coordination interpreted through cultural conventions. No oscillation, no energy transfer, no medium."
+      },
+      "notes": "Shared keyword 'wave'; physics oscillation vs cultural gesture."
+    },
+    {
+      "id": "no_match_v2_013",
+      "should_match": false,
+      "essence_pattern": "none — same word 'bubble' but soap film surface tension vs speculative asset overvaluation",
+      "side_a": {
+        "domain": "physics",
+        "description": "A soap bubble is a thin liquid film enclosing gas, held together by surface tension minimizing surface area. Quasi-stable until evaporation thins the film below the rupture threshold."
+      },
+      "side_b": {
+        "domain": "finance",
+        "description": "An asset bubble is a sustained period of asset prices well above fundamental value, driven by expectations of further price rises that themselves attract more buyers. A reflexive belief loop, not a physical surface."
+      },
+      "notes": "Shared keyword 'bubble'; surface tension vs belief-driven price dynamics."
+    },
+    {
+      "id": "no_match_v2_014",
+      "should_match": false,
+      "essence_pattern": "none — same word 'spring' but mechanical elastic device vs seasonal climate phase",
+      "side_a": {
+        "domain": "mechanical engineering",
+        "description": "A spring is an elastic device that stores energy under deformation and releases it on return to equilibrium. Hooke's law: force is proportional to displacement. Used in suspension, escapements, and oscillators."
+      },
+      "side_b": {
+        "domain": "climate",
+        "description": "Spring is the climate season between winter and summer in temperate latitudes, characterized by warming temperatures, increased daylight, and biological reawakening. Determined by axial tilt and orbital position."
+      },
+      "notes": "Shared keyword 'spring'; mechanical energy storage vs astronomical/seasonal phase."
+    },
+    {
+      "id": "no_match_v2_015",
+      "should_match": false,
+      "essence_pattern": "none — same word 'crash' but software fault termination vs cardiovascular event",
+      "side_a": {
+        "domain": "software",
+        "description": "A software crash is an abrupt termination of a program due to an unhandled exception, memory violation, or operating-system signal. The process state is lost; recovery requires restart."
+      },
+      "side_b": {
+        "domain": "medicine",
+        "description": "A cardiovascular crash is acute hemodynamic collapse — typically from massive hemorrhage, septic shock, or cardiac arrhythmia. The body's organ perfusion fails; intervention is required within minutes."
+      },
+      "notes": "Shared keyword 'crash'; software termination vs biological perfusion failure."
+    }
+  ]
+}

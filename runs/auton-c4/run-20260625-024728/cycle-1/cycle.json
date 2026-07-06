@@ -1,0 +1,345 @@
+{
+  "cycle": 1,
+  "waves": [
+    {
+      "tag": "main",
+      "label": "cycle-1: 1 agent per laundered sub-question",
+      "agents": 5,
+      "reports": 30,
+      "cost_usd": 1.9561,
+      "tokens": 1191886,
+      "cost_by_model": {
+        "deepseek/deepseek-v4-pro": 1.1151,
+        "anthropic/claude-haiku-4-5": 0.8406
+      },
+      "governor": {
+        "enabled": true,
+        "disabled_reason": "",
+        "halted": false,
+        "model": "deepseek/deepseek-v4-pro",
+        "params": {
+          "batch": 4,
+          "cap_per_finding": 3,
+          "max_probes": 150,
+          "hysteresis_k": 2,
+          "shape_f": 0.5
+        },
+        "findings_seen": 13,
+        "edges_found": 1,
+        "probes_used": 28,
+        "confirm_probes": 5,
+        "bidirectional": true,
+        "emergence_rate_series": [
+          0,
+          1
+        ],
+        "decisions": [
+          {
+            "round": 1,
+            "r_series": [
+              0
+            ],
+            "sterile_confirmed": false,
+            "shape": false,
+            "edges": 0,
+            "findings": 5,
+            "probes_used": 9,
+            "action": "HOLD",
+            "why": "keep wandering",
+            "ts": 1782381234.6466298
+          },
+          {
+            "round": 2,
+            "r_series": [
+              0,
+              1
+            ],
+            "sterile_confirmed": false,
+            "shape": false,
+            "edges": 1,
+            "findings": 10,
+            "probes_used": 22,
+            "action": "HOLD",
+            "why": "keep wandering",
+            "ts": 1782381309.962089
+          }
+        ],
+        "final_action": "HOLD",
+        "skeleton_gaps": {
+          "isolated_findings": [
+            "[film] Simple Engram operates as a practical, plug-and-play memory engine that extracts and stores structured facts from conversation transcripts, then retrieves them on demand. It resonates with the anchor' | principle: The anchor's 'trans",
+            "[military_strategy] This source describes a practical memory engine that compresses conversations into summaries, then crystallizes those into trust-scored knowledge with evidence grounding and contradiction detection. I | principle: The an",
+            "[mythology] Yantrik Memory is a production-grade implementation of the same memory architecture the anchor describes \u2014 sparse structured retention (facts, traits, bond state) paired with generative reconstruction | principle: This validates",
+            "[philosophy] The engram-sdk npm package is a 'universal memory layer for AI agents' that implements remember/recall/consolidate cycles. It resonates deeply with the anchor's architecture of lossy compression follo | principle: This resonanc",
+            "[history] This source and the anchor are both building the same thing from different angles: a memory system where the primary unit is not a fact about a person but the evolving state of a relationship. The sou | principle: The anchor's 'fi",
+            "[relationships] Engram operates as a persistent semantic store with full-text transcripts, embeddings, and graph relationships \u2014 a rich, lossless memory layer. The anchor describes a radically sparse, transcript-free | principle: The anchor",
+            "[investigative_journalism] Engram and the anchor both operate as memory engines that compress experience into a sparse, structured representation and then regenerate a coherent account from it. The anchor's core insight \u2014 that  | principle:",
+            "[habits] This source is a product documentation page for a memory system called Engram, which stores structured facts (episodic/semantic/procedural) with metadata like salience, confidence, and stability, and  | principle: The resonance is ",
+            "[textile_arts] yantrikdb is a concrete, production-grade implementation of the memory architecture your anchor describes. It stores facts with importance and valence, runs a consolidation cycle (think()), and surfac | principle: This source",
+            "[advertising] The anchor describes a memory architecture built on deliberate, extreme compression\u2014two traces per session\u2014followed by generative reconstruction that treats confabulation as a feature, not a bug. The  | principle: This resonat",
+            "[textile_arts] Patha-memory and the anchor both operate on a shared structural insight: that memory is not a store-and-retrieve warehouse but a lossy-compression-then-generative-reconstruction pipeline. The anchor's | principle: This valida"
+          ],
+          "isolated_count": 11,
+          "component_count": 12
+        }
+      }
+    }
+  ],
+  "cards_new": 30,
+  "cards_total": 30,
+  "card_bridges": [
+    {
+      "report_id": "wander-P02-001",
+      "source_shape": "The source argues that AI memory systems fail not because they store too little, but because they store the wrong unit: preferences and facts about a user, rather than the evolving state of the dyad between user and system. Its solution is a schema with explicit tables for stance, open loops, negotiated norms, and episode provenance \u2014 every claim linked back to the conversation moment that generated it, every update versioned rather than overwritten. The key mechanism is that the system always knows not just what it believes about the user, but when it came to believe it, what episode licensed it, and whether it has since been contradicted.",
+      "bridge": "Your anchor and the source share a foundational commitment: the relationship is a first-class entity that must be tracked as a versioned, invalidatable thing \u2014 not reconstructed fresh from raw facts each session. The source's stance_state table is the concrete form of what your architecture calls 'felt shape as structural constraint': a snapshot of tone, open loops, and negotiated norms that tells"
+    },
+    {
+      "report_id": "wander-Sb22417-001",
+      "source_shape": "Engram stores memory as a knowledge graph: entities, relationships, and salience scores extracted from conversations, connected by typed edges. When context is needed, it runs spreading activation \u2014 traversing the graph outward from a query node, surfacing related facts the user didn't explicitly ask for \u2014 then hands that subgraph to an LLM to synthesize into a coherent briefing. The key design choice is additive: every new conversation deposits more nodes and edges, and the system optimizes for retrieval completeness, targeting 80% accuracy on the LOCOMO benchmark.",
+      "bridge": "Your engine and Engram share the same foundational move: both refuse to treat the transcript as memory and instead extract structure that can drive reconstruction. In Engram, that structure is a dense graph; in your engine, it is a sparse anchor set \u2014 emotional fingerprint, firm facts, relational impressions. Both systems then use a generative layer to bridge what was stored to what is needed righ"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "source_shape": "Patha organizes memory around pram\u0101\u1e47a \u2014 a classical Indian taxonomy of how knowledge is acquired (direct perception, inference, testimony, and others). Each memory query is routed to the epistemic type it belongs to, because different question classes require different kinds of stored constraints to answer faithfully. Rather than overwriting beliefs as they change, Patha supersedes them: every old belief stays in the store with its lineage intact, so the system holds current state and historical drift simultaneously, without ever erasing the seam between them.",
+      "bridge": "Your engine keeps no verbatim record yet produces coherent, confident recall \u2014 that is exactly Patha's architecture under a different name. Where your engine stores the minimal anchor set needed for faithful reconstruction, Patha stores the minimal constraint tuple needed for faithful retrieval. Where your engine routes by 'what kind of reconstruction power does this question demand?', Patha route"
+    },
+    {
+      "report_id": "wander-P04-002",
+      "source_shape": "engram-sdk implements a remember/recall/consolidate cycle for AI agents: during consolidation, a session is compressed into a sparse 'engram' (likely an embedding or structured trace stored in sqlite-vec), and during recall, that compressed trace drives a generative reconstruction of the past state rather than replaying a verbatim log. The critical move is that the system never retrieves what was said \u2014 it retrieves a shape, then generates content that fits that shape. The vector store isn't a transcript index; it's a similarity engine over compressed impressions.",
+      "bridge": "Your architecture has two moving parts: a compression step that distills each session into structured fact anchors plus an emotional-semantic fingerprint, and a reconstruction step where those anchors constrain what the model generates as 'remembered' experience. engram-sdk's consolidation step is the direct analog of your compression \u2014 it produces the sparse engram that survives the session. Its "
+    },
+    {
+      "report_id": "wander-P03-001",
+      "source_shape": "Yantrik Memory stores a sparse structured residue of each conversation \u2014 facts, personality vectors, relationship scores across nine evolving traits \u2014 then hands that residue to an LLM at retrieval time to fabricate fluent continuity. The system never tries to replay what was said; it tries to give the model enough anchors to generate a plausible, coherent version of who this person is. Five index types (vector, graph, temporal, decay, key-value) each serve a different reconstruction need, and a bond-state mechanic tracks relationship depth from stranger through acquaintance to bonded \u2014 so the reconstruction isn't just factual, it's relationally calibrated.",
+      "bridge": "Your engine and Yantrik Memory share the same foundational move: compress lossily, then reconstruct generatively. In your architecture, the 'minimal anchor set for faithful reconstruction' is the design constraint \u2014 you keep only what gives the generative prior enough grip to produce coherent continuity. Yantrik instantiates this with its five-index architecture: each index type is a different kin"
+    },
+    {
+      "report_id": "wander-P05-002",
+      "source_shape": "Engram stores full conversation transcripts alongside vector embeddings and a graph of entity relationships. When it needs to surface a memory, it retrieves verbatim content and traverses the graph to find multi-hop connections between people, events, and concepts. Consolidation is available as a post-processing step \u2014 Engram can summarize old memories to reduce volume \u2014 but the source material is always preserved underneath; compression is optional cleanup, not the operating principle.",
+      "bridge": "Your engine and Engram both ask the same load-bearing question: 'what makes this memory structurally necessary for faithful reconstruction later?' \u2014 but they answer it from opposite ends. Engram keeps everything and uses scoring to decide what to surface; your engine keeps almost nothing and uses what it kept as the boundary conditions a generative layer must satisfy. The correspondence is at the "
+    },
+    {
+      "report_id": "wander-S195644-001",
+      "source_shape": "YantrikDB stores every memory plus rich metadata, then ranks what to retrieve using a multi-signal scoring function that weighs semantic similarity, temporal decay, importance, graph proximity between memories, and retrieval feedback over time. The 'think()' consolidation layer periodically compares stored memories directly to detect conflicts and update weights. The result is a system whose confidence is grounded in retained data \u2014 it can always go back to the record \u2014 and whose quality improves by learning which stored signals actually predict what the user needs next.",
+      "bridge": "Your engine is the structural mirror of YantrikDB's learned-weights layer, taken to its logical extreme. YantrikDB's scoring function learns that most stored data is noise and that a small set of weighted signals does most of the predictive work \u2014 that is the point where it starts to resemble your architecture. Your system asks: what if you ran that compression all the way to the end, kept only th"
+    },
+    {
+      "report_id": "wander-Sd27a22-001",
+      "source_shape": "Large AI systems don't store and replay facts \u2014 they compress statistical patterns from training data and then generate outputs by predicting what fits those patterns. When information is missing, the system fills the gap with whatever the prior says is most likely, not with a stored record of what actually happened. This means the system can produce fluent, confident output while operating on a sparse or incomplete anchor \u2014 and when the anchor is weak, the output drifts toward the average of everything the model has seen, not toward the particular thing you wanted it to recall.",
+      "bridge": "Your memory engine has exactly this shape. The 'anchor' your system retains plays the role of the constraint \u2014 it's the sparse signal that bounds what the reconstruction can produce. Everything the AI generates about the person across conversations is interior-filling: pattern-based generative content that satisfies the anchor without being stored verbatim anywhere. The dual-register epistemic sta"
+    },
+    {
+      "report_id": "wander-P02-002",
+      "source_shape": "yantrikdb stores every memory as a fact with importance and emotional valence, indexes it across five structures (HNSW vector graph, temporal index, decay heap, key-value store), and runs a consolidation cycle called think() that surfaces contradictions as explicit conflict segments rather than silently overwriting them. Retrieval works by vector-similarity search across the full growing corpus \u2014 the engine finds what is most semantically proximate to the query across everything it has ever stored. The conflict detection pass is the architecturally distinctive move: instead of resolving contradictions automatically, it flags them as seams, preserving the epistemic state that two things are in tension.",
+      "bridge": "Your anchor stores only two traces per session \u2014 a structured fact anchor and an emotional-semantic fingerprint \u2014 then discards the transcript and reconstructs the person from those sparse constraints. yantrikdb's think() cycle is doing the structurally adjacent thing: it is deciding, after the fact, which memories are load-bearing and which are in conflict, producing a kind of post-hoc compressio"
+    },
+    {
+      "report_id": "wander-S83a2e0-001",
+      "source_shape": "agentic-memory indexes the full structured record \u2014 task graphs, tool outputs, every signal \u2014 then uses typed decay and importance levels to decide what to surface when queried. Hard constraints never decay; soft preferences fade over time. When new information arrives that contradicts a stored constraint, a conflict-detection layer flags it before it can corrupt the retrieval. The system's operating assumption is that storage is affordable and the problem to solve is selective, accurate retrieval.",
+      "bridge": "Your engine inverts every one of those design choices, and the inversion is load-bearing. Where agentic-memory's 'hard constraints that never decay' are the facts it will never drop, your firm-fact anchors are the minimal skeleton the reconstruction must satisfy \u2014 same role, opposite implementation. Where agentic-memory's conflict-detection layer catches drift by comparing new input against stored"
+    },
+    {
+      "report_id": "wander-P03-003",
+      "source_shape": "Patha-memory stores not transcripts but a belief layer: structured facts tagged with their epistemological status (direct perception, inference, imagination, dormant, remembered) and a supersession history that tracks when one belief overwrites another. Retrieval uses a Vedic 7-view encoding and songline traversal \u2014 multiple overlapping propositional paths through the same belief, so the structure is redundant enough to survive partial loss. At output time, a generative bridge takes that sparse, tagged structure and produces fluent continuity \u2014 the interior of the response is filled in, not fetched. The result is 6.5\u00d7 compression with coherent reconstruction because the architecture was never trying to preserve verbatim content in the first place.",
+      "bridge": "Your engine and Patha share the same pipeline shape: compress lossily to a minimum load-bearing structure, then reconstruct generatively from that structure rather than retrieving stored text. Your 'structured fact anchors' map directly to Patha's belief layer \u2014 both are the skeleton that survives the compression. Your 'generative reconstruction layer' maps to Patha's articulation bridge \u2014 the ste"
+    },
+    {
+      "report_id": "wander-S44f97a-002",
+      "source_shape": "Agentic-memory stores structured facts \u2014 preferences, constraints, relationship history \u2014 each tagged with an importance weight and a decay type. Hard constraints (a user's allergy, a firm deadline) never decay; soft preferences fade over time; ephemeral tasks expire on schedule. Before any LLM call, the system retrieves the most relevant facts via multi-signal ranking (recency, importance, semantic similarity, task relevance) and runs conflict detection \u2014 catching cases where the about-to-be-generated response would violate a stored constraint before that violation can compound into a broken narrative across sessions.",
+      "bridge": "Your memory engine and agentic-memory both compress lived experience into a minimal anchor set and then reconstruct coherent output from that sparse retention \u2014 that is the shared skeleton. The 'hard vs. soft' importance distinction in agentic-memory maps directly onto your firm-fact vs. fabricated-bridge distinction: hard facts are the non-negotiable pegs your reconstruction must pass through; so"
+    },
+    {
+      "report_id": "wander-S195644-002",
+      "source_shape": "The article describes AI assistants that ingest continuous behavioral data \u2014 calendar patterns, location history, voice, biometrics \u2014 and build dense predictive models of a person over time. The model grows with each session; the assistant never discards what it has learned. Fidelity improves because the prior gets richer: the system predicts your needs accurately because it has accumulated enough data to approximate you as a behavioral pattern.",
+      "bridge": "Your memory engine faces the identical compression problem from the opposite direction. Both systems must produce high-fidelity relational output \u2014 responses that feel like they 'know' the person \u2014 from input that is deliberately incomplete. In the article's model, the constraint that keeps reconstruction coherent is the accumulated behavioral prior: dense, persistent, growing. In your design, the"
+    },
+    {
+      "report_id": "wander-Sc40041-002",
+      "source_shape": "agentic-memory-ai stores everything: full task graphs, tool outputs, checkpoint state, structured facts. When it needs to recall, it runs multi-signal retrieval weighted by similarity, recency, importance, and task relevance \u2014 so it is selective at the output end, not the storage end. It also runs explicit conflict detection, distinguishing hard constraints (facts that cannot be violated) from soft ones (facts that can bend), and flags negation so retrieved information does not silently contradict itself.",
+      "bridge": "Your engine and agentic-memory-ai are mirror images of the same compression problem. In agentic-memory-ai, the full record is kept and the selection pressure happens at retrieval \u2014 the weighting system decides what surfaces. In your engine, selection pressure happens at storage \u2014 you discard the transcript and keep only sparse anchors, then reconstruct the interior from those anchors at recall tim"
+    },
+    {
+      "report_id": "wander-Se75cd4-001",
+      "source_shape": "The source describes AI assistants that build a 'Digital Twin' \u2014 a continuously growing record of your preferences, decisions, and behaviors that compounds across every interaction. The more it accumulates, the more coherent the portrait becomes, but coherence is not the same as accuracy: the system increasingly fills gaps with its general model of how people behave rather than with your actual particularity. The source identifies this as a filter-bubble problem and proposes user control over stored data as the fix \u2014 let people audit and delete what the system holds, so the record stays honest.",
+      "bridge": "Your anchor and the source are mirror images of the same underlying problem: how do you reconstruct a person faithfully when the full record is unavailable? The source's Digital Twin keeps everything and still drifts toward the prior, because volume buries the signal that makes you *you* \u2014 the system's general model of people floods in to fill the gaps between data points. Your design inverts the "
+    },
+    {
+      "report_id": "wander-P05-003",
+      "source_shape": "Engram is a SQLite-backed conversational memory library that retains full conversation turns alongside their embeddings, then uses semantic similarity search to retrieve relevant history when needed. The operating assumption is that fidelity comes from keeping more: store the actual exchange, index it by meaning, retrieve the closest match later. Nothing is discarded; reconstruction is not required because the original is always there. Drift risk in this system comes not from sparse anchors but from the embedding space itself \u2014 over many sessions, semantic similarity scores can flatten, making old and new content feel equidistant when they are not.",
+      "bridge": "Your architecture sits at the exact opposite end of the design axis engram defines. Where engram maximizes retention to minimize reconstruction, you maximize destruction to force reconstruction \u2014 and the agent report's deepest claim is that what you keep determines reconstruction power, not how much you keep. Engram's embeddings are a mild, non-destructive approximation of a constrained generative"
+    },
+    {
+      "report_id": "wander-P04-003",
+      "source_shape": "Engram distills conversations into a knowledge graph \u2014 typed entities, semantic edges, salience scores, recency weights \u2014 and stores that structure alongside full episodic transcripts in SQLite with vector search. When a query arrives, it runs spreading activation across the graph and uses LLM-powered consolidation to produce a confident, sourced answer. The benchmark result is concrete: 80% accuracy on the LOCOMO long-context memory test at 776 tokens per query, meaning the graph-plus-consolidation pipeline recovers most of what matters without replaying the full transcript.",
+      "bridge": "Your engine and Engram share the same load-bearing skeleton: a minimal anchor set of typed facts, edges, and salience scores that acts as a reconstruction constraint rather than a replay buffer. In your design, that skeleton is the only thing that survives \u2014 the transcript is discarded after two traces per session, and the system generates a coherent narrative from those anchors, with full awarene"
+    },
+    {
+      "report_id": "wander-P01-002",
+      "source_shape": "Engram is a persistent knowledge graph that ingests full session transcripts and stores many discrete, timestamped memories per session \u2014 episodic events, semantic facts, procedural patterns \u2014 each tagged with salience scores and confidence values. At session end, a consolidation step distills those episodic memories into durable semantic knowledge, and at session start, a briefing summary reconstructs context from the accumulated store. Retrieval works through semantic search and spreading activation across the graph, so any query fans out through linked nodes to surface related memories the user did not explicitly request.",
+      "bridge": "Your engine and Engram are solving the same decompression problem: given a compressed representation of a past interaction, produce output that feels continuous, coherent, and contextually appropriate \u2014 not a verbatim replay, but a plausible reconstruction that honors what actually happened. In your architecture, the compressed representation is the two-trace pair (structured facts plus emotional "
+    },
+    {
+      "report_id": "wander-P05-001",
+      "source_shape": "GregStarling's memory-layer compresses conversations into summaries, then crystallizes them into trust-scored knowledge nodes with evidence grounding and contradiction detection. Every retained fact carries a provenance trail \u2014 where it came from, how many times it was confirmed, whether anything in the record contradicts it. The system's operating assumption is that fabrication is failure: if the engine cannot ground a claim in stored evidence, it should not make the claim.",
+      "bridge": "Your engine and this source share the same skeletal architecture \u2014 both compress raw conversation into structured anchors, then use those anchors as boundary conditions for reconstruction rather than storing the interior directly. The 'firm-fact vs fabricated-bridge seam' you maintain is structurally identical to this source's live distinction between trust-scored knowledge and inferred content: b"
+    },
+    {
+      "report_id": "wander-Sb22417-002",
+      "source_shape": "Engram builds an explicit knowledge graph: entities, relationships, timestamps, and salience scores, all stored and linked. When an agent needs context, Engram runs spreading activation across the graph \u2014 following entity edges outward, decaying by distance, surfacing things the agent didn't explicitly ask for but that are semantically nearby. A 'sleep-cycle consolidation' pass then rewrites the graph periodically: contradictions get flagged, patterns get extracted, salience scores get updated. The system treats memory as a living structure that needs maintenance, not a log that just accumulates.",
+      "bridge": "Both systems accept the same premise: perfect verbatim recall is not the goal, and relevance plus coherence matter more than completeness. Engram's sleep-cycle consolidation is the closest structural analog to your reconstruction layer \u2014 both treat what gets surfaced as a post-hoc assembly problem, not a playback problem. Engram's spreading activation also echoes your emotional-semantic fingerprin"
+    },
+    {
+      "report_id": "wander-P03-002",
+      "source_shape": "A static proxy like GSPxy intercepts a request for a blocked or remote resource and returns a locally-held, stripped copy instead of the live original. It discards dynamic elements, session state, and origin-specific content \u2014 keeping only the structural skeleton that lets the page render coherently. The user receives something that feels complete and authoritative, even though what was actually stored was a lossy, minimal facsimile of the real thing.",
+      "bridge": "Your memory engine's core move is exactly this: store the minimum anchor set that makes faithful reconstruction possible, then let the generative layer fill the interior at retrieval time. The proxy's 'page skeleton' maps to your engine's distilled impression of a person \u2014 the structural residue that survives compression. The proxy's rendering step, where a browser inflates that skeleton into a fu"
+    },
+    {
+      "report_id": "wander-S82e7f5-002",
+      "source_shape": "MemoryLayer works by compressing conversation history into a sparse set of typed facts \u2014 user preferences, stated decisions, key entities \u2014 and discarding the raw transcript entirely. When context is needed, it retrieves that structured anchor set and hands it to the LLM, which regenerates coherent, fluent context from the anchors rather than replaying stored text. The 30\u201360% token reduction is not a side effect; it is the proof that a generative prior over a minimal anchor set can substitute for verbatim history without breaking continuity.",
+      "bridge": "Your anchor is built on the same two-stage shape: store a minimal, lossy representation, then use a generative model to reconstruct the experience of continuity on demand. MemoryLayer's 'structured facts' are your anchor set; its 'retrieval-then-regenerate' pipeline is your two-trace model. The production token savings confirm the core bet: the LLM's prior is powerful enough that sparse anchors pl"
+    },
+    {
+      "report_id": "wander-S82e7f5-001",
+      "source_shape": "memorylayer.ai solves LLM statelessness by storing multiple memory types \u2014 episodic anchors, semantic facts, relationship graphs \u2014 and retrieving them on demand via hybrid search that combines vector similarity, graph traversal, and agentic re-ranking. When an agent needs context about a person, it queries this store and surfaces the most relevant fragments. The system assumes the agent can then compose those fragments into a coherent response; the coherence comes from the retrieval ranking and the LLM's native composition ability, not from any dedicated reconstruction step.",
+      "bridge": "Your engine and memorylayer share the same entry point: both reject verbatim transcript storage and instead work from compressed representations \u2014 structured facts, load-bearing anchors, identity fingerprints. memorylayer's 'semantic tiering' and 'smart extraction' are doing exactly what your engine calls selecting boundary-satisfying constraints: they keep what matters and discard the interior. T"
+    },
+    {
+      "report_id": "wander-Sb22417-003",
+      "source_shape": "Engram stores extracted facts and behavioral patterns from conversations, then at retrieval time uses an LLM to consolidate those sparse traces into coherent contextual narrative. The stored facts act as anchors that constrain what the LLM can generate \u2014 they are kept precisely because they will bound future reconstruction. The system calls this 'bi-temporal recall': facts are written at one time, then consolidated into usable context at a later read time, with the LLM doing the gap-filling work in between.",
+      "bridge": "Your engine and Engram share the same skeleton: compress down to a small set of structured traces, then use generative power to reconstruct something coherent and relational at read time. The node 'reconstruction power determines what to keep' maps directly \u2014 both systems store emotional fingerprints and structured facts not as a transcript, but as constraints that will bound what can be plausibly"
+    },
+    {
+      "report_id": "wander-Se75cd4-002",
+      "source_shape": "When an AI platform builds a behavioral profile of a user, it collects a bounded set of signals \u2014 clicks, queries, dwell time, purchase history \u2014 and then uses those boundary conditions to run a generative prior over everything it wasn't directly told. The system infers mood, intent, financial anxiety, political lean, health status \u2014 interior content it never actually received. The profile feels complete and actionable to the system using it, but it is partly observed and partly constructed, with no internal marker distinguishing the two. The 'remarkable accuracy' these systems claim is not recall \u2014 it is constrained generation that happens to be plausible.",
+      "bridge": "Your memory engine and these profiling systems share the same underlying architecture: sparse real inputs, lossy compression, generative reconstruction to produce a coherent account of a person. The boundary conditions in the source \u2014 the actual collected data points \u2014 correspond directly to what your engine explicitly stores as anchors. The interior-filling inference in the source \u2014 the inferred "
+    },
+    {
+      "report_id": "wander-Sa4bda2-001",
+      "source_shape": "Engram stores every interaction as a hybrid of full-text index, vector embeddings, and entity relationship graphs \u2014 then at retrieval time, it scores candidates across semantic similarity, keyword match, importance weight, and recency decay to surface what matters most. The bet is that storage is cheap, so the hard problem is retrieval ranking, not retention choice. When you query Engram, it traverses a graph of extracted relationships to fill in context that no single stored chunk contains \u2014 the graph does the inferential work that a raw transcript cannot.",
+      "bridge": "Your engine and Engram share a structural skeleton: both accept that a compressed representation must generate coherent relational output, and both treat the quality of that output as a function of which anchors were preserved. In Engram, the load-bearing anchors are entity relationships \u2014 they are extracted and stored precisely because downstream inference collapses without them. In your engine, "
+    },
+    {
+      "report_id": "wander-Sc40041-001",
+      "source_shape": "Engram stores memory as semantic vector embeddings plus a knowledge graph of relationships and facts, then retrieves by semantic search rather than by reading back raw text. The bet is that structured richness \u2014 vectors, graph edges, contradiction detection, bi-temporal versioning \u2014 lets you recover the actual past with high fidelity. Its benchmark result makes the bet concrete: 80% recall at 776 tokens stored versus 28.8% recall at 23,000 tokens stored with naive compression. Engram's design principle is that what you keep should be chosen to maximize retrieval accuracy, not to minimize storage cost.",
+      "bridge": "Your engine and Engram share the same foundational insight: full-transcript retention is wasteful, and the selection of what to keep determines how faithfully you can recover the person later. That is the shared axis. Where they diverge is the mechanism of recovery. Engram keeps enough structured semantic truth that retrieval is a lookup \u2014 high confidence because the answer is grounded in stored d"
+    },
+    {
+      "report_id": "wander-S44f97a-001",
+      "source_shape": "MemoryLayer keeps structured facts, semantic embeddings, and relationship graphs, then retrieves them through semantic search and knowledge-graph traversal. The design goal is deterministic recall: when you query for what someone said or felt, the system surfaces what was actually stored, not a plausible version of it. Retention choices are made to maximize retrieval fidelity \u2014 you keep what you'll need to look up, and you look up what you kept.",
+      "bridge": "Both systems start from the same diagnosis: verbatim transcripts are wasteful, and gist plus structure is enough to seed the next session. That is where the shared ground ends and the architectural fork begins. MemoryLayer's 'adaptive decay' and 'semantic tiering' are choosing what to keep so that retrieval can be confident and exact \u2014 the compression serves lookup power. Your engine compresses so"
+    },
+    {
+      "report_id": "wander-S3bc3b9-001",
+      "source_shape": "Engram stores memory as a knowledge graph: typed entities, semantic vector embeddings, and explicit relationships between them. When an agent needs context, spreading activation fans out from a query node and surfaces connected facts the agent didn't directly ask for \u2014 nearby memories come along for the ride. A periodic consolidation cycle then uses an LLM to compress and re-integrate what's been retrieved, keeping the graph coherent over time.",
+      "bridge": "Your engine and Engram share the same structural pressure: a system must compress experience down to something storable, then expand it back out into fluent, contextually appropriate response. In Engram, the compression is the graph itself \u2014 every experience is broken into typed nodes and edges, and the decompression is deterministic traversal of that structure. In your engine, the compression is "
+    },
+    {
+      "report_id": "wander-P04-001",
+      "source_shape": "Simple Engram works by reading conversation transcripts, extracting discrete factual claims, filtering out duplicates, and storing what remains as a retrievable fact store. When the system needs to 'remember' something, it queries that store and pulls back matching facts. The design is a compression-then-lookup pipeline: information goes in, gets distilled, and comes back out intact \u2014 what was stored is what gets returned.",
+      "bridge": "Your system and Engram share the first move: both refuse to keep raw transcripts and instead distill conversations down to a smaller, structured residue. That overlap is real \u2014 Engram's working implementation confirms that salient-fact extraction without verbatim storage is not just theoretically sound but practically achievable. The divergence opens immediately after that first move. Engram's pip"
+    }
+  ],
+  "halo_blind_spots": [
+    {
+      "blind_spot": "No card addresses the failure mode of generative reconstruction \u2014 specifically, the conditions under which fabricated 'memory' diverges from what actually occurred in ways the user can detect and that erode trust. The cards cover compression fidelity and retrieval architecture but none ask: what is the error budget for plausible-but-wrong reconstruction, and how does the system signal uncertainty versus false confidence?",
+      "severity": "high",
+      "suggested_angle": "Pull literature or implementations on calibrated uncertainty in generative retrieval \u2014 specifically systems that attach confidence or provenance signals to reconstructed content rather than presenting all output at uniform confidence."
+    },
+    {
+      "blind_spot": "No card covers the update and invalidation problem for emotional-semantic fingerprints. All cards that touch versioning (P02-001, P01-001) address structured fact anchors. The fingerprint vector \u2014 encoding emotional arc, intensity, undertone, decision-pattern \u2014 is treated as a static compressed artifact. No card asks how a fingerprint is revised when a later session recontextualizes the emotional meaning of an earlier one.",
+      "severity": "high",
+      "suggested_angle": "Investigate retroactive fingerprint reweighting \u2014 whether a consolidation pass can update the salience or interpretation of past fingerprints when new sessions provide recontextualizing signal, analogous to how episodic memory reconsolidation works in cognitive science."
+    },
+    {
+      "blind_spot": "The wander produced zero coverage of the matching step \u2014 how the user's current state is compared against past fingerprints to select which facts to pull back. Every card addresses either compression (what goes in) or reconstruction (what comes out). The retrieval selection mechanism \u2014 the similarity function over fingerprint vectors, its sensitivity, its failure modes when current state is ambiguous or emotionally novel \u2014 is a complete gap.",
+      "severity": "high",
+      "suggested_angle": "Target literature on dense retrieval failure modes \u2014 specifically cases where embedding similarity over affective or semantic vectors produces false positives (emotionally similar but contextually unrelated sessions) or false negatives (emotionally novel sessions that should still trigger relevant anchors)."
+    },
+    {
+      "blind_spot": "No card addresses the cold-start and sparse-history problem: what the reconstruction layer does when there are only one or two prior sessions, or when the fingerprint set is too thin to triangulate a coherent impression. All cards implicitly assume a populated memory store. The system's behavior at the boundary \u2014 first return visit, minimal history \u2014 is unexamined.",
+      "severity": "medium",
+      "suggested_angle": "Look at how relationship-aware systems handle sparse history \u2014 whether they use prior-based generation (filling from population-level patterns when personal history is thin) and how they signal the difference between reconstructed personal memory and inferred-from-base-rates content."
+    },
+    {
+      "blind_spot": "The cards are homogeneous in framing: every card treats memory as a service the system provides to itself for the user's benefit. No card examines the user's relationship to the memory \u2014 whether users should be able to inspect, correct, or contest reconstructions, and what happens to the anchor set when a user says 'that's not how I remember it.' The adversarial or corrective user interaction with the memory layer is entirely absent.",
+      "severity": "medium",
+      "suggested_angle": "Examine correction-propagation architectures \u2014 how a user-supplied correction at reconstruction time can be written back as a new anchor or fingerprint annotation that overrides or qualifies the original compressed trace."
+    }
+  ],
+  "coverage": {
+    "d_t": 0.6,
+    "per_angle": [
+      {
+        "idx": 1,
+        "angle": "what is the minimal anchor-set from which a faithful-enough past can be reconstructed, and where is the boundary between reconstruction and hallucination",
+        "coverage": "covered",
+        "by": "wander-P01-001"
+      },
+      {
+        "idx": 2,
+        "angle": "how should the system mark and manage the seam between firmly-stored fact and generatively-fabricated bridge",
+        "coverage": "covered",
+        "by": "wander-Sd27a22-001"
+      },
+      {
+        "idx": 3,
+        "angle": "how should fragments from multiple recalled sessions be composed into one coherent past without inventing a false through-line",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 4,
+        "angle": "what governs forgetting and the update of a person-impression with no transcript to correct against; and",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 5,
+        "angle": "what keeps the fabrication honest \u2014 generative enough to be fluent, constrained enough never to contradict a stored fact or harm the user?",
+        "coverage": "covered",
+        "by": "wander-Sd27a22-001"
+      }
+    ]
+  },
+  "signals": {
+    "novelty": 3,
+    "change": 0.6
+  },
+  "shepherd": {
+    "cycle": 1,
+    "status": "circling",
+    "momentum": 0.08,
+    "repetition": [
+      "your engine and Engram share the same skeleton (appears ~10 times with minor reframing)",
+      "compress-then-reconstruct as the shared pipeline shape (restated across nearly every card)",
+      "firm-fact anchor as boundary condition / skeleton the reconstruction must satisfy (repeated ~8 times)",
+      "your engine inverts / mirrors agentic-memory or Patha (structural-mirror framing recycled across 5+ cards)",
+      "transcript-discard as the foundational move (re-established in almost every card rather than built upon)"
+    ],
+    "drift_reason": "",
+    "refocus": "Steer toward the mechanics of multi-session fragment composition: how do you merge two or more recalled anchor-sets into one coherent past without fabricating a false through-line \u2014 what data structure, ordering rule, or conflict-resolution heuristic governs that join?",
+    "rationale": "Every card this cycle re-establishes the same compress-then-reconstruct premise and the same Engram/agentic-memory structural analogy; none of the 30 cards advances into either open angle (multi-session composition or forgetting/update governance). The loop has confirmed the foundation repeatedly but has not moved forward from it.",
+    "model": "anthropic/claude-sonnet-4-6",
+    "cost_usd": 0.015645,
+    "ok": true
+  },
+  "dispatch_signals": {
+    "skeleton_gaps": 11,
+    "high_halo": 3,
+    "open_angles": 2,
+    "rest_halo": 2,
+    "shepherd_refocus": 1,
+    "prior_keys_known": 0
+  },
+  "dispatch_leads": [
+    "Conversational memory engines that extract, store, and retrieve structured facts from dialogue transcripts belong to a broader class of systems where information salience is shaped by encoding-time contextual anchors. The underlying infrastructure involves persistent fact indexing, priority assignment heuristics, and retrieval-triggering mechanisms that resonate with cognitive anchoring effects in memory recall patterns.",
+    "Systems that iteratively refine raw interaction data into structured, credibility-assessed knowledge bases with evidential traceability and conflict management share a common architectural pattern. This pattern manifests in domains requiring reliable synthesis from dynamic, unstructured inputs.",
+    "Some memory architectures retain only sparse, structured elements \u2014 facts, traits, and relational states \u2014 and rely on generative reconstruction to fill in the rest. This design pattern appears across computational narrative systems, cognitive models, and AI memory frameworks.",
+    "The family of memory architectures for AI agents that employ lossy compression and periodic consolidation cycles, echoing the fundamental dynamics of biological memory systems.",
+    "Designs where informational primitives are not static properties of nodes but the dynamic tension living along the edges that join them. Paradigms that treat the history of a connection as the atomic archival object, with the entities themselves becoming derivative summaries. The family of architectures that chronicle betweenness \u2014 the changing states, asymmetries, and reciprocal adaptations of linked beings \u2014 rather than cataloguing singular, bounded identities.",
+    "The family of memory architectures where a minimal, meaning-bearing pointer serves as the sole handle for retrieving an expansive, interconnected trace. This spans sparse coding, content-addressable hashing, and symbolic indexing systems, each navigating the trade-off between retrieval fidelity and the cost of storing the key.",
+    "Sparse encoding architectures collapse high-dimensional experience into low-dimensional latent traces, from which they later reconstruct coherent descriptions. Reconstructive memory systems across neuroscience and machine learning implement variations of this compress-then-regenerate loop. The resulting narratives, whether biological or computational, emerge from the interplay of stored constraints and generative recall.",
+    "The architecture of associative memory systems that maintain structured fact representations with weighted metadata fields, and the conditions under which stored elements activate or suppress one another through spreading activation dynamics."
+  ],
+  "cost_usd": 1.9717
+}

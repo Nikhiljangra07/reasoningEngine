@@ -1,0 +1,427 @@
+{
+  "metadata": {
+    "session_id": "r-fable-sorter-20260612-051604",
+    "mode": "multi_pendulum",
+    "anchor_summary": "I'm currently working on a system that helps people advance their concepts or the work they're currently working on. If there's a case or research that's already published, based on that inheritance, ",
+    "cushion_constellation_size": 19,
+    "agent_count": 6,
+    "report_count": 9,
+    "total_tokens_spent": 228534,
+    "elapsed_seconds": 319.80991101264954,
+    "completed_at": 1781266934.7457018
+  },
+  "high": [
+    {
+      "report_id": "wander-P01-001",
+      "agent_id": "P01",
+      "domain": "taoism",
+      "spark": "Taoism named the mechanism you're building 300 years before computers existed: wu-wei is a soft field that attracts rather than directs.",
+      "source_shape": "Kuo's reading of Taoism treats incompleteness and non-specification as the generative condition itself — not deficits to fix. Creative insight emerges when the self stops directing and allows resonance to arise through emptiness.",
+      "bridge": "Your system's core bet — that vague input and partial knowing are the engine, not the obstacle — has a philosophical lineage here. The 'bounded chaos' tension in your design is precisely the Taoist shape: constraint that is gravitational rather than instructional.",
+      "use": "Consider using wu-wei as a design test: if a component directs the user toward an answer rather than attracting resonance, treat that as a signal the constraint has become too instructional.",
+      "limit": "Taoism is a practice of human surrender — the creative agent dissolves the directing self to allow emergence. Your system inverts this: wandering agents are computational, not self-dissolving, and the user anchors rather than surrenders. Taoist emptiness is achieved by subtracting ego; your system achieves openness through structural design. Conflating these risks romanticizing the system's function as spiritual rather than engineering it as a field-constraint problem.",
+      "confidence": "high",
+      "confidence_detail": "act:0/7 ess:5/6 mec:3/6",
+      "citations": [
+        {
+          "title": "Taoistic Psychology of Creativity",
+          "url": "https://onlinelibrary.wiley.com/doi/10.1002/j.2162-6057.1996.tb00769.x",
+          "snippet": "[Taoistic Psychology of Creativity]\nTaoistic Psychology of Creativity - KUO - 1996 - The Journal of Creative Behavior - Wiley Online Library\nOpens in a new windowOpens an external websiteOpens an exte"
+        }
+      ],
+      "match_strength": 0.42105263157894735,
+      "serve_score": {
+        "score": 0.14,
+        "verdict": "neutral",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:build,test"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P03-001",
+      "agent_id": "P03",
+      "domain": "astronomy",
+      "spark": "Astronomy's literature-mining systems predict future concept–object discoveries by treating the accumulated history of scientific associations as a latent gravitational field — the past track is fully visible, the future path is not, and that asymmetry is the engine.",
+      "source_shape": "A knowledge graph of 400k+ papers encodes which celestial objects have been linked to which concepts; matrix factorization finds the low-rank geometry underneath those links and uses it to rank which associations are likely to emerge next — before they appear in print.",
+      "bridge": "Your system's wandering agents face the same asymmetry: the user's prior work and expressed fragments are the observable track, and the latent factor geometry is what makes certain undiscovered connections feel gravitationally closer than others — drift isn't random, it's shaped by accumulated structure.",
+      "use": "Consider representing each user's anchor not just as a semantic embedding but as a position in a learned association space — so that 'closeness' during wandering reflects historical co-occurrence structure, not just surface similarity.",
+      "limit": "The astronomy system's inputs are fully explicit — resolved identifiers, controlled vocabularies, weighted co-occurrence counts — and partial knowing is a data gap to be predicted around, not a generative constraint that shapes traversal. Your anchor is a half-formed, subjective, felt inspiration; the ALS mechanism has no structural role for productive incompleteness as input, and no analog to the Heisenberg principle your system is built to honor.",
+      "confidence": "high",
+      "confidence_detail": "act:2/7 ess:3/6 mec:5/6",
+      "citations": [
+        {
+          "title": "Predicting New Concept–Object Associations in Astronomy by Mining the Literature",
+          "url": "https://arxiv.org/html/2602.14335",
+          "snippet": "Title: Predicting New Concept–Object Associations in Astronomy by Mining the Literature\n\nURL Source: https://arxiv.org/html/2602.14335\n\nMarkdown Content:\nJinchu Li \n\nSchool of Computer Science, \n\nGeor"
+        }
+      ],
+      "match_strength": 0.5263157894736842,
+      "serve_score": {
+        "score": 0.043478260869565216,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P01-002",
+      "agent_id": "P01",
+      "domain": "humor",
+      "spark": "Taoist wu wei — non-forcing action — is structurally identical to a soft field constraint that guides without directing.",
+      "source_shape": "Taoist creativity holds an intention without forcing resolution, letting incubation and the unification of opposites produce emergence on their own terms. The practitioner navigates by felt sense — intuition as personal knowledge — not by explicit specification.",
+      "bridge": "Your system's constraint layer faces the same design problem: it must exert gravitational pull toward relevance without collapsing the agent's freedom to traverse. Wu wei names the quality that constraint needs — present, non-coercive, directional without being directive.",
+      "use": "Consider auditing your constraint mechanism against a single question: does it forbid, or does it attract — and if it forbids anywhere, treat that as a design debt worth examining.",
+      "limit": "Taoism is a practice of individual human consciousness — incubation and opposition-unification happen inside one mind over time, not across distributed memoryless agents traversing external domains. It carries no model of stateless traversal, domain-agnostic drift, or cross-domain structural resonance detection; the system is multi-agent and computational, Taoism is singular and phenomenological.",
+      "confidence": "high",
+      "confidence_detail": "act:0/7 ess:5/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://eric.ed.gov?id=EJ532400",
+          "url": "https://eric.ed.gov?id=EJ532400",
+          "snippet": "Title: ERIC - EJ532400 - Taoistic Psychology of Creativity., Journal of Creative Behavior, 1996\n\nURL Source: https://eric.ed.gov/?id=EJ532400\n\nMarkdown Content:\n[![Image 1: ERIC - Institute of Educati"
+        }
+      ],
+      "match_strength": 0.42105263157894735,
+      "serve_score": {
+        "score": 0.041666666666666664,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04"
+        ],
+        "serves_attachment_only": false
+      }
+    }
+  ],
+  "medium": [
+    {
+      "report_id": "wander-P01-003",
+      "agent_id": "P01",
+      "domain": "chemistry",
+      "spark": "Ancestor worship functions as a behavioral gravity field — a norm that bends individual choices toward cooperation without specifying what any individual must do.",
+      "source_shape": "The ancestor encodes a tradition that persists across generations, shaping descendants' altruistic behavior through inclusive fitness pressure rather than direct instruction. Descendants are neither fully free nor fully determined — they operate inside a field they didn't choose but can accept, reject, or reinterpret.",
+      "bridge": "Your system faces the same structural shape: a soft constraint that enables high-entropy individual traversal while producing low-entropy convergence at the aggregate level. The ancestor's encoded norm is a working biological instantiation of exactly the dynamic your wandering agents are meant to embody.",
+      "use": "Consider whether your anchor functions less like a search target and more like an ancestor norm — a field that bends agent drift without closing the action space, where the user's judgment plays the role of descendant reinterpretation.",
+      "limit": "The paper's mechanism is load-bearing on genetic relatedness — the fitness math only works because cultural and genetic relatedness can be separately quantified and their divergence measured. Your system has no equivalent of that hidden coefficient: there is no underlying 'true distance' between anchor and domain match running beneath the surface, and therefore no analogous calibration problem the system could be unknowingly miscalibrating against.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:2/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://pubmed.ncbi.nlm.nih.gov/39296490/",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/39296490/",
+          "snippet": "Title: Kin selection favors religious traditions: ancestor worship as a cultural descendant-leaving strategy - PubMed\n\nURL Source: https://pubmed.ncbi.nlm.nih.gov/39296490/\n\nMarkdown Content:\n## Kin s"
+        }
+      ],
+      "match_strength": 0.2631578947368421,
+      "serve_score": {
+        "score": 0.09761904761904762,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.05",
+          "goal-directed-signal:ship"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P06-001",
+      "agent_id": "P06",
+      "domain": "education",
+      "spark": "A family's unspoken achievement culture bends each generation's path without ever issuing instructions — the same shape as a soft constraint that enables rather than dictates.",
+      "source_shape": "Across three generations, grandparents shape grandchildren not through direct teaching but through an inherited 'idioculture' — a gravitational field of orientation that biases choices without determining them. The past trajectory is measurable; the future path remains open.",
+      "bridge": "Your system needs to hold a user's half-formed concept the way a family idioculture holds its members: present enough to bend probability, absent enough to leave the path underdetermined. The soft field doesn't collapse the possibility space — it tilts it.",
+      "use": "Consider whether your system's scaffolding could function as an idioculture rather than a curriculum — something the user moves inside rather than follows.",
+      "limit": "This paper studies how stable, well-specified orientations transmit with fidelity across generations — vagueness is a deficiency in its model. Your system treats productive incompleteness as the generative engine. The paper explains how the ghost of a destination becomes a fixed inheritance; your anchor depends on the ghost staying a ghost long enough to do its work.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:2/6 mec:3/6",
+      "citations": [
+        {
+          "title": "Checking your browser - reCAPTCHA",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5384102/",
+          "snippet": "Title: Familial Transmission of Educational Plans and the Academic Self-Concept: A Three-Generation Longitudinal Study\n\nURL Source: https://pmc.ncbi.nlm.nih.gov/articles/PMC5384102/\n\nMarkdown Content:"
+        }
+      ],
+      "match_strength": 0.2631578947368421,
+      "serve_score": {
+        "score": 0.09054054054054055,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:move"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P05-001",
+      "agent_id": "P05",
+      "domain": "religion",
+      "spark": "Ancestor worship functions as a soft cultural field — the ancestor doesn't control descendants, but installs a recognition structure that makes certain behaviors feel natural across generations.",
+      "source_shape": "The ancestor embeds a norm (treat co-descendants as close kin) that propagates forward stochastically — not through direct instruction, but through a field that shapes what feels obligatory. The past track is fixed and legible; which descendants carry it forward, and how far, is genuinely unpredictable.",
+      "bridge": "Your three-point anchor works the same structural way: it doesn't direct the traversal, it installs a recognition structure that makes certain convergences more likely. The past track (the anchor) is observable; where the wandering leads is not — and that asymmetry is exactly what makes the system productive rather than merely random.",
+      "use": "Consider treating your anchor not as a destination but as an ancestral norm — something that shapes what feels resonant without specifying what gets found, and test whether your current anchor formulation is soft enough to preserve that.",
+      "limit": "The ancestor worship model is explicitly fitness-maximizing — the soft field exists to serve the ancestor's inclusive fitness, measured by altruism levels and gene propagation. Your wandering system explicitly resists optimization; its value is destroyed if traversal is pulled toward a predetermined fitness peak. The cultural norm in this paper also encodes a specific behavioral target, whereas your anchor must remain target-agnostic to preserve discovery — structurally resonant at the mechanism level, but inverted at the purpose level.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:2/6 mec:4/6",
+      "citations": [
+        {
+          "title": "Kin selection favors religious traditions: ancestor worship as a cultural descendant-leaving strategy - PMC",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11409833/",
+          "snippet": "Title: Kin selection favors religious traditions: ancestor worship as a cultural descendant-leaving strategy\n\nURL Source: https://pmc.ncbi.nlm.nih.gov/articles/PMC11409833/\n\nMarkdown Content:\n## [](ht"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.08448275862068964,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:ship,test",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P04-001",
+      "agent_id": "P04",
+      "domain": "carpentry",
+      "spark": "A woodcarving framework that translates vague human desire into buildable form through a three-party loop mirrors the exact tension your system is navigating — moving from felt-sense to crystallized output without killing the discovery in transit.",
+      "source_shape": "The framework runs user (vague desire) → AIGC (wide generative traversal) → artisan (expert convergence and execution). The artisan closes the loop by selecting and building from what the AI surfaces.",
+      "bridge": "Your wandering agents follow the same shape: a soft anchor bounds the traversal without directing it, and the user's half-formed input acts as the gravitational field rather than a specification. The paper's finding that verbal gaps between user and artisan are not defects but generative space maps directly onto your productive incompleteness node.",
+      "use": "Consider whether the three-party structure — vague input, high-entropy traversal, low-entropy convergence — could be made explicit in how your system presents results, so users feel the traversal rather than just receiving an output.",
+      "limit": "The woodcarving framework is a retrieval-and-refinement pipeline that requires a human expert to close the loop by executing a selected design — premature expert closure is precisely what your bounded chaos is designed to prevent. The paper also operates on explicit, surveyable user needs via Kano-AHP scoring, which is the structural opposite of your half-formed, pre-verbal input as productive state.",
+      "confidence": "medium",
+      "confidence_detail": "act:2/7 ess:4/6 mec:3/6",
+      "citations": [
+        {
+          "title": "A Sustainable Innovation Framework for Traditional Woodcarving Craftsmanship Using Artificial Intelligence and Collaborative Design",
+          "url": "https://www.mdpi.com/2071-1050/18/3/1268",
+          "snippet": "Title: A Sustainable Innovation Framework for Traditional Woodcarving Craftsmanship Using Artificial Intelligence and Collaborative Design\n\nURL Source: https://www.mdpi.com/2071-1050/18/3/1268\n\nPublis"
+        }
+      ],
+      "match_strength": 0.47368421052631576,
+      "serve_score": {
+        "score": 0.07912621359223301,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:build"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P04-002",
+      "agent_id": "P04",
+      "domain": "agriculture",
+      "spark": "A blood transfusion that helps dying patients actively harms stable ones — the same input, opposite outcomes, depending on whether the system is already in crisis.",
+      "source_shape": "In aneurysmal subarachnoid hemorrhage, red blood cell transfusion is associated with worse outcomes when delayed cerebral ischemia is absent, but may be beneficial when it's present. The intervention is only load-bearing when the system has drifted into the specific state that needs it.",
+      "bridge": "Your system faces the same shape: supplying structure or direction to a wandering process before it has reached its own crisis point — its productive tension — may not merely fail to help but actively degrade the output. The anchor's soft constraint is only load-bearing in the right systemic state.",
+      "use": "Consider designing your intervention timing around a detectable 'DCI-equivalent' — some signal that the user's process has drifted into genuine productive tension — rather than offering structure on a fixed schedule or at first contact.",
+      "limit": "The study is retrospective and observational on a biological system with a fixed, measurable intervention (≥3 units of blood) and a binary outcome scored at 6 months — none of which holds here. Your system has no dose equivalent, no clinical threshold that triggers intervention, and no Glasgow-scale outcome. The harm direction in the study (more input into a pressurized system = worse outcome) is not a structural feature the anchor can straightforwardly inherit.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:2/6 mec:2/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://pubmed.ncbi.nlm.nih.gov/29038077/",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/29038077/",
+          "snippet": "Title: The Effects of Red Blood Cell Transfusion on Functional Outcome after Aneurysmal Subarachnoid Hemorrhage - PubMed\n\nURL Source: https://pubmed.ncbi.nlm.nih.gov/29038077/\n\nMarkdown Content:\nObser"
+        }
+      ],
+      "match_strength": 0.21052631578947367,
+      "serve_score": {
+        "score": 0.056818181818181816,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.06"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P02-001",
+      "agent_id": "P02",
+      "domain": "parenting",
+      "spark": "MentiParent is built to keep parents in productive not-knowing — and that state is exactly what your system needs to protect, not resolve.",
+      "source_shape": "MentiParent trains caregivers to hold a child's inner world as genuinely uncertain rather than already understood. The chatbot's therapeutic value depends entirely on sustaining that reflective incompleteness — closing it destroys the tool.",
+      "bridge": "Your system's wandering agents need the same structural move: partial knowing is not a deficiency the system should fix before it can run — it is the operative state that makes high-entropy traversal possible. The vague input is the signal, not noise preceding the signal.",
+      "use": "Consider designing your intake or anchoring step to explicitly frame the user's incomplete concept as load-bearing — something the system holds open, not something it resolves before proceeding.",
+      "limit": "MentiParent's traversal is tightly directed toward one domain and one target state (higher PRF scores) — wandering destroys it, while wandering is exactly what your system must do. It also assumes an inherited framework (attachment theory) and trains users into it; it has no mechanism for a user arriving with a genuinely novel concept that has no prior framework to inherit.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "Feasibility and acceptability of the MentiParent AI chatbot for training parental reflective functioning | Scientific Reports",
+          "url": "https://www.nature.com/articles/s41598-026-47934-4",
+          "snippet": "Title: Feasibility and acceptability of the MentiParent AI chatbot for training parental reflective functioning\n\nURL Source: https://www.nature.com/articles/s41598-026-47934-4\n\nMarkdown Content:\n## Ba"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.039999999999999994,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:move",
+          "attachment-signal:protect"
+        ],
+        "serves_attachment_only": false
+      }
+    }
+  ],
+  "low": [],
+  "synthesis": {
+    "top_insights": [
+      "wander-P01-001",
+      "wander-P01-002",
+      "wander-P03-001",
+      "wander-P01-003",
+      "wander-P02-001",
+      "wander-P04-001",
+      "wander-P05-001",
+      "wander-P06-001",
+      "wander-P04-002"
+    ],
+    "clusters": [
+      {
+        "label": "Soft-field constraint: attracting without directing",
+        "card_ids": [
+          "wander-P01-001",
+          "wander-P01-002",
+          "wander-P01-003",
+          "wander-P05-001",
+          "wander-P06-001"
+        ],
+        "summary": "Five cards converge on the same structural shape: a constraint that bends probability without closing the action space. Taoism (wu-wei), ancestor worship (inclusive-fitness norms), and intergenerational idioculture all instantiate a field that is present enough to tilt traversal yet absent enough to leave the path genuinely open. Taken together, these cards suggest the anchor in the user's system may be less like a search target and more like a gravitational norm — something the agent moves inside rather than moves toward. The cards differ in their mechanism (phenomenological, biological, sociological) but share the same structural signature, which makes the convergence worth examining even where individual confidence is medium."
+      },
+      {
+        "label": "Productive incompleteness as load-bearing input, not noise",
+        "card_ids": [
+          "wander-P02-001",
+          "wander-P04-001",
+          "wander-P01-001",
+          "wander-P01-002"
+        ],
+        "summary": "These cards argue, from different angles, that vagueness and partial knowing are not deficiencies the system should resolve before it can operate — they are the operative state that makes high-entropy traversal possible. MentiParent shows that closing the incompleteness destroys the tool's therapeutic value. The woodcarving framework names the verbal gap between user and artisan as generative space rather than communication failure. The two Taoist cards frame non-specification as the generative condition itself. The shared implication is that the system's intake or anchoring step may need to explicitly hold the user's concept open rather than sharpen it into a specification."
+      },
+      {
+        "label": "Latent structure and learned association geometry as traversal guide",
+        "card_ids": [
+          "wander-P03-001",
+          "wander-P05-001"
+        ],
+        "summary": "These two cards approach the anchor from the perspective of accumulated structure rather than felt sense. The astronomy literature-mining card shows that a low-rank geometry underneath historical co-occurrence can make certain undiscovered connections feel gravitationally closer — drift shaped by structure, not random. The ancestor worship card (P05) echoes this: the past track is fixed and legible, the future path is not, and that asymmetry is what makes the system productive. Together they raise the question of whether the user's anchor could be represented not just as a semantic embedding but as a position in a learned association space that encodes historical structure."
+      },
+      {
+        "label": "Three-party traversal loop: vague input → high-entropy traversal → low-entropy convergence",
+        "card_ids": [
+          "wander-P04-001",
+          "wander-P03-001"
+        ],
+        "summary": "The woodcarving framework and the astronomy prediction system both instantiate a loop where a soft or latent input bounds traversal, traversal surfaces candidates, and a convergence step selects. The woodcarving paper makes the three-party structure explicit (user → AIGC → artisan); the astronomy system makes the asymmetry explicit (observable track → latent geometry → ranked predictions). The user's system may benefit from making this loop visible to users — so they experience the traversal rather than just receiving an output — though the woodcarving paper's reliance on expert human closure is a structural tension with the system's goal of preventing premature convergence."
+      },
+      {
+        "label": "Intervention timing and state-dependence",
+        "card_ids": [
+          "wander-P04-002"
+        ],
+        "summary": "The blood transfusion card stands somewhat alone: it introduces the possibility that supplying structure or direction before the system has reached its own productive tension may not merely fail to help but actively degrade the output. The card's confidence is medium and its biological mechanism does not map cleanly onto the user's system, but the structural shape — same input, opposite outcomes depending on systemic state — is worth holding as an open question about when the anchor's constraint should be applied, tightened, or withheld."
+      }
+    ],
+    "contradictions": [
+      {
+        "description": "Taoism requires the self to dissolve as the creative agent; the user's system inverts this by making computational agents the wanderers and the user the anchoring pole — the philosophical lineage is real but the mechanism runs in opposite directions.",
+        "card_ids": [
+          "wander-P01-001",
+          "wander-P01-002"
+        ]
+      },
+      {
+        "description": "The ancestor worship and idioculture cards describe soft fields that encode specific behavioral targets and propagate them with fidelity; the user's anchor must remain target-agnostic to preserve discovery — structurally resonant at the mechanism level but inverted at the purpose level.",
+        "card_ids": [
+          "wander-P01-003",
+          "wander-P05-001",
+          "wander-P06-001"
+        ]
+      },
+      {
+        "description": "The astronomy literature-mining system treats partial knowing as a data gap to be predicted around, while the productive-incompleteness cluster treats it as the generative engine — these are not reconciled by any card in the set.",
+        "card_ids": [
+          "wander-P03-001",
+          "wander-P02-001",
+          "wander-P01-001"
+        ]
+      },
+      {
+        "description": "The woodcarving framework requires a human expert to close the loop through selection and execution — premature expert closure is precisely what the user's bounded-chaos design is meant to prevent.",
+        "card_ids": [
+          "wander-P04-001",
+          "wander-P01-001",
+          "wander-P01-002"
+        ]
+      }
+    ],
+    "opportunity_paths": [
+      {
+        "description": "Investigate whether there is a detectable 'productive tension signal' — a DCI-equivalent — that would indicate when the anchor's constraint should be tightened, relaxed, or withheld entirely, rather than applied on a fixed schedule.",
+        "supporting_card_ids": [
+          "wander-P04-002",
+          "wander-P01-001"
+        ],
+        "confidence_estimate": "low"
+      }
+    ],
+    "open_questions": [
+      "What is the minimal specification of the anchor that preserves its gravitational pull without collapsing the traversal space — and is there a testable threshold below which the anchor stops being load-bearing?",
+      "If the anchor functions like an ancestral norm (bending probability without specifying outcome), what is the analog of 'descendant reinterpretation' — the moment when the user's judgment overrides the field — and should the system make that moment explicit?",
+      "The astronomy system encodes historical co-occurrence structure as the latent geometry; what is the equivalent accumulated structure in the user's system, and does it exist yet or does it need to be built?",
+      "Several cards weakly converge on the idea that premature convergence destroys the system's value — but none of the cards define what counts as premature. Is there a detectable signal that convergence is happening too early?",
+      "The blood transfusion card introduces state-dependence: the same intervention helps in one systemic state and harms in another. Does the user's system have any mechanism to detect which state the user's process is currently in?",
+      "The productive-incompleteness cluster and the latent-structure cluster are in implicit tension: one says vagueness is the engine, the other says accumulated structure is the guide. Can both be true simultaneously, and if so, how do they interact in the system's design?"
+    ],
+    "recommended_next_direction": "The cards most worth exploring together are the soft-field cluster and the productive-incompleteness cluster, because they point toward the same design question from two different angles: what does the anchor actually do, and when does it stop doing it well. A direction worth pursuing is to stress-test the current anchor formulation against the wu-wei audit question — does each component attract or forbid — while simultaneously examining whether the intake step is inadvertently sharpening the user's concept into a specification before traversal begins. The astronomy card adds a third angle: whether the anchor's gravitational pull could be grounded in learned association structure rather than only in the user's expressed fragments. These three threads do not converge to a single answer, but they may converge to a single design question: what is the minimal, softest form of the anchor that still bends traversal without closing it.",
+    "what_would_change_the_verdict": "If the user's system already has empirical evidence that sharper, more specified anchors produce better user-reported discovery outcomes than vague ones, the productive-incompleteness cluster's central claim — and much of the soft-field cluster's design advice — would need to be reconsidered from the ground up."
+  },
+  "master_synthesis": null,
+  "master_sorted": {
+    "known": [],
+    "invalid": [],
+    "unplaced": [],
+    "total_cost_usd": 0.0698,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_demotions": [],
+    "call_log": [
+      {
+        "round": "sort",
+        "model": "anthropic/claude-fable-5",
+        "in_tok": 6802,
+        "out_tok": 3296,
+        "cost_usd": 0.0698,
+        "ms": 46468.9,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_card_count": 9,
+    "classified_count": 0,
+    "dropped_report_ids": [
+      "wander-P01-001",
+      "wander-P03-001",
+      "wander-P01-002",
+      "wander-P01-003",
+      "wander-P06-001",
+      "wander-P05-001",
+      "wander-P04-001",
+      "wander-P04-002",
+      "wander-P02-001"
+    ]
+  },
+  "suppressed_framings": []
+}

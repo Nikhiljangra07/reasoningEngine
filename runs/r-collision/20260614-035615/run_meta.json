@@ -1,0 +1,62 @@
+{
+  "timestamp": "20260614-035615",
+  "git_sha": "0a915f0ca130b8c7b38fc9a6b40c0458da1abc4c",
+  "git_branch": "chaos-amp",
+  "control_room": {
+    "WANDER_DOMAINS": [
+      "physics",
+      "mathematics"
+    ],
+    "WANDER_MODE": "absolute_chaos",
+    "WANDER_AGENTS": 6,
+    "WANDER_MODEL": "deepseek/deepseek-v4-pro",
+    "SORTER_MODEL": "anthropic/claude-sonnet-4-6",
+    "BLENDER_MODEL": "anthropic/claude-opus-4-8",
+    "DRIFT_CHECKER_MODEL": "anthropic/claude-sonnet-4-6",
+    "AUDITOR_MODEL": "anthropic/claude-sonnet-4-6",
+    "CONTRIBUTION_BOARD": false
+  },
+  "durations_seconds": {
+    "cushion": 48.48,
+    "wander": 2322.4,
+    "dossier_sort": 768.45,
+    "collision": 160.17
+  },
+  "sort": {
+    "known": 24,
+    "invalid": 0,
+    "unplaced": 1
+  },
+  "collision": {
+    "blends": 4,
+    "quarantined": 0,
+    "bins": {
+      "known": 0,
+      "adjacent": 2,
+      "novel": 2,
+      "flawed": 0
+    },
+    "stage_costs": {
+      "blend": 0.7574,
+      "drift": 0.0112,
+      "verify": 0.0725
+    },
+    "collision_cost_usd": 0.8411
+  },
+  "halo": {
+    "model": "anthropic/claude-sonnet-4-6",
+    "blind_spots": {
+      "cushion": 5,
+      "cards": 5,
+      "blends": 5
+    },
+    "ok": {
+      "cushion": true,
+      "cards": true,
+      "blends": true
+    },
+    "total_cost_usd": 0.0665,
+    "report_md": "/Users/nikhil/Downloads/constellax_halo_audit_20260614-035615.md"
+  },
+  "output_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-collision/20260614-035615"
+}

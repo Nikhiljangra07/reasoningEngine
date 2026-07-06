@@ -1,0 +1,71 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": false,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 13,
+  "edges_found": 1,
+  "probes_used": 28,
+  "confirm_probes": 5,
+  "bidirectional": true,
+  "emergence_rate_series": [
+    0,
+    1
+  ],
+  "decisions": [
+    {
+      "round": 1,
+      "r_series": [
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 0,
+      "findings": 5,
+      "probes_used": 9,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782381234.6466298
+    },
+    {
+      "round": 2,
+      "r_series": [
+        0,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 1,
+      "findings": 10,
+      "probes_used": 22,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782381309.962089
+    }
+  ],
+  "final_action": "HOLD",
+  "skeleton_gaps": {
+    "isolated_findings": [
+      "[film] Simple Engram operates as a practical, plug-and-play memory engine that extracts and stores structured facts from conversation transcripts, then retrieves them on demand. It resonates with the anchor' | principle: The anchor's 'trans",
+      "[military_strategy] This source describes a practical memory engine that compresses conversations into summaries, then crystallizes those into trust-scored knowledge with evidence grounding and contradiction detection. I | principle: The an",
+      "[mythology] Yantrik Memory is a production-grade implementation of the same memory architecture the anchor describes \u2014 sparse structured retention (facts, traits, bond state) paired with generative reconstruction | principle: This validates",
+      "[philosophy] The engram-sdk npm package is a 'universal memory layer for AI agents' that implements remember/recall/consolidate cycles. It resonates deeply with the anchor's architecture of lossy compression follo | principle: This resonanc",
+      "[history] This source and the anchor are both building the same thing from different angles: a memory system where the primary unit is not a fact about a person but the evolving state of a relationship. The sou | principle: The anchor's 'fi",
+      "[relationships] Engram operates as a persistent semantic store with full-text transcripts, embeddings, and graph relationships \u2014 a rich, lossless memory layer. The anchor describes a radically sparse, transcript-free | principle: The anchor",
+      "[investigative_journalism] Engram and the anchor both operate as memory engines that compress experience into a sparse, structured representation and then regenerate a coherent account from it. The anchor's core insight \u2014 that  | principle:",
+      "[habits] This source is a product documentation page for a memory system called Engram, which stores structured facts (episodic/semantic/procedural) with metadata like salience, confidence, and stability, and  | principle: The resonance is ",
+      "[textile_arts] yantrikdb is a concrete, production-grade implementation of the memory architecture your anchor describes. It stores facts with importance and valence, runs a consolidation cycle (think()), and surfac | principle: This source",
+      "[advertising] The anchor describes a memory architecture built on deliberate, extreme compression\u2014two traces per session\u2014followed by generative reconstruction that treats confabulation as a feature, not a bug. The  | principle: This resonat",
+      "[textile_arts] Patha-memory and the anchor both operate on a shared structural insight: that memory is not a store-and-retrieve warehouse but a lossy-compression-then-generative-reconstruction pipeline. The anchor's | principle: This valida"
+    ],
+    "isolated_count": 11,
+    "component_count": 12
+  }
+}

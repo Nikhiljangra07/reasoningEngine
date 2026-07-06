@@ -1,0 +1,20 @@
+{
+  "timestamp": "20260613-041831",
+  "blend_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-fable-sorter-6agents/20260613-001204/verified-20260613-035149/blend-20260613-040606",
+  "verify_model": "anthropic/claude-sonnet-4-6",
+  "blend_count": 4,
+  "bins": {
+    "known": 0,
+    "adjacent": 4,
+    "novel": 0,
+    "flawed": 0
+  },
+  "evidence": {
+    "queries": 12,
+    "hits": 50,
+    "errors": 0
+  },
+  "parser_notes": [],
+  "duration_seconds": 48.89,
+  "llm_cost_usd": 0.076
+}

@@ -150,7 +150,7 @@ def _make_cushion(problem_text: str = "test problem about bounded freedom") -> C
             problem=CushionField(name="problem", content=problem_text),
             context=CushionField(name="context"),
             vision=CushionField(name="vision"),
-            current_map=CushionField(name="current_map"),
+            hunches=CushionField(name="hunches"),
         ),
     )
 
@@ -732,6 +732,41 @@ async def test_run_session_triple():
     assert session.agent_count() == 2
 
 
+@test("7.7 TRIPLE mode honors shared session deadline (no Nx time multiplier)")
+async def test_run_session_triple_shared_deadline():
+    """The session deadline is `started + time_budget_seconds`. With a
+    tight budget that elapses BEFORE the second agent's MIN_AGENT_BUDGET
+    threshold, the chain stops at the deadline instead of giving each
+    agent a fresh full budget. This is the fix that prevents the old
+    behavior where a 3-agent chain with `time_budget_seconds=15min`
+    could run up to 45 minutes."""
+    cushion = _make_cushion()
+    # 5-agent chain but tiny deadline — clock jumps past it during the
+    # first run_agent call, so subsequent agents must NOT spawn.
+    config = WanderingConfig(
+        mode=WanderingMode.TRIPLE_PENDULUM,
+        agents=5,
+        time_budget_seconds=0.001,  # below MIN_AGENT_BUDGET_SEC (10s)
+        tokens_per_agent=99_999,
+    )
+    client = _FakeLLMClient(responses={
+        "psychology:structural_match_check": json.dumps({"actual": [], "essence": [], "mechanism": []}),
+    })
+    # Real wall clock — we just need it to advance past the tiny budget.
+    import time as _time
+    session = await run_wandering_session(
+        cushion, config, client, clock=_time.monotonic,
+    )
+    # With deadline < MIN_AGENT_BUDGET_SEC, ZERO agents should spawn.
+    # The old (per-agent-full-budget) implementation would have spawned
+    # all 5, each getting 0.001s and exiting near-immediately — but the
+    # NEW implementation must short-circuit at the loop guard.
+    assert session.agent_count() == 0, (
+        f"shared deadline should have prevented agent spawn; got "
+        f"{session.agent_count()} agents"
+    )
+
+
 # ===========================================================================
 # 8. Articulation
 # ===========================================================================
@@ -992,6 +1027,7 @@ ALL_TESTS = [
     test_assign_models_cycle,
     test_run_session_multi,
     test_run_session_triple,
+    test_run_session_triple_shared_deadline,
     # 8. Articulation
     test_parse_articulation_valid,
     test_parse_articulation_missing,

@@ -1,0 +1,434 @@
+{
+  "cycle": 2,
+  "waves": [
+    {
+      "tag": "lead1",
+      "label": "dispatch: The structural neighbourhood where two independent",
+      "agents": 2,
+      "reports": 14,
+      "cost_usd": 0.0,
+      "tokens": 0,
+      "cost_by_model": {
+        "?": 0.0
+      },
+      "governor": {
+        "enabled": true,
+        "disabled_reason": "",
+        "halted": false,
+        "model": "deepseek/deepseek-v4-pro",
+        "params": {
+          "batch": 4,
+          "cap_per_finding": 3,
+          "max_probes": 150,
+          "hysteresis_k": 2,
+          "shape_f": 0.5
+        },
+        "findings_seen": 5,
+        "edges_found": 1,
+        "probes_used": 8,
+        "emergence_rate_series": [
+          1
+        ],
+        "decisions": [
+          {
+            "round": 1,
+            "r_series": [
+              1
+            ],
+            "sterile_confirmed": false,
+            "shape": true,
+            "edges": 1,
+            "findings": 4,
+            "probes_used": 6,
+            "action": "REALLOCATE",
+            "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+            "ts": 1781707446.934039
+          }
+        ],
+        "final_action": "REALLOCATE"
+      }
+    },
+    {
+      "tag": "lead2",
+      "label": "dispatch: Sequential resource deployment under yield uncerta",
+      "agents": 2,
+      "reports": 7,
+      "cost_usd": 0.0,
+      "tokens": 0,
+      "cost_by_model": {
+        "?": 0.0
+      },
+      "governor": {
+        "enabled": true,
+        "disabled_reason": "",
+        "halted": false,
+        "model": "deepseek/deepseek-v4-pro",
+        "params": {
+          "batch": 4,
+          "cap_per_finding": 3,
+          "max_probes": 150,
+          "hysteresis_k": 2,
+          "shape_f": 0.5
+        },
+        "findings_seen": 3,
+        "edges_found": 0,
+        "probes_used": 3,
+        "emergence_rate_series": [],
+        "decisions": [],
+        "final_action": "HOLD"
+      }
+    }
+  ],
+  "cards_new": 21,
+  "cards_total": 56,
+  "card_bridges": [
+    {
+      "report_id": "wander-P07-001",
+      "source_shape": "DeepClaude chains DeepSeek's deep reasoning with Claude's synthesis in a live agent loop. Each model performs well in isolation: DeepSeek excels at hard reasoning, Claude at clean generation. But when composed, new costs emerge \u2014 latency compounds, errors in DeepSeek's reasoning corrupt Claude's output, and 'thinking verbosity' inflates overhead. Critically, the system has no way to detect before running both models whether the incoming task is the kind that actually benefits from the expensive two-model path, so the author is forced to partition tasks by hand: async batch for deep work, synchronous for simple generation.",
+      "bridge": "Your loop is built from validated organs \u2014 seven divergent agents, a coverage scorer, a gap analyzer \u2014 each of which you have confirmed works. What DeepClaude documents is the next phase of exactly your situation: the moment you compose those organs into a self-governing loop, the composition layer becomes the new failure surface. The author's presence-based quality metric (test passes, issue dete"
+    },
+    {
+      "report_id": "wander-Sab5054-003",
+      "source_shape": "The LangGraph pipeline dispatches parallel specialist agents, runs a gap-analyzer that returns a binary verdict (sufficient or insufficient), and either triggers a writer or reruns all specialists from scratch. Termination is enforced by a hard iteration cap, not by any judgment about whether continued searching would yield anything new. The gap-analyzer has no memory of what was already tried, no sense of how deep coverage actually goes, and no way to distinguish a gap that is genuinely unfillable from one that was just under-attempted.",
+      "bridge": "The anchor's Level-1 loop is structurally identical to this pipeline at the surface \u2014 parallel divergent agents, a coverage checkpoint, a halting condition \u2014 which is exactly why the source's failure modes are diagnostic rather than generic. The LangGraph gap-analyzer's binary sufficiency check maps directly to the presence-detection problem the anchor already named: it can tell you a topic was to"
+    },
+    {
+      "report_id": "wander-S737364-002",
+      "source_shape": "The LangGraph multi-agent research assistant chains a planner, researcher, writer, and reviewer in sequence. The reviewer reads the output and issues a verdict: acceptable or not. If not, the loop restarts \u2014 but a hard cap on total cycles forces termination regardless of verdict, preventing runaway execution. The coverage check is binary: the reviewer either approves or rejects, with no map of what gaps remain or why.",
+      "bridge": "Your anchor holds exactly this structural tension in unsolved form. The source's reviewer-plus-cap is the simplest possible implementation of what your coverage scorer and cycle terminator are trying to do together: one agent decides if the output is good enough, and a ceiling ends the argument if they never agree. Where the source uses a single binary verdict, your system needs a gap list \u2014 not j"
+    },
+    {
+      "report_id": "wander-S60699c-003",
+      "source_shape": "The source builds a LangGraph pipeline where multiple agents research a topic in parallel, then a reviewer agent inspects the combined output and either approves it or sends it back for another round. The loop terminates on one of two conditions: the reviewer approves, or a hard revision-count cap is hit. The cap is the safety valve \u2014 it guarantees the loop ends even if the reviewer never reaches satisfaction. The mechanism is simple: a binary gate (approve / revise) plus a ceiling, with no internal measurement of whether the output is actually getting better per cycle.",
+      "bridge": "Your Level-1 loop has the same skeleton: divergent agents run, output is collected, something decides whether to halt or continue. The source's hard revision cap is structurally identical to your fixed-allocation terminator \u2014 both end the loop by counting, not by measuring earned depth. Where the source's reviewer asks 'is this good enough?' with a yes/no answer, your envisioned organs \u2014 coverage "
+    },
+    {
+      "report_id": "wander-P05-002",
+      "source_shape": "DeepClaude chains DeepSeek (pure reasoning) into Claude Code (pure execution) as a two-stage linear pipeline: the first stage produces a plan, the second carries it out, and the handoff between them is a structured boundary, not a blur. The pipeline runs once per task, exits on explicit conditions, and has no memory of previous runs \u2014 each invocation starts cold. The article is candid that context window limits and fixed exit conditions are real failure modes, not edge cases.",
+      "bridge": "The anchor's system separates sensing (wander agents finding leads) from doing (coverage tracking, gap dispatch, cycle advancement) \u2014 the same structural split DeepClaude makes between reasoning and execution. The handoff layer in DeepClaude is the physical instantiation of what the anchor needs between its validated organs: a defined boundary where one stage's output becomes the next stage's inpu"
+    },
+    {
+      "report_id": "wander-P04-002",
+      "source_shape": "The DeepClaude experiment routes tasks through DeepSeek's deep-reasoning engine first, then hands the output to Claude for synthesis \u2014 two proven parts in sequence. What the author discovered is that this coupling introduces latency that compounds per call, verbose reasoning output that becomes noise rather than signal for the downstream synthesizer, and error contamination where a bad first-stage output poisons the second stage regardless of its own quality. Critically, the quality gains only materialized on tasks that genuinely required deep reasoning \u2014 uniform application of the hybrid across all task types degraded overall performance because the expensive coupling was applied to terrain that didn't need it.",
+      "bridge": "Your loop has the same composition shape: you have validated individual organs \u2014 wandering agents, a noticeboard, a coverage scorer \u2014 but the question of how they behave when coupled into a running loop is structurally unanswered. Just as DeepClaude's per-call latency amplification was invisible until the pipeline ran end-to-end, your fixed-allocation wave-sizing will only reveal its failure mode "
+    },
+    {
+      "report_id": "wander-P03-001",
+      "source_shape": "The LangChain DeepAgents playbook is built around a core warning: sub-agents that each work correctly do not automatically produce a coherent system when wired together. Composition introduces new failure modes that no single component test can reveal \u2014 feedback instability, stateless loops that lose track of what has already been tried, and coverage checks that register presence without measuring depth. The playbook's answer is LangGraph checkpointing: persistent state that survives across cycles so the system can govern itself by what it actually knows, not just what it has touched.",
+      "bridge": "Your loop has exactly this shape. Each organ \u2014 the divergent wander, the synthesis pass, the gap detectors \u2014 has been validated on its own terms, but the composition between them has not. The stateless-loop warning maps directly: without a persistent cross-cycle signal, your loop cannot distinguish a gap it has genuinely closed from a gap it has merely visited. The 'presence-based coverage produce"
+    },
+    {
+      "report_id": "wander-S353333-003",
+      "source_shape": "In the OpenAI hide-and-seek experiment, agents play millions of adversarial rounds with a simple win/lose signal. Neither team is told what strategy to use; they discover increasingly sophisticated tactics \u2014 box-barricading, ramp-surfing, eventually outright physics exploits \u2014 purely because each round's outcome updates the agents' policy, carrying forward what worked and what didn't. The cross-cycle memory is not stored explicitly anywhere; it lives in the policy weights, accumulated invisibly across training. Remove that accumulation and the agents never get past round-one tactics.",
+      "bridge": "Your loop runs seven divergent agents, scores their coverage, and dispatches leads \u2014 but each new wave starts with no record of which directions the previous wave already exhausted. That is the hide-and-seek agents stripped of their policy updates: free to explore, but condemned to rediscover the same dead ends. The coverage scorer is your win/lose signal \u2014 it tells you whether a gap was filled \u2014 "
+    },
+    {
+      "report_id": "wander-P04-004",
+      "source_shape": "The Deep Agents framework gives practitioners pre-built scaffolding \u2014 state graphs, file-based context stores, subagent orchestrators \u2014 that carry information forward across agent cycles and signal when a task is genuinely done versus merely timed out. The key insight in its design is that individual agent capabilities (planning, searching, summarizing) don't self-assemble into a coherent loop; the harness exists specifically to wire them together with shared state and feedback signals. Without the harness, each agent call is stateless: it can't see what previous cycles attempted, can't distinguish 'I looked and found nothing' from 'nobody looked yet,' and can't earn its own stopping condition.",
+      "bridge": "Your loop has the same structural gap the Deep Agents harness was built to close, but you're feeling it at a more specific level. Your organs \u2014 coverage scorer, lead-laundering gate, marginal-value wave-sizer \u2014 are individually validated, which maps directly to the framework's pre-built capabilities: proven in isolation, not yet composed. The harness's state graph corresponds to what your loop cur"
+    },
+    {
+      "report_id": "wander-P05-001",
+      "source_shape": "OATS is a multi-agent orchestration system where agents share a persistent memory layer (called 'dream consolidation') that carries signal forward between runs, so each cycle knows what previous cycles actually attempted. Termination is gated on task completion \u2014 an agent cannot exit until it has demonstrably finished its job, not merely run until a clock ran out. The system also uses trust scoring across agents, so the architecture can distinguish an agent that consistently delivers from one that consistently stalls.",
+      "bridge": "Your loop currently runs stateless: each cycle begins without knowing what the previous cycle attempted, which means a lead that looked present but was never actually probed can pass your coverage gate repeatedly without triggering an alarm \u2014 presence is mistaken for depth. OATS's dream consolidation is the direct structural answer to this: a cross-cycle memory that records not just what was found"
+    },
+    {
+      "report_id": "wander-P02-001",
+      "source_shape": "Deepresearch decomposes a research question into a fixed task list, spawns subagents to handle each task, and runs an adversarial verifier to score every output. The verifier genuinely works \u2014 it produces a trust metric that catches weak claims. But that metric is written to a log and never read again: it does not feed back into which tasks get more effort, which gaps get new waves, or when the run should stop. The pipeline's shape is linear and predetermined \u2014 a schedule executed, not a terrain explored.",
+      "bridge": "Your anchor is the same shape one level up. You have validated organs \u2014 divergent wander, coverage checkpoint, gap allocation, auditor \u2014 and the question is whether they compose into a loop that governs itself. Deepresearch answers that question by negative example: wiring organs together is not the same as giving them a shared signal they all read and write. The verifier in deepresearch correspon"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "source_shape": "The wandabwa2004 agent runs a fixed sequence: classify intent, scout the landscape, dispatch parallel specialists, analyze gaps, and if gaps remain, dispatch another wave \u2014 up to a hard iteration ceiling. The gap analyzer is the pivot: it looks at what was found and decides whether another round of specialists is warranted. But every cycle starts from scratch with the same allocation logic; the system has no record of which gaps were already attacked, how many times, or with what result. It terminates either when gaps are gone or when the ceiling is hit \u2014 whichever comes first.",
+      "bridge": "Your loop and this pipeline share the same skeletal shape: divergent agents scatter, a checkpoint reads coverage, open gaps trigger another wave. That surface resemblance is real. But the mechanism layer is where the correspondence breaks into contrast rather than confirmation. Your anchor already names the problems this pipeline embodies: presence-based coverage producing false convergence (the g"
+    },
+    {
+      "report_id": "wander-Sd383d3-001",
+      "source_shape": "DeepAgents is a harness that wraps planning, memory, subagent delegation, and context management into a single integration layer. The key mechanism is that each agent cycle does not start from scratch \u2014 memory persists across runs, so the system can track what has been attempted, what failed, and how to allocate effort differently next time. Without that persistent cross-cycle signal, each loop iteration is blind to all previous iterations, and the system cannot adapt its behavior; it can only repeat it.",
+      "bridge": "Your loop has the same structural problem DeepAgents was built to solve: you have individually validated organs \u2014 coverage scorer, lead-laundering gate, marginal-value wave-sizer \u2014 but no layer that carries state across the boundary between one cycle and the next. In DeepAgents, the memory layer is what converts a stateless sequence of capable components into a self-governing system; in your loop,"
+    },
+    {
+      "report_id": "wander-P06-001",
+      "source_shape": "Seek takes proven, isolated components \u2014 a planner, sub-agent teams, a scheduler, a memory layer \u2014 and composes them without letting them interfere with each other. Each sub-agent runs in its own isolated worktree so parallel execution doesn't bleed between branches. The shared transcript is the only thing that crosses boundaries: every agent writes to it, every subsequent step reads from it, so state is never 'carried' in a live variable \u2014 it's reconstructed from the written record each time the loop wakes.",
+      "bridge": "Your loop faces the same jump: organs that work in isolation (the seven wandering agents, the two detectors, the gap scorer) whose composition is unproven. Seek's answer to that jump is the transcript-as-state pattern \u2014 which maps directly onto your cross-cycle memory problem. In your system, the transcript analog is a gap attempt registry: a persistent written record not of what was found, but of"
+    },
+    {
+      "report_id": "wander-S60699c-001",
+      "source_shape": "The source builds software continuously by running specialized agents in adversarial pairs: two architects propose competing designs, parallel reviewers attack each proposal, and a security gate holds veto power that forces upstream redesign before anything moves forward. Agents are allocated uniformly across tasks on a fixed schedule \u2014 no task gets more attention because it is harder, and the loop does not converge on a goal, it simply keeps generating. The hard gate is the system's only self-correcting mechanism: a veto doesn't just reject output, it changes upstream behavior by forcing a new proposal cycle.",
+      "bridge": "Your divergent wander and this boardroom share the same surface structure: multiple agents running in parallel, adversarial pressure applied to their outputs, and a gate that decides whether the work advances. The correspondence holds at the organ level \u2014 your seven wandering agents map to the competing architects, and your terminate-vs-reroute decision point maps to the veto gate. But the deeper "
+    },
+    {
+      "report_id": "wander-Sd3cc92-002",
+      "source_shape": "Deep Agents gives one agent a structured execution environment by composing four distinct primitives: a planner that writes explicit todos, subagents that execute delegated tasks, a shared filesystem that persists state across subagent calls, and a structured prompt that bounds behavior. The key mechanism is that none of these primitives knows about the others \u2014 the harness is what makes them a system. Behavior emerges from their wiring, not from any single component, and the filesystem is the only thing that lets one subagent's output become another's input.",
+      "bridge": "Your system has the same compositional problem: you have validated organs \u2014 coverage scorer, auditor, divergent wanderers \u2014 that each work in isolation but are not yet wired into a self-governing whole. The Deep Agents filesystem maps directly to the persistent cross-cycle signal your loop needs: just as subagents read and write shared state to stay coherent across a single task, your organs need "
+    },
+    {
+      "report_id": "wander-P01-002",
+      "source_shape": "Libraries.io maintains an index of open-source packages and returns a graceful 404 when a requested package is absent. The page loads cleanly \u2014 the lookup mechanism performs correctly \u2014 but the response carries no information about why the package is missing: never published, deleted, or temporarily unavailable are indistinguishable from the outside. The system's job is presence detection, and it does that job perfectly, while being structurally blind to depth or permanence.",
+      "bridge": "Your loop's coverage signal is the 404 page. When an agent touches a gap and moves on, the loop registers contact \u2014 the equivalent of a page load \u2014 without gaining any information about whether that gap was fully explored or only surface-skimmed. The 'graceful response' in your case is a gap marked as visited; in the 404 case, it is a page that renders without error. Both systems have validated co"
+    },
+    {
+      "report_id": "wander-P03-003",
+      "source_shape": "DeepClaude routes all reasoning through DeepSeek and all execution through Claude Code, each model validated in isolation. But when they are coupled, new failure modes emerge at the handoff: latency spikes when the reasoning model runs long on a hard task, context drift as information passes across the model boundary, and dual-provider dependency that neither model was designed to absorb. The deeper structural problem is that the routing is fixed \u2014 every task, regardless of difficulty or type, gets the same allocation of reasoning effort \u2014 so when the task landscape is heterogeneous, the fixed allocation collapses: easy tasks are over-served, hard tasks time out.",
+      "bridge": "Your loop runs seven divergent agents, a convergence pass, and a coverage scorer \u2014 each component designed and now proven to run. But the DeepClaude shape says: the moment those components couple into a live cycle, the seams become the risk surface, not the components. The fixed-allocation problem maps directly onto your uniform force on unequal terrain: if your convergence pass applies the same s"
+    },
+    {
+      "report_id": "wander-P04-001",
+      "source_shape": "Peek & Seek trains a hider and a seeker separately, each competent in isolation. When run together, they stagnated \u2014 each round reset both agents to the same starting assumptions, so neither learned from what the other had just done. The fix was cross-round lesson notes: after each game, the system wrote a short persistent memo summarizing what worked, what failed, and why. That memo carried forward into the next round as live context, turning a sequence of isolated games into a genuine learning arc.",
+      "bridge": "Your loop has the same composition gap. Each organ \u2014 divergent wander, synthesis, gap analysis \u2014 is validated on its own terms, but the loop as a whole resets its working knowledge at each cycle boundary. The lesson-note mechanism maps directly onto this: just as the game agents needed a cross-round signal to stop repeating the same tactical mistakes, your loop needs a cross-cycle signal to stop r"
+    },
+    {
+      "report_id": "wander-Sd383d3-002",
+      "source_shape": "In the Cipher architecture, specialized agents handle distinct subtasks (writing, reviewing, patching) and pass outputs sequentially to the next agent. The problem the builder surfaced is that a plausible-looking but wrong output from agent one becomes trusted ground truth for agent two \u2014 there is no cross-check between steps, so errors do not surface, they compound. The proposed fix is deterministic quality gates between agents: hard checks that do not ask another LLM whether the output is good, but verify it against an objective criterion that cannot be rubber-stamped.",
+      "bridge": "Your validated organs \u2014 the divergent wander, the convergence detector, the coverage scorer \u2014 are in the same position as Cipher's individually-tested agents: each proven in isolation, none yet proven in composition. The coupling risk is identical in shape: when your convergence detector hands a signal to the coverage scorer, the scorer inherits whatever shallow presence artifact the detector prod"
+    },
+    {
+      "report_id": "wander-S01e011-002",
+      "source_shape": "The source pipeline assigns agents to distinct roles \u2014 planner, coder, reviewer, judge \u2014 and routes their outputs through hard gates before the next stage begins. A security gate, for instance, doesn't just reject bad code; it forces earlier agents to anticipate security constraints in how they generate proposals at all. The pipeline terminates when the project ships, and its coherence comes entirely from the fixed sequence of roles, not from any memory of what was tried or any mechanism to detect whether the output actually covers the problem.",
+      "bridge": "Your anchor sits at the same pressure point the source names: validated organs that have not yet been composed into a working whole. In the source, the hardest design problem isn't building any single agent \u2014 it's defining roles precisely enough that handoffs don't create instability. That maps directly onto your organ-coupling problem: each of your components has been validated in isolation, but "
+    },
+    {
+      "report_id": "wander-S1e04af-001",
+      "source_shape": "The source system dispatches parallel specialist agents, runs a gap analyzer after each round that checks whether topics were touched, and halts at a hard iteration cap regardless of actual coverage quality. A citation audit acts as a final gate before the writer synthesizes. The system is stable and ships results because every component is deterministic and the gap analyzer asks only one question: was this topic present in the output? It never asks how deeply it was covered, so it never has to resolve the harder question of when enough is actually enough.",
+      "bridge": "Your live loop shares the exact same skeleton: divergent wander, coverage checkpoint, hard cap. Where the source's gap analyzer marks a topic 'done' the moment any agent touches it, your loop faces the same pressure \u2014 presence is easier to detect than depth, so without an explicit depth signal, your checkpoint will also tend to converge on coverage that looks complete but is shallow. The source's "
+    },
+    {
+      "report_id": "wander-Sab5054-001",
+      "source_shape": "The deep-research pipeline runs several agents in parallel to gather material, then routes the result through an adversarial critic (who challenges the reasoning) and a citation auditor (who verifies the sources). Each of those two reviewers is independently reliable. But they fire once, in sequence, and the pipeline ends \u2014 there is no mechanism that checks whether the combined output actually covers the question, no memory of what gaps remained after the pass, and no way for the system to decide it needs another cycle.",
+      "bridge": "Your anchor is the same shape one level up. You have validated organs \u2014 the divergent wander, the coverage checkpoint, the gap detector \u2014 each of which works. The deep-research tool shows you exactly what happens when validated organs get composed without a governing loop: the composition produces a result that looks finished because each component did its job, while the question of whether the wh"
+    },
+    {
+      "report_id": "wander-P03-002",
+      "source_shape": "The source appears to be a CLI tool that breaks code analysis into discrete, independently executable steps \u2014 each step can be verified in isolation, but the tool runs them in a fixed sequence with no memory carried between passes. When the problem is heterogeneous or deep, the tool hits a wall: it allocated effort uniformly across a landscape that was anything but uniform, and the fixed workflow has no mechanism to notice the mismatch and correct it. The result is either a timeout or a surface-level pass that looks like coverage but isn't.",
+      "bridge": "Your Level-1 loop faces the same structural trap from a different angle. Each of your seven agents can be individually sound \u2014 good prompt, good retrieval, good output \u2014 and yet the composition of all seven can still fail to produce a coherent, non-redundant synthesis, because soundness at the component level does not propagate automatically to the system level. The CLI's timeout is the blunt sign"
+    },
+    {
+      "report_id": "wander-S353333-002",
+      "source_shape": "DeepSeek-Reasonix is a harness that composes two distinct models \u2014 a planner and an executor \u2014 through a config layer, with cost optimized via prefix caching. Each model is validated on its own terms: the planner reasons about what to do, the executor carries it out. The config layer is what holds them together, but it is static \u2014 it describes the composition at setup time and does not adjust based on what happens across sessions.",
+      "bridge": "Your pipeline has the same compositional seam: auditor, scorer, wandering agents \u2014 each component works, but the question of how they stay coherent across cycles is a separate, harder problem than whether any one of them functions correctly. In Reasonix, the planner-executor split is bridged by a config that never changes; in your loop, the equivalent bridge has to be dynamic, because each cycle's"
+    },
+    {
+      "report_id": "wander-Sd3cc92-001",
+      "source_shape": "The tutorial decomposes a research agent into a planner, a web searcher, an evidence store, a gap-detection step (an LLM reviews what's been found and names what's missing), and a report writer. The loop runs for a fixed number of iterations set by a single parameter called `research_depth` \u2014 when that count is exhausted, the loop stops and the report is written, regardless of whether the gaps were actually closed. The implicit assumption is that more iterations equal better coverage, with no mechanism to detect whether additional passes are producing new information or just confirming what's already known.",
+      "bridge": "Your system has the same organ list \u2014 coverage scorer, lead-laundering gate, dispatched agents, aggregation \u2014 so the tutorial confirms that the decomposition is sound and the components are individually plausible. But the tutorial's gap-detection step is a stripped-down version of your coverage scorer: it names what's missing, but it has no memory across cycles, no sense of whether a gap is fillab"
+    },
+    {
+      "report_id": "wander-P04-003",
+      "source_shape": "The deepcode-cli assistant runs as a stateless process: each invocation starts fresh with no inherent memory of prior work. It escapes this by writing user preferences, project context, and reusable skills to disk, so the next invocation reads them back in. The statefulness lives outside the model, not inside it \u2014 the tool is still stateless, but the problem it operates on is not, and the gap is bridged by an explicit external store.",
+      "bridge": "Your Level-1 loop has the same structural gap: the agents themselves are stateless processes, but the research problem they are collectively solving is deeply stateful \u2014 what was covered, what gaps remain, what signal is worth carrying forward. The CLI's move is to stop expecting the stateless component to carry state and instead route that responsibility to an external artifact the next invocatio"
+    },
+    {
+      "report_id": "wander-P01-003",
+      "source_shape": "DeepClaude assigns Claude and DeepSeek fixed roles in a multi-model coding loop: one model reasons, the other executes, and the output of each feeds the next. Each model has been validated independently, so the assumption is that their combination inherits their individual reliability. In practice, the handoff point between models introduces behaviors that neither model exhibited alone \u2014 the coupling is a new, untested organ, not a transparent wire.",
+      "bridge": "Your autonomous Level-1 loop is also a composition of validated parts: seven agents, a divergent wander, a coverage scorer, termination logic, memory. Each piece may behave exactly as designed in isolation. But DeepClaude's structural lesson is that the junctions between components are where emergent instability lives \u2014 not in any single component. In your system, the junction between the wander a"
+    },
+    {
+      "report_id": "wander-S353333-001",
+      "source_shape": "DeepSeek-Reasonix uses prefix caching to store the static portion of a conversation's token sequence so that repeated inference calls don't re-evaluate context the model has already processed. The cache is a persistent signal that survives across calls \u2014 the model doesn't re-read the system prompt and prior turns every time, it picks up from where the shared prefix ends. The result is that extended, multi-turn interactions become progressively cheaper and faster, because accumulated context stops being a repeated cost.",
+      "bridge": "Your Level-1 loop runs seven agents, collects results, and synthesizes \u2014 but between cycles, it carries no record of which territory was visited or how deeply it was probed. That is structurally identical to a model that discards its prefix cache after every call: each cycle starts from presence-only ground, re-discovering what was already found rather than building on it. The caching insight maps"
+    },
+    {
+      "report_id": "wander-S01e011-001",
+      "source_shape": "The guide catalogs orchestration patterns \u2014 sequential, parallel, hierarchical, consensus \u2014 and warns that validating each agent individually doesn't guarantee the team works. It also flags that fixed workflows stall when tasks vary in difficulty: if every wave gets the same resources regardless of how hard the ground is, the hard patches become bottlenecks. These are treated as operational hazards to engineer around, not as fundamental properties of the composition problem.",
+      "bridge": "The anchor's system already has proven individual components \u2014 coverage scoring, wave sizing, memory, termination logic \u2014 but the question of whether they compose into a reliable autonomous loop is exactly the 'proven parts, unproven composition' problem the guide names. The guide's second warning maps just as cleanly: fixed wave sizes applied to heterogeneous search terrain (some gaps easy to fil"
+    },
+    {
+      "report_id": "wander-P06-002",
+      "source_shape": "Seekcode is a CLI agent that sends a user's coding question to a DeepSeek model, receives code output, and stops. Each version from 0.1.0 to 0.4.10 adds a capability \u2014 better output parsing, improved prompting, broader model support \u2014 but the core cycle never changes: one human query, one agent pass, one answer. There is no memory of prior attempts, no logic for detecting whether the problem was actually solved versus merely touched, and no mechanism for deciding when to try again. The loop is fixed, shallow, and user-driven at every step.",
+      "bridge": "Your pipeline's central risk is the same shape, one level up. Each of your organs \u2014 the divergent wander, the auditor, the synthesizer \u2014 is being validated in isolation and confirmed to work. Seekcode shows what happens when that pattern is mistaken for composition: you accumulate proven parts without ever building the connective tissue that makes them a self-governing whole. The specific failure "
+    },
+    {
+      "report_id": "wander-S60699c-002",
+      "source_shape": "The source maps the standard patterns for multi-agent systems: sequential, parallel, hierarchical, and debate-style coordination, plus the scaffolding frameworks that wire them together. Its 'Common Challenges' section explicitly flags that validated individual agents do not automatically produce a coherent result when composed, and that static task allocations degrade badly when the underlying landscape is heterogeneous. These are treated as design-time problems \u2014 the practitioner decides on a pattern, builds it, and if it breaks, redesigns it manually.",
+      "bridge": "Your anchor's two matched mechanism nodes \u2014 'validated components do not compose automatically' and 'fixed allocation on heterogeneous landscape collapses to timeout' \u2014 are precisely the failure modes this source names and warns against. That's the point of contact: the source confirms you are solving real, field-recognized problems, not architectural anxieties you invented. Where the source stops"
+    },
+    {
+      "report_id": "wander-Sab5054-002",
+      "source_shape": "The source system breaks deep research into discrete skills: question refinement, parallel sub-query execution, synthesis, and citation validation. Each skill is independently proven and produces real output. But the pipeline is linear and human-triggered \u2014 one pass, predetermined subtopic breakdown, no mechanism for the system to notice what it missed and send agents back in. Halting is simply command completion: the job ends when the steps end, not when the terrain is actually covered.",
+      "bridge": "Your Level-1 loop and this pipeline share the same structural moment: components that work individually, not yet composed into something that governs itself. The 'proven parts, unproven composition' layer node names this precisely \u2014 having validated organs is not the same as having a living system. Where the source stays frozen at that moment (human re-triggers the next pass), your loop is attempt"
+    },
+    {
+      "report_id": "wander-S737364-001",
+      "source_shape": "The source describes a workflow where Claude Code handles agentic execution and DeepSeek V4 handles reasoning, each proven in isolation. To make them work together, the builder must explicitly define handoff points, set effort parameters, and review outputs at the seam \u2014 the combination introduces interaction failure modes that neither tool surfaces on its own. The two outputs also need cross-validation, because each can produce plausible-looking results that the other's blind spots will not catch.",
+      "bridge": "Your loop's organs \u2014 the divergent wander, the convergence layer, the detectors \u2014 are each locally validated, which is exactly the position this source starts from. The source's lesson is that the seam between two capable components is its own failure surface, distinct from either component's failure modes. In your system, the specific seam at risk is the handoff between the two uncorroborated det"
+    },
+    {
+      "report_id": "wander-S737364-003",
+      "source_shape": "The source describes a research pipeline assembled from individually functional skills: a question refiner, a research executor, a citation validator, a synthesizer. Each skill works. But they are chained together by a fixed script or triggered manually by the user \u2014 the pipeline runs in one direction and stops when the script ends. There is no mechanism inside the system that evaluates whether the output is good enough to halt, or poor enough to reroute; that judgment lives entirely outside the system, in the human who launched it.",
+      "bridge": "Your Level-1 loop has the same structural split: the individual organs \u2014 the divergent wander, the detectors, the synthesizer \u2014 are validated in isolation, but the question of whether they compose into a self-directing whole is still open. In the source, the 'composition problem' is solved by a human holding the script; in your system, the analog would be a coverage scorer and a terminate-vs-rerou"
+    },
+    {
+      "report_id": "wander-P02-001",
+      "source_shape": "In the paper's architecture, multiple goal-aware agents each hold a local view of a shared resource (the grid) and produce proposals that conflict. Rather than letting one agent overrule the others, a weighted-consensus mechanism lets each agent's output influence the final dispatch signal in proportion to its credibility \u2014 but no agent gets to see another's raw observations, only their emitted proposals. The fusion layer is therefore doing epistemic translation: it synthesizes across incompatible vantage points without requiring any agent to surrender the constraint that makes its vantage point valuable.",
+      "bridge": "Your anchor sits at the junction where a goal-blind detection regime and a goal-aware detection regime must both contribute to a single priority output \u2014 and the core problem is that letting one regime see the other's raw observations would corrupt the epistemic independence that gives each regime its power. The paper's mutual gating maps directly onto this: each agent gates the others' influence "
+    },
+    {
+      "report_id": "wander-Sa310a5-002",
+      "source_shape": "Grid-Agent pairs a planning agent, which knows the grid's objectives and proposes control actions, with a validation agent, which checks those proposals for electrical stability before they are executed. The two agents have different functional roles but share the same epistemic position: both have full access to system state and operational goals. Validation is applied sequentially \u2014 the planner acts first, then the validator reviews \u2014 so the output of one feeds directly into the input of the other, forming a chain rather than two independent lines of sight converging on the same object.",
+      "bridge": "Your anchor is built on a specific structural requirement: two detection regimes that are epistemically asymmetric by design \u2014 one goal-aware, one goal-blind \u2014 so that when they both flag something, the corroboration carries real weight precisely because neither regime could have been contaminated by the other's perspective. Grid-Agent's planner corresponds to your goal-aware regime, and its valid"
+    },
+    {
+      "report_id": "wander-Sa310a5-003",
+      "source_shape": "In Cooperative Augmented Assembly, a human worker and a robotic fabricator share a cloud-based AR workspace that logs and displays what each agent has done, but neither agent is required to perceive the world through the other's sensors. The robot brings millimeter-precise positioning and tireless repeatability; the human brings contextual judgment, improvisation, and manual dexterity in ambiguous situations. Their individual outputs are woven into the shared digital model continuously, and the physical assembly act is the moment where their separate contributions collapse into one coordinated result \u2014 a placed element, a fastened joint \u2014 before independence resumes.",
+      "bridge": "Your anchor describes two detection regimes that must remain epistemically separate: one operates without knowledge of the goal, one operates with it, and the value of the pairing depends on neither contaminating the other's observational basis. The CAA human-robot pair has exactly this shape \u2014 the robot's precise sensing is not enriched by the human's goal-awareness, and the human's contextual ju"
+    },
+    {
+      "report_id": "wander-Sefbc6f-002",
+      "source_shape": "In CAA, an AR interface overlays a shared task space where a human handles the dexterous, judgment-heavy placements a robot cannot reliably perform, while the robot handles the precise, repeatable operations a human cannot reliably sustain. Neither agent duplicates the other's work; each triggers the other's next move. The fusion happens at the dispatch layer \u2014 a shared representation of the task state that both agents read from and write to, so the output of one becomes the input condition for the other.",
+      "bridge": "The structural echo your anchor is looking for is the dispatch layer: CAA shows that two agents with genuinely different capabilities can produce a single coherent output without either one subordinating its mode of operation to the other \u2014 the human does not become robotic, the robot does not approximate human judgment. That is the shape your anchor cares about: synthesis without flattening. The "
+    },
+    {
+      "report_id": "wander-P01-001",
+      "source_shape": "In fabrication-aware human-robot assembly, the human and the robot each carry knowledge the other lacks \u2014 the human holds contextual flexibility and can handle unexpected variation; the robot holds geometric precision and repeatability. Neither agent is given the other's full picture. Instead, an AR-mediated coordination layer reads both agents' current state and capability, then dispatches tasks to whichever agent is better constrained to handle that step right now. The asymmetry is not a problem to be engineered away \u2014 it is the source of the system's combined capability, because the two agents cover each other's blind spots precisely because they do not share the same observational frame.",
+      "bridge": "Your goal-blind regime and your goal-aware regime are the human and the robot in this analogy. The goal-blind regime, like the robot, operates inside a tight epistemic constraint \u2014 it cannot see intent, only pattern; this constraint is what makes its signal clean and uncontaminated by expectation. The goal-aware regime, like the human, carries contextual knowledge that the other agent lacks, givin"
+    },
+    {
+      "report_id": "wander-P01-002",
+      "source_shape": "In human\u2013robot cooperative assembly, the human holds the design goal \u2014 what the structure is supposed to become \u2014 while the robot holds fabrication-level awareness: what is physically reachable, what tolerances are live, what the material is actually doing. Neither agent can fully substitute for the other, because their knowledge comes from fundamentally different epistemic positions. The coordination challenge is not to merge these views into one homogeneous picture, but to translate between them just enough to dispatch a coherent next action \u2014 while keeping the two perspectives distinct, because their distinctiveness is the source of the team's capability.",
+      "bridge": "Your anchor describes two detection regimes that are valuable precisely because they do not share observations: each sees what the other cannot, and corroboration only means something if the two streams are genuinely independent. The human in the assembly dyad is your goal-aware regime \u2014 it holds the intent that the other cannot access. The robot is your blind-sensing regime \u2014 it holds fabrication"
+    },
+    {
+      "report_id": "wander-Sa310a5-001",
+      "source_shape": "In Grid-Agent, a Planner (an LLM) proposes corrective actions for grid violations using contextual, semantic reasoning \u2014 it understands operator intent, historical patterns, and high-level strategy. A Validator (a numerical physics solver) then tests each proposal against hard physical constraints: power flow equations, thermal limits, voltage bounds. Neither agent can do the other's job. The Planner cannot verify physical feasibility; the Validator cannot generate candidate actions. Their collaboration is a loop: propose, verify, reject or accept, repeat \u2014 with the asymmetry between their knowledge types being the engine that makes the loop productive rather than circular.",
+      "bridge": "Your anchor is the structural neighbourhood where a goal-blind detection regime and a goal-aware detection regime must be fused without either contaminating the other's signal. Grid-Agent maps onto this at the level of epistemic constraint difference: the Planner's semantic reasoning corresponds to your goal-aware regime (it knows what a good outcome looks like), and the Validator's physics-only e"
+    },
+    {
+      "report_id": "wander-P02-002",
+      "source_shape": "In this framework, multiple AI agents compete over shared grid resources \u2014 some optimizing for cost, others for resilience \u2014 and submit action proposals that conflict. A mediation layer runs iterative negotiation: agents that yield more gain proportionally more influence over the final decision, via a weighting formula. Crucially, no agent ever sees another's internal objective; each treats the others as black-box proposal sources, and the consensus layer synthesizes them into a single executable dispatch signal without requiring objective transparency.",
+      "bridge": "Your anchor's fusion layer faces the same structural demand: take signals from two independent regimes and collapse them into one priority output without destroying what makes each regime valuable. The mediation layer here maps directly onto your fusion layer \u2014 both are the site where asymmetric inputs meet and must be translated into a unified signal. The 'agents never see each other's objectives"
+    },
+    {
+      "report_id": "wander-Saca737-001",
+      "source_shape": "Many Indigenous epistemic frameworks operate as genuinely dual-mode systems: one mode reads the environment relationally and holistically, tracking patterns across time, species, and place without a pre-specified target; the other mode is purposive, directed toward a named question or need. Neither mode is a degraded version of the other \u2014 they are structurally asymmetric by design. The synthesis happens not by averaging the two readings but by holding them in tension: where they independently converge, confidence rises; where they diverge, the divergence itself carries information rather than being treated as error to be resolved.",
+      "bridge": "Your anchor describes two detection regimes whose epistemic asymmetry is the mechanism, not a defect to be corrected \u2014 and this is exactly the structure Indigenous dual-mode traditions instantiate. The goal-blind regime corresponds to the holistic-relational mode: it scans without a target, so it cannot be steered by expectation, which is precisely what makes its signal clean. The goal-aware regim"
+    },
+    {
+      "report_id": "wander-Sefbc6f-001",
+      "source_shape": "In Cooperative Augmented Assembly, humans and robots share a physical task but not a shared mind: the human brings dexterous judgment, the robot brings repeatable precision, and neither is asked to simulate the other's reasoning. A task-shop layer allocates each action to whichever agent is better suited, using an AR overlay as a minimal coordination surface \u2014 just enough shared context to sequence the work, not enough to collapse the two agents into one. The result is a system that extracts complementary value from asymmetry rather than trying to eliminate it.",
+      "bridge": "Your anchor describes two detection regimes that must stay epistemically separate \u2014 one goal-blind, one goal-aware \u2014 until the moment a single priority signal must be dispatched. CAA is built on the same load-bearing principle: independence is not a problem to be engineered away, it is the source of the system's value, and the fusion point is kept as late and as thin as possible. The task-shop in "
+    },
+    {
+      "report_id": "wander-Sef7335-002",
+      "source_shape": "The paper's architecture assigns low-level RL agents a restricted, local view of the grid topology via a Graph Neural Network \u2014 each agent sees only its immediate neighborhood, not the whole system. A high-level manager sits above them, holding the broader coordination view and issuing directives that unify the local agents' outputs into a single control decision. The asymmetry in observation scope \u2014 local versus global \u2014 is what makes the hierarchy useful: neither level alone could produce the right action, so the gap between them is the architecture's engine, not its flaw.",
+      "bridge": "Your anchor's structure is also a two-regime system where asymmetry does the work \u2014 one regime scanning without goal knowledge, the other evaluating against known intent, and the value coming precisely from keeping those stances separate until dispatch. The power grid paper maps onto that shape at the level of 'two differently constrained observers feeding one output': the low-level agents' topolo"
+    },
+    {
+      "report_id": "wander-Saca737-002",
+      "source_shape": "In this hierarchical reinforcement learning architecture, low-level agents each see only a local slice of the grid topology \u2014 encoded through a graph neural network that captures nearby node relationships but not the full network state. A high-level manager then coordinates their outputs without ever handing them global information; it integrates what they each did, not what they each saw. The epistemic separation is load-bearing: agents that could see everything would collapse toward the same decisions, so the architecture preserves their blindness to keep their contributions genuinely distinct.",
+      "bridge": "Your anchor's two detection regimes have the same structural requirement: the goal-blind detector must stay blind to the goal-aware detector's framing, or its signal stops being independent evidence and becomes an echo. The power grid paper gives a concrete existence proof that this is engineerable \u2014 the manager layer is exactly the fusion site where asymmetric epistemic inputs meet without either"
+    },
+    {
+      "report_id": "wander-Sef7335-001",
+      "source_shape": "In Grid-Agent, a planning agent proposes control actions for a power grid using semantic, goal-directed reasoning; a validation agent then inspects those proposals against known stability criteria before anything is dispatched. The two agents are not peers operating in parallel \u2014 the validator sits downstream of the planner, sees the planner's proposed move, and gives a thumbs-up or thumbs-down. The result is a generate-and-validate pipeline: one agent sets the agenda, the other audits it.",
+      "bridge": "Your anchor is built around two detection regimes that operate independently \u2014 one without goal knowledge, one with \u2014 and the structural question is how to fuse them without destroying the epistemic gap that makes each one valuable. Grid-Agent instantiates a weaker version of this: it does combine semantic reasoning with numerical evaluation to reach a single actionable output, and that combinatio"
+    },
+    {
+      "report_id": "wander-P02-003",
+      "source_shape": "In this framework, multiple agents each hold a partial, goal-driven view of a shared resource (one optimizes cost, another optimizes resilience) and iteratively propose actions that conflict. A weighted-consensus mechanism lets them push back against each other, adjusting influence weights across rounds, until the loop converges on a single coherent dispatch. The key structural feature is that the asymmetry between agents is not resolved early \u2014 it is maintained through the iteration and only collapsed at the moment a real-world action must be issued.",
+      "bridge": "Your fusion layer faces the same forcing-function problem: two detection regimes with genuinely different epistemic positions must eventually produce one signal, and the question is where in the pipeline their difference gets erased. The deconfliction paper's answer \u2014 preserve asymmetry through all intermediate rounds, collapse only at dispatch \u2014 maps directly onto your anchor's insistence that th"
+    },
+    {
+      "report_id": "wander-P01-002",
+      "source_shape": "The paper models a multi-stage investment where a decision-maker can advance a project, wait, or walk away at each stage, while an external market price drifts stochastically. At every stage, the decision-maker compares the current price against a computed threshold: above it, advance; below it, wait or quit. The threshold itself shifts with how far along the project is, because sunk costs and remaining exposure change what price is 'good enough' \u2014 so the decision rule is not static, it evolves as the project does.",
+      "bridge": "The anchor's probe-and-revise loop maps directly onto the paper's stage-by-stage threshold comparison: each increment is a probe, and the decision to commit the next one is gated by whether the current signal clears the threshold \u2014 exactly the posterior-gated commitment rule. The anchor's endogenous horizon (you don't know in advance how many increments there will be) mirrors the paper's optimal s"
+    },
+    {
+      "report_id": "wander-S573661-001",
+      "source_shape": "The paper embeds known nonlinear crop-response curves (the Mitscherlich curve, which describes how yield rises steeply with early fertilizer but flattens as the field approaches saturation) directly into bandit-style decision algorithms. At each step, the agent chooses a fertilizer rate, observes the resulting yield, and updates its statistical model of where the crop's response curve actually sits \u2014 because the true curve is unknown and must be inferred from noisy field data. The result is a probe-and-revise loop where every resource unit spent is simultaneously an economic action and an experiment: the spend produces both a harvest outcome and a posterior update that shapes the next decision.",
+      "bridge": "The structural match to your anchor is tight at three points. First, the fertilizer rate maps directly to your incremental resource deployment: in both cases, the agent is not choosing whether to commit, but how much to commit right now, given what it currently believes about remaining potential. Second, the posterior update after each application maps to your evolving potential estimate \u2014 each in"
+    },
+    {
+      "report_id": "wander-S8fb5bd-002",
+      "source_shape": "The paper models fertilizer application as a sequential bandit problem: each application is a resource increment, and each observed crop response updates a belief about the underlying yield function \u2014 a non-linear curve relating inputs to outputs. The algorithm uses that updated belief (a posterior over the response curve) to decide both how much to apply next and whether to keep going at all. Because the response curve is partially revealed by each increment, the resource itself is simultaneously a tool that produces yield and a probe that produces information about whether further investment is worthwhile.",
+      "bridge": "Your anchor's structure maps onto this almost node-for-node. The fertilizer increments are your sequential resource deployments; the yield response curve is your evolving potential estimate \u2014 the thing you are trying to learn while you are spending. The paper's posterior-gated commitment rule is exactly your endogenous termination logic: the algorithm does not stop at a fixed horizon, it stops whe"
+    },
+    {
+      "report_id": "wander-P02-001",
+      "source_shape": "The paper uses a bandit framework anchored in biological response models (like Michaelis-Menten kinetics, which describe how yield rises steeply at low input and flattens as input increases) to govern incremental fertilizer decisions. Each application produces an observed yield response, which updates a posterior belief about where the field sits on that curve. The decision rule is posterior-gated: you apply the next increment only if your updated belief still places expected marginal yield above a threshold \u2014 otherwise you stop. Asymmetric error costs matter here too, since over-applying wastes input and under-applying leaves yield on the table, and those two errors are not equally expensive.",
+      "bridge": "Your anchor's probe-and-revise loop maps cleanly onto this structure: each resource increment is an experiment that updates your estimate of remaining potential, and that updated estimate determines whether the next increment is warranted \u2014 exactly the posterior-gated commitment rule the paper formalizes. The Michaelis-Menten shape is also structurally honest about diminishing signal quality: earl"
+    },
+    {
+      "report_id": "wander-S8fb5bd-001",
+      "source_shape": "The paper models sequential fertilizer decisions as a nonlinear bandit problem: each season, the farmer chooses an application rate, earns a yield, and uses that yield to update their model of the underlying dose-response curve \u2014 how much output each unit of input actually produces. The chosen rate is never just an operational decision; it is also an experiment, because the yield it generates narrows uncertainty about the true curve. The cost of each application is non-recoverable, so every season the farmer is simultaneously spending a stake and buying a clue.",
+      "bridge": "Your anchor's core shape is exactly this: each resource increment is both a deployment and a probe, and the probe's result updates the estimate that governs whether the next increment is worth making. In the fertilizer model, the dose-response curve is the 'partially-revealed system' \u2014 the farmer never knows it fully, only narrows it season by season. In your problem, the evolving yield estimate p"
+    },
+    {
+      "report_id": "wander-S8fb5bd-003",
+      "source_shape": "When a farmer runs sequential fertilizer trials, each application rate they test produces a yield observation that updates their model of the crop's response curve. The only way to learn where the curve peaks is to spend fertilizer across the range \u2014 you cannot observe the response without incurring the cost. This creates a tight coupling: information is not free, it is purchased by the very resource you are trying to optimize, and each purchase changes what you believe about where the optimum lies.",
+      "bridge": "Your anchor has exactly this coupling at its core \u2014 each increment of resource deployed is not just an allocation decision, it is a measurement that updates your estimate of remaining potential. What the agricultural framework makes explicit is the algorithmic structure of that update: the posterior over the response surface shifts with each observation, and the next increment's size can be chosen"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "source_shape": "The paper models a multi-stage project where each stage requires an irreversible capital outlay and the decision to enter the next stage depends on a stochastically evolving market price. The core mechanism is a pair of thresholds \u2014 a continuation threshold above which proceeding is optimal, and an abandonment threshold below which sinking more capital destroys value \u2014 derived via dynamic programming. Between stages, the firm waits and watches the price drift; the threshold policy tells it exactly when the current estimate of future value justifies the next irreversible commitment.",
+      "bridge": "The anchor's sequential resource increments map directly onto the paper's staged capital outlays \u2014 each is irreversible, each gates the next. The anchor's 'evolving potential estimate' maps onto the paper's stochastically drifting price: both are the quantity you are watching between commitments to decide whether to continue. The posterior-gated commitment rule in the anchor \u2014 commit only when you"
+    }
+  ],
+  "halo_blind_spots": [
+    {
+      "blind_spot": "No card addresses how the coverage scorer distinguishes a genuinely unfillable gap from one that is merely under-attempted \u2014 the exact decision that determines whether the loop reroutes or terminates. Every card that touches halting uses a binary gate or a hard cap; none surfaces a mechanism for estimating gap-fillability before committing another wave.",
+      "severity": "high",
+      "suggested_angle": "Hunt for work on gap-type classification \u2014 distinguishing structural absences (no source exists) from retrieval failures (source exists, not yet reached). Triangulation-convergence rate across waves is one proxy; look for others."
+    },
+    {
+      "blind_spot": "Zero cards cover cross-wave state accumulation \u2014 how the system tracks what each prior wave attempted so the gap-to-lead conversion does not re-dispatch the same angle under a new label. The one card that touches memory (P03-001 on LangGraph checkpointing) names the problem but supplies no mechanism for the anchor's specific case.",
+      "severity": "high",
+      "suggested_angle": "Look for implementations where the gap-analyzer receives a diff of what was tried, not just what was found \u2014 wave-level provenance attached to each card so the next dispatcher can exclude already-explored angles explicitly."
+    },
+    {
+      "blind_spot": "No card examines what happens when the marginal-value wave-sizer and the coverage scorer disagree \u2014 the wave-sizer says diminishing returns, the scorer says gaps remain open. The cards treat sizing and scoring as independent organs; none addresses their conflict resolution.",
+      "severity": "high",
+      "suggested_angle": "Search for multi-signal termination logic where a resource-cost signal and a coverage-completeness signal are jointly weighted, with an explicit tie-breaking rule when they point in opposite directions."
+    },
+    {
+      "blind_spot": "All eight cards draw from LangGraph-style sequential or parallel pipeline architectures. No card covers a system where the wander itself is steered mid-flight by intermediate findings \u2014 adaptive sampling rather than fixed-wave dispatch. The wander is treated as a black box that runs and returns.",
+      "severity": "medium",
+      "suggested_angle": "Look for intra-wave feedback mechanisms: agent outputs posted to a shared noticeboard mid-wave that remaining agents in the same wave can read and use to redirect their search before the wave closes."
+    },
+    {
+      "blind_spot": "No card addresses output homogeneity risk \u2014 the condition where seven divergent agents, despite different prompts, converge on the same source cluster because they share an underlying retrieval substrate or embedding space. The wander produces apparent diversity that is structural monoculture.",
+      "severity": "medium",
+      "suggested_angle": "Look for diversity-enforcement mechanisms applied at the retrieval or seeding layer \u2014 forced source-type variation, embedding-distance constraints between agent starting points, or adversarial agent roles explicitly tasked with finding what the others missed."
+    }
+  ],
+  "coverage": {
+    "d_t": 0.0,
+    "per_angle": [
+      {
+        "idx": 1,
+        "angle": "how to fuse two independent gap-detectors \u2014 a goal-blind structural piece-finder and a goal-aware auditor \u2014 into one dispatch priority, with corroboration rather than concatenation",
+        "coverage": "uncovered",
+        "by": "no finding proposes a mechanism for fusing two independent gap-detectors into one dispatch priority with corroboration rather than concatenation"
+      },
+      {
+        "idx": 2,
+        "angle": "how to size each dispatch wave from the gap's expected yield rather than a fixed count, and when to stop adding agents to a single gap",
+        "coverage": "uncovered",
+        "by": "no finding addresses sizing dispatch waves from expected yield or when to stop adding agents to a single gap"
+      },
+      {
+        "idx": 3,
+        "angle": "how to distinguish an UNFILLABLE gap (terminate) from an UNDER-ATTEMPTED one (re-route deeper) from observable signals, including the record of what was already sent at it",
+        "coverage": "uncovered",
+        "by": "no finding proposes how to distinguish an unfillable gap from an under-attempted one based on observable signals"
+      },
+      {
+        "idx": 4,
+        "angle": "how to bias re-exploration toward identified gaps WITHOUT collapsing the diversity that made the first pass productive, and how to measure depth of coverage rather than mere presence; and",
+        "coverage": "uncovered",
+        "by": "no finding proposes how to bias re-exploration toward gaps without collapsing diversity or how to measure depth of coverage"
+      },
+      {
+        "idx": 5,
+        "angle": "what governs the overall STOP decision \u2014 coverage-complete versus diminishing-returns versus a hard cap \u2014 when the coverage signal itself may be shallow and no quality judge is in the loop?",
+        "coverage": "uncovered",
+        "by": "no finding addresses the overall STOP decision\u2014coverage-complete vs diminishing-returns vs hard cap\u2014when coverage signal is shallow and no quality judge is in the loop"
+      }
+    ]
+  },
+  "signals": {
+    "novelty": 0,
+    "change": 0.0
+  },
+  "cost_usd": 0.0,
+  "halt": "cycle cap 2 reached (open: [1, 2, 3, 4, 5])"
+}

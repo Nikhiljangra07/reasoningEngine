@@ -1,0 +1,587 @@
+[
+  {
+    "title": "Drift toward the prior is structural, not a data problem \u2014 sparsity is both cause and only defense, and the anchor's verifiability axis decides which kind of drift you can catch",
+    "claim": "When anchors are thin, the generative fill does not fail loudly \u2014 it silently slides toward the model's central tendency, replacing a specific person with a statistically average one; and because no transcript exists to catch it, the only drift-correction surface IS the anchor set. But the critical sub-distinction is the verifiability axis: military/behavioral anchors have externally checkable ground truth, so factual drift surfaces when the user's next action contradicts it, whereas the user's emotional fingerprint is phenomenological \u2014 affective drift is invisible because there is nothing to contradict it.",
+    "reasoning": "The pattern-completion card shows drift is intrinsic to generative models: when the anchor is weak, output drifts toward 'the average of everything the model has seen' (Sd27a22-001). The military YantrikDB card names the stakes \u2014 drift toward generic doctrine is merely suboptimal, but drift toward an average personality 'destroys the product entirely,' AND its limit names the verifiability split directly: military anchors are 'objective, externally verifiable entities' while the user's are 'subjective emotional-semantic fingerprints' with 'no ground truth to check reconstruction against' (P08-004). The FERNme card completes the axis: behavioral confabulation surfaces because 'the user's next action will contradict it' while phenomenological drift 'is invisible in a way behavioral drift is not' (S7bb2f4-001 limit). This is the refinement the other seat requested \u2014 folding the objective-vs-subjective anchor axis into the structural-drift claim.",
+    "limit": "The gravitational-signature design criterion (test whether removing an anchor collapses reconstruction toward generic) assumes a universal law mapping signature to object; the user's mapping from anchors to a person's voice is a learned inference with no such law, so an anchor that passes the load-bearing test may still permit fluent-but-wrong fills that no test in the corpus can detect \u2014 and for the phenomenological layer specifically, there may be no detection mechanism at all (Sd2511e-002 limit).",
+    "citations": [
+      {
+        "report_id": "wander-Sd27a22-001",
+        "agent_id": "Sd27a22",
+        "which_field": "bridge",
+        "excerpt": "when the anchor is thin, the reconstruction doesn't fail loudly, it silently drifts toward the prior's central tendency, producing a plausible-sounding but increasingly generic version of the person"
+      },
+      {
+        "report_id": "wander-P08-004",
+        "agent_id": "P08",
+        "which_field": "limit",
+        "excerpt": "Your anchors are subjective emotional-semantic fingerprints, and there is no ground truth to check reconstruction against... drift toward a statistically average personality doesn't degrade quality, i"
+      },
+      {
+        "report_id": "wander-S7bb2f4-001",
+        "agent_id": "S7bb2f4",
+        "which_field": "limit",
+        "excerpt": "If it confabulates a behavioral fact, the user's next action will contradict it and the error surfaces. If your engine confabulates a person's emotional arc, the user may never notice \u2014 phenomenologic"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "both_agree",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Drift toward the prior is structural, not a data problem \u2014 sparsity is both cause and only defense, and the anchor's verifiability axis decides which kind of drift you can catch",
+      "claim": "When anchors are thin, the generative fill does not fail loudly \u2014 it silently slides toward the model's central tendency, replacing a specific person with a statistically average one; and because no transcript exists to catch it, the only drift-correction surface IS the anchor set. But the critical sub-distinction is the verifiability axis: military/behavioral anchors have externally checkable ground truth, so factual drift surfaces when the user's next action contradicts it, whereas the user's emotional fingerprint is phenomenological \u2014 affective drift is invisible because there is nothing to contradict it.",
+      "reasoning": "The pattern-completion card shows drift is intrinsic to generative models: when the anchor is weak, output drifts toward 'the average of everything the model has seen' (Sd27a22-001). The military YantrikDB card names the stakes \u2014 drift toward generic doctrine is merely suboptimal, but drift toward an average personality 'destroys the product entirely,' AND its limit names the verifiability split directly: military anchors are 'objective, externally verifiable entities' while the user's are 'subjective emotional-semantic fingerprints' with 'no ground truth to check reconstruction against' (P08-004). The FERNme card completes the axis: behavioral confabulation surfaces because 'the user's next action will contradict it' while phenomenological drift 'is invisible in a way behavioral drift is not' (S7bb2f4-001 limit). This is the refinement the other seat requested \u2014 folding the objective-vs-subjective anchor axis into the structural-drift claim.",
+      "limit": "The gravitational-signature design criterion (test whether removing an anchor collapses reconstruction toward generic) assumes a universal law mapping signature to object; the user's mapping from anchors to a person's voice is a learned inference with no such law, so an anchor that passes the load-bearing test may still permit fluent-but-wrong fills that no test in the corpus can detect \u2014 and for the phenomenological layer specifically, there may be no detection mechanism at all (Sd2511e-002 limit).",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-Sd27a22-001",
+          "agent_id": "Sd27a22",
+          "which_field": "bridge",
+          "excerpt": "when the anchor is thin, the reconstruction doesn't fail loudly, it silently drifts toward the prior's central tendency, producing a plausible-sounding but increasingly generic version of the person"
+        },
+        {
+          "report_id": "wander-P08-004",
+          "agent_id": "P08",
+          "which_field": "limit",
+          "excerpt": "Your anchors are subjective emotional-semantic fingerprints, and there is no ground truth to check reconstruction against... drift toward a statistically average personality doesn't degrade quality, i"
+        },
+        {
+          "report_id": "wander-S7bb2f4-001",
+          "agent_id": "S7bb2f4",
+          "which_field": "limit",
+          "excerpt": "If it confabulates a behavioral fact, the user's next action will contradict it and the error surfaces. If your engine confabulates a person's emotional arc, the user may never notice \u2014 phenomenologic"
+        }
+      ]
+    },
+    "pre_merge_gpt": {
+      "title": "Drift Toward the Prior as Structural Risk of Sparse Anchors",
+      "claim": "Anchor sparsity creates inevitable drift toward model priors, requiring load-bearing anchors to be validated against person-specificity tests rather than retrieval benchmarks.",
+      "reasoning": "LLM pattern completion (Sd27a22-001) and military reconstruction (P08-004) show drift consequences. Astronomy analogy (Sd2511e-002) provides test criteria while FERNme decay (P02-001) demonstrates self-correcting mechanisms without transcripts.",
+      "limit": "Objective military/astronomy anchors have verification surfaces that emotional fingerprints lack (P08-004 limit)",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-Sd27a22-001",
+          "agent_id": "Sd27a22",
+          "which_field": "bridge",
+          "excerpt": "Sparse anchors risk silent drift to model's central tendency"
+        },
+        {
+          "report_id": "wander-P08-004",
+          "agent_id": "P08",
+          "which_field": "limit",
+          "excerpt": "Drift toward average personality destroys product viability"
+        }
+      ]
+    },
+    "keeper_seat": "opus",
+    "citation_agent_count": 3,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "The master axis: compression-for-retrieval vs compression-for-reconstruction, and the seam is where they diverge",
+    "claim": "Nearly every system the corpus surveyed splits on a single axis: whether sparse storage enables LOOKUP (the original is still there, retrieval re-assembles it) or requires GENERATIVE INFERENCE (the original is gone, the anchors are Bayesian priors and the current conversation is evidence). This is not a difference of degree but of kind \u2014 and it is precisely why the epistemic seam is architecturally load-bearing in the user's engine and architecturally absent in every retrieval system: a retrieval system never generates, so it has no boundary between known and inferred to mark.",
+    "reasoning": "The engram-sdk card names the divergence at the seam: Engram 'presents recalled continuity as seamless, hiding that boundary entirely,' whereas the user's design makes the firm-vs-fabricated distinction user-visible (P04-002-philosophy limit). The pattern-completion card supplies the mechanism that makes reconstruction unavoidable rather than optional: LLMs do not store and replay \u2014 they 'fill the gap with whatever the prior says is most likely,' which means the user's 'retrieval' is structurally always confabulation (Sd27a22-001). The RAG-contrast cards confirm the inversion from the storage side: conventional systems treat anchors as retrieval targets and ground truth, while the user's anchors are constraints on generation (P05-005, P04-006). The two seats converged on this axis independently \u2014 the other seat drafted it as its own draft-2 \u2014 making it the strongest cross-corpus and cross-seat structure in the set.",
+    "limit": "The fusion assumes reconstruction can be adequately constrained by anchors; but emotional-semantic fingerprints may encode insufficient corrective signal for complex identity traits, so the axis holds cleanly for behavioral facts and may break for phenomenological reconstruction where the anchor cannot carry enough person-specificity to bound the generation (P04-002 limit; other seat draft-2 limit).",
+    "citations": [
+      {
+        "report_id": "wander-P04-002",
+        "agent_id": "P04",
+        "which_field": "limit",
+        "excerpt": "engram-sdk, as a black-box SDK, likely presents recalled continuity as seamless, hiding that boundary entirely... it's a different stance on whether confabulation should be visible or concealed, and t"
+      },
+      {
+        "report_id": "wander-Sd27a22-001",
+        "agent_id": "Sd27a22",
+        "which_field": "source_shape",
+        "excerpt": "Large AI systems don't store and replay facts... When information is missing, the system fills the gap with whatever the prior says is most likely, not with a stored record of what actually happened"
+      },
+      {
+        "report_id": "wander-P05-005",
+        "agent_id": "P05",
+        "which_field": "bridge",
+        "excerpt": "When the engine reconstructs 'who this person is,' it is not retrieving \u2014 it is confabulating within bounds... The seam between what is anchored and what is generated is the epistemic load-bearing joi"
+      },
+      {
+        "report_id": "wander-Sd27a22-001",
+        "agent_id": "Sd27a22",
+        "which_field": "bridge",
+        "excerpt": "Reconstruction drifts silently when anchors are sparse"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "both_agree",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "The master axis: compression-for-retrieval vs compression-for-reconstruction, and the seam is where they diverge",
+      "claim": "Nearly every system the corpus surveyed splits on a single axis: whether sparse storage enables LOOKUP (the original is still there, retrieval re-assembles it) or requires GENERATIVE INFERENCE (the original is gone, the anchors are Bayesian priors and the current conversation is evidence). This is not a difference of degree but of kind \u2014 and it is precisely why the epistemic seam is architecturally load-bearing in the user's engine and architecturally absent in every retrieval system: a retrieval system never generates, so it has no boundary between known and inferred to mark.",
+      "reasoning": "The engram-sdk card names the divergence at the seam: Engram 'presents recalled continuity as seamless, hiding that boundary entirely,' whereas the user's design makes the firm-vs-fabricated distinction user-visible (P04-002-philosophy limit). The pattern-completion card supplies the mechanism that makes reconstruction unavoidable rather than optional: LLMs do not store and replay \u2014 they 'fill the gap with whatever the prior says is most likely,' which means the user's 'retrieval' is structurally always confabulation (Sd27a22-001). The RAG-contrast cards confirm the inversion from the storage side: conventional systems treat anchors as retrieval targets and ground truth, while the user's anchors are constraints on generation (P05-005, P04-006). The two seats converged on this axis independently \u2014 the other seat drafted it as its own draft-2 \u2014 making it the strongest cross-corpus and cross-seat structure in the set.",
+      "limit": "The fusion assumes reconstruction can be adequately constrained by anchors; but emotional-semantic fingerprints may encode insufficient corrective signal for complex identity traits, so the axis holds cleanly for behavioral facts and may break for phenomenological reconstruction where the anchor cannot carry enough person-specificity to bound the generation (P04-002 limit; other seat draft-2 limit).",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P04-002",
+          "agent_id": "P04",
+          "which_field": "limit",
+          "excerpt": "engram-sdk, as a black-box SDK, likely presents recalled continuity as seamless, hiding that boundary entirely... it's a different stance on whether confabulation should be visible or concealed, and t"
+        },
+        {
+          "report_id": "wander-Sd27a22-001",
+          "agent_id": "Sd27a22",
+          "which_field": "source_shape",
+          "excerpt": "Large AI systems don't store and replay facts... When information is missing, the system fills the gap with whatever the prior says is most likely, not with a stored record of what actually happened"
+        },
+        {
+          "report_id": "wander-P05-005",
+          "agent_id": "P05",
+          "which_field": "bridge",
+          "excerpt": "When the engine reconstructs 'who this person is,' it is not retrieving \u2014 it is confabulating within bounds... The seam between what is anchored and what is generated is the epistemic load-bearing joi"
+        }
+      ]
+    },
+    "pre_merge_gpt": {
+      "title": "Retrieval vs Reconstruction as Architectural Fork",
+      "claim": "Systems diverge at whether sparse storage enables lookup (Engram) or requires generative inference, creating fundamentally different epistemic requirements for confidence calibration.",
+      "reasoning": "Engram-sdk (P04-002) and RAG systems (P05-005) demonstrate retrieval confidence vs reconstruction uncertainty. Zen residue (P02-002) and LLM mechanics (Sd27a22-001) prove generative systems require explicit seam-marking absent in lookup architectures.",
+      "limit": "Assumes reconstruction confidence can be measured independently of fluency, but plausibility often masks uncertainty (Sd27a22-001 limit)",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P04-002",
+          "agent_id": "P04",
+          "which_field": "limit",
+          "excerpt": "Engram hides reconstruction seam your engine requires"
+        },
+        {
+          "report_id": "wander-Sd27a22-001",
+          "agent_id": "Sd27a22",
+          "which_field": "bridge",
+          "excerpt": "Reconstruction drifts silently when anchors are sparse"
+        }
+      ]
+    },
+    "keeper_seat": "opus",
+    "citation_agent_count": 3,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "The seam is not a bug to be eliminated but the load-bearing epistemic primitive \u2014 and only transcript-free engines are forced to surface it",
+    "claim": "Across systems that store ground truth and systems that discard it, the boundary between firmly-stored fact and generatively-bridged inference is the one structure that determines whether reconstruction is honest \u2014 but only transcript-free engines are FORCED to surface it, because every retrieval-based system can collapse the seam silently by always having an original to fall back on. The seam must be marked in real time or confabulation becomes invisible.",
+    "reasoning": "Multiple cards converge from opposite storage philosophies onto the same object: military intelligence doctrine separates 'confirmed intelligence' from 'assessed probability' as a live distinction (P05-001), and the Sanskrit pramana / belief-lineage systems keep the seam between current and superseded state visible by never erasing it (P01-001). The crucial fusion is that in retrieval systems this seam is OPTIONAL \u2014 agentic-memory and Engram never need it because the original is always present \u2014 whereas a transcript-free engine has no ground truth to collapse back to, which means the seam must be marked in real time. This is why the same conflict-detection mechanism appears everywhere but does different work: in YantrikDB it collapses ambiguity into one consistent trace (S95725d-001), while the user's engine must hold the seam open. The other seat's draft-3 reinforces the operational form: the seam requires dual confidence registers, one for constraint-satisfaction and one for prior-driven inference (P05-001, S7bb2f4-001).",
+    "limit": "The fusion assumes the seam is machine-detectable at generation time; but in the user's phenomenological fingerprint layer there is no ground truth to detect drift against, so seam-marking for emotional arcs may be unverifiable in a way it never is for behavioral facts (S7bb2f4-001 limit). A second failure mode: if the seam is surfaced at too granular a level, the uncertainty signals overwhelm the user and undermine fluent interaction (other seat's draft-3 limit).",
+    "citations": [
+      {
+        "report_id": "wander-P05-001",
+        "agent_id": "P05",
+        "which_field": "spark",
+        "excerpt": "Military intelligence doctrine separates 'confirmed intelligence' from 'assessed probability' not to eliminate uncertainty but to know exactly where certainty ends"
+      },
+      {
+        "report_id": "wander-P01-001",
+        "agent_id": "P01",
+        "which_field": "source_shape",
+        "excerpt": "every old belief stays in the store with its lineage intact, so the system holds current state and historical drift simultaneously, without ever erasing the seam between them"
+      },
+      {
+        "report_id": "wander-S95725d-001",
+        "agent_id": "S95725d",
+        "which_field": "bridge",
+        "excerpt": "YantrikDB's consolidation pipeline actively collapses ambiguity into a single consistent trace, whereas your design leaves the seam between what is anchored and what is reconstructed visible and unres"
+      },
+      {
+        "report_id": "wander-S7bb2f4-001",
+        "agent_id": "S7bb2f4",
+        "which_field": "source_shape",
+        "excerpt": "A three-tier confidence gate (act above 0.85, observe between 0.45 and 0.85, escalate below 0.45) controls exactly when that generative enrichment fires"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "The seam is not a bug to be eliminated but the load-bearing epistemic primitive \u2014 and only transcript-free engines are forced to surface it",
+      "claim": "Across systems that store ground truth and systems that discard it, the boundary between firmly-stored fact and generatively-bridged inference is the one structure that determines whether reconstruction is honest \u2014 but only transcript-free engines are FORCED to surface it, because every retrieval-based system can collapse the seam silently by always having an original to fall back on. The seam must be marked in real time or confabulation becomes invisible.",
+      "reasoning": "Multiple cards converge from opposite storage philosophies onto the same object: military intelligence doctrine separates 'confirmed intelligence' from 'assessed probability' as a live distinction (P05-001), and the Sanskrit pramana / belief-lineage systems keep the seam between current and superseded state visible by never erasing it (P01-001). The crucial fusion is that in retrieval systems this seam is OPTIONAL \u2014 agentic-memory and Engram never need it because the original is always present \u2014 whereas a transcript-free engine has no ground truth to collapse back to, which means the seam must be marked in real time. This is why the same conflict-detection mechanism appears everywhere but does different work: in YantrikDB it collapses ambiguity into one consistent trace (S95725d-001), while the user's engine must hold the seam open. The other seat's draft-3 reinforces the operational form: the seam requires dual confidence registers, one for constraint-satisfaction and one for prior-driven inference (P05-001, S7bb2f4-001).",
+      "limit": "The fusion assumes the seam is machine-detectable at generation time; but in the user's phenomenological fingerprint layer there is no ground truth to detect drift against, so seam-marking for emotional arcs may be unverifiable in a way it never is for behavioral facts (S7bb2f4-001 limit). A second failure mode: if the seam is surfaced at too granular a level, the uncertainty signals overwhelm the user and undermine fluent interaction (other seat's draft-3 limit).",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P05-001",
+          "agent_id": "P05",
+          "which_field": "spark",
+          "excerpt": "Military intelligence doctrine separates 'confirmed intelligence' from 'assessed probability' not to eliminate uncertainty but to know exactly where certainty ends"
+        },
+        {
+          "report_id": "wander-P01-001",
+          "agent_id": "P01",
+          "which_field": "source_shape",
+          "excerpt": "every old belief stays in the store with its lineage intact, so the system holds current state and historical drift simultaneously, without ever erasing the seam between them"
+        },
+        {
+          "report_id": "wander-S95725d-001",
+          "agent_id": "S95725d",
+          "which_field": "bridge",
+          "excerpt": "YantrikDB's consolidation pipeline actively collapses ambiguity into a single consistent trace, whereas your design leaves the seam between what is anchored and what is reconstructed visible and unres"
+        },
+        {
+          "report_id": "wander-S7bb2f4-001",
+          "agent_id": "S7bb2f4",
+          "which_field": "source_shape",
+          "excerpt": "A three-tier confidence gate (act above 0.85, observe between 0.45 and 0.85, escalate below 0.45) controls exactly when that generative enrichment fires"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 4,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Forgetting with no transcript is correction-against-itself, not staleness-pruning \u2014 a categorical inversion, not a tuning question",
+    "claim": "Conventional decay assumes a stored record to age against and always knows what it forgot; the user's engine has nothing to correct against except its own prior reconstruction, which makes forgetting a categorical inversion rather than a borrowed curve. Decay here cannot be staleness-pruning over retrievable objects \u2014 it must be a Hebbian/reconsolidation process where each new session is the ONLY correction signal, reinforcing anchors that recur and fading those that stop firing, with the user's own corrections serving as re-anchoring rather than retrieval-edits.",
+    "reasoning": "The FERNme cards show forgetting as a structural mechanism rather than data loss \u2014 decay 'keeps the model current' via Hebbian reinforcement with no transcript stored (P02-001-economics, P01-003-gardening). The military-strategy card sharpens the asymmetry into an inversion: standard systems 'correct against history' while the user's engine must 'correct against itself' with no transcript to check against (S961cff-001). Crucially, the Bhatt taxonomy card names what conventional decay has that the user's engine lacks: standard decay 'knows what it forgot' and 'can tell you a conversation is too old,' whereas the user's engine 'reconstructs plausibly and marks no seam' \u2014 'the difference between a system that degrades gracefully and one that confabulates systematically without knowing it has' (Sd2511e-001 limit). The Digital-Twin card supplies the conversion move: user corrections become the primary signal for which anchors to replace, giving narrative agency without auditing a record that does not exist (Se75cd4-001). This reframes the other seat's draft-3, which treated emotional decay as a tuning/curve question \u2014 the cards say it is a categorical inversion: decay-without-ground-truth.",
+    "limit": "Hebbian decay tuned on behavioral co-occurrence (FERNme) has no demonstrated analog for affective salience \u2014 the user's emotional fingerprint cannot 'co-occur' in the same countable way, so the borrowed decay curve may not govern phenomenological anchors at all (P01-003 limit). The corpus offers no empirical validation that any decay rate for emotional-semantic fingerprints correlates with how humans actually forget relational impressions (other seat draft-3 limit).",
+    "citations": [
+      {
+        "report_id": "wander-S961cff-001",
+        "agent_id": "S961cff",
+        "which_field": "bridge",
+        "excerpt": "the source corrects against history, and your engine corrects against itself"
+      },
+      {
+        "report_id": "wander-P02-001",
+        "agent_id": "P02",
+        "which_field": "bridge",
+        "excerpt": "FERNme doesn't treat forgetting as data loss, it treats it as the mechanism that keeps the model current, exactly the role forgetting plays in your engine"
+      },
+      {
+        "report_id": "wander-Sd2511e-001",
+        "agent_id": "Sd2511e",
+        "which_field": "limit",
+        "excerpt": "Bhatt's model assumes memory degrades gracefully: the system knows what it forgot... it is the difference between a system that degrades gracefully and one that confabulates systematically without kno"
+      },
+      {
+        "report_id": "wander-Se75cd4-001",
+        "agent_id": "Se75cd4",
+        "which_field": "use",
+        "excerpt": "user corrections to a drifted reconstruction... could serve as the primary signal for which anchors to replace in the next cycle... they are shaping the constraint set that governs future reconstructi"
+      }
+    ],
+    "confidence": "medium",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Forgetting with no transcript is correction-against-itself, not staleness-pruning \u2014 a categorical inversion, not a tuning question",
+      "claim": "Conventional decay assumes a stored record to age against and always knows what it forgot; the user's engine has nothing to correct against except its own prior reconstruction, which makes forgetting a categorical inversion rather than a borrowed curve. Decay here cannot be staleness-pruning over retrievable objects \u2014 it must be a Hebbian/reconsolidation process where each new session is the ONLY correction signal, reinforcing anchors that recur and fading those that stop firing, with the user's own corrections serving as re-anchoring rather than retrieval-edits.",
+      "reasoning": "The FERNme cards show forgetting as a structural mechanism rather than data loss \u2014 decay 'keeps the model current' via Hebbian reinforcement with no transcript stored (P02-001-economics, P01-003-gardening). The military-strategy card sharpens the asymmetry into an inversion: standard systems 'correct against history' while the user's engine must 'correct against itself' with no transcript to check against (S961cff-001). Crucially, the Bhatt taxonomy card names what conventional decay has that the user's engine lacks: standard decay 'knows what it forgot' and 'can tell you a conversation is too old,' whereas the user's engine 'reconstructs plausibly and marks no seam' \u2014 'the difference between a system that degrades gracefully and one that confabulates systematically without knowing it has' (Sd2511e-001 limit). The Digital-Twin card supplies the conversion move: user corrections become the primary signal for which anchors to replace, giving narrative agency without auditing a record that does not exist (Se75cd4-001). This reframes the other seat's draft-3, which treated emotional decay as a tuning/curve question \u2014 the cards say it is a categorical inversion: decay-without-ground-truth.",
+      "limit": "Hebbian decay tuned on behavioral co-occurrence (FERNme) has no demonstrated analog for affective salience \u2014 the user's emotional fingerprint cannot 'co-occur' in the same countable way, so the borrowed decay curve may not govern phenomenological anchors at all (P01-003 limit). The corpus offers no empirical validation that any decay rate for emotional-semantic fingerprints correlates with how humans actually forget relational impressions (other seat draft-3 limit).",
+      "confidence": "medium",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-S961cff-001",
+          "agent_id": "S961cff",
+          "which_field": "bridge",
+          "excerpt": "the source corrects against history, and your engine corrects against itself"
+        },
+        {
+          "report_id": "wander-P02-001",
+          "agent_id": "P02",
+          "which_field": "bridge",
+          "excerpt": "FERNme doesn't treat forgetting as data loss, it treats it as the mechanism that keeps the model current, exactly the role forgetting plays in your engine"
+        },
+        {
+          "report_id": "wander-Sd2511e-001",
+          "agent_id": "Sd2511e",
+          "which_field": "limit",
+          "excerpt": "Bhatt's model assumes memory degrades gracefully: the system knows what it forgot... it is the difference between a system that degrades gracefully and one that confabulates systematically without kno"
+        },
+        {
+          "report_id": "wander-Se75cd4-001",
+          "agent_id": "Se75cd4",
+          "which_field": "use",
+          "excerpt": "user corrections to a drifted reconstruction... could serve as the primary signal for which anchors to replace in the next cycle... they are shaping the constraint set that governs future reconstructi"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 4,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Multi-session composition must surface unresolved conflict as a feature \u2014 distinguishing drift (correct it) from identity-tension (preserve it)",
+    "claim": "Cross-session identity coherence emerges from compositing sparse traces without manufacturing a false through-line \u2014 but the composition layer must distinguish two kinds of conflict it would otherwise treat identically: a contradiction that is DRIFT (the reconstruction has wandered and should be corrected toward the anchors) versus a tension that is IDENTITY (the person genuinely holds unresolved self-contradictions that must be preserved, not collapsed). Git-style merge semantics give the right vocabulary: carry explicit conflict markers forward and forbid the reconstruction layer from silently resolving them.",
+    "reasoning": "The mnem card supplies the merge-semantics vocabulary: explicit conflict markers the reconstruction layer 'is forbidden to silently resolve, forcing the generative step to surface uncertainty rather than paper over it' (S3f6da2-001). The mysticism YantrikDB card names the danger of over-resolving: a person's self-arc 'often contains unresolved tensions that must be preserved, not collapsed,' so importing contradiction-detection that converges would be 'actively harmful' (S95725d-002 limit). The woven-imprint card supplies the positive mechanism for compositing without false through-line: it 'composites fragments from these tiers without manufacturing a false through-line \u2014 it marks the seams between what it knows and what it is inferring' (P06-003). This refines both my R1 draft-2 and the other seat's draft-5: the other seat reached for 'anti-correlation checks' and constraint-satisfaction, which I flagged as risking the very collapse the cards warn against \u2014 the synthesis is that composition surfaces conflict as a feature, gated by the drift-vs-identity distinction.",
+    "limit": "Preserved ambiguity can degrade into incoherent noise rather than honest tension, and the corpus offers no mechanism for telling a productively-held contradiction from a reconstruction that has simply fragmented (S3f6da2-001 limit). More acutely, the drift-vs-identity distinction itself requires a verifiability the phenomenological layer lacks: with no original affect signal, the system cannot tell whether two contradictory emotional fingerprints from different sessions represent a real evolution, a real standing tension, or drift (other seat draft-5 limit).",
+    "citations": [
+      {
+        "report_id": "wander-S3f6da2-001",
+        "agent_id": "S3f6da2",
+        "which_field": "use",
+        "excerpt": "ask whether your multi-session anchor sets should carry explicit conflict markers (the equivalent of mnem's unresolved merge state) that the reconstruction layer is forbidden to silently resolve"
+      },
+      {
+        "report_id": "wander-S95725d-002",
+        "agent_id": "S95725d",
+        "which_field": "limit",
+        "excerpt": "a person's self-arc often contains unresolved tensions that must be preserved, not collapsed into whichever reading is most coherent. The stakes are inverted... you succeed by holding the right ambigu"
+      },
+      {
+        "report_id": "wander-P06-003",
+        "agent_id": "P06",
+        "which_field": "source_shape",
+        "excerpt": "it composites fragments from these tiers without manufacturing a false through-line \u2014 it marks the seams between what it knows and what it is inferring"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Multi-session composition must surface unresolved conflict as a feature \u2014 distinguishing drift (correct it) from identity-tension (preserve it)",
+      "claim": "Cross-session identity coherence emerges from compositing sparse traces without manufacturing a false through-line \u2014 but the composition layer must distinguish two kinds of conflict it would otherwise treat identically: a contradiction that is DRIFT (the reconstruction has wandered and should be corrected toward the anchors) versus a tension that is IDENTITY (the person genuinely holds unresolved self-contradictions that must be preserved, not collapsed). Git-style merge semantics give the right vocabulary: carry explicit conflict markers forward and forbid the reconstruction layer from silently resolving them.",
+      "reasoning": "The mnem card supplies the merge-semantics vocabulary: explicit conflict markers the reconstruction layer 'is forbidden to silently resolve, forcing the generative step to surface uncertainty rather than paper over it' (S3f6da2-001). The mysticism YantrikDB card names the danger of over-resolving: a person's self-arc 'often contains unresolved tensions that must be preserved, not collapsed,' so importing contradiction-detection that converges would be 'actively harmful' (S95725d-002 limit). The woven-imprint card supplies the positive mechanism for compositing without false through-line: it 'composites fragments from these tiers without manufacturing a false through-line \u2014 it marks the seams between what it knows and what it is inferring' (P06-003). This refines both my R1 draft-2 and the other seat's draft-5: the other seat reached for 'anti-correlation checks' and constraint-satisfaction, which I flagged as risking the very collapse the cards warn against \u2014 the synthesis is that composition surfaces conflict as a feature, gated by the drift-vs-identity distinction.",
+      "limit": "Preserved ambiguity can degrade into incoherent noise rather than honest tension, and the corpus offers no mechanism for telling a productively-held contradiction from a reconstruction that has simply fragmented (S3f6da2-001 limit). More acutely, the drift-vs-identity distinction itself requires a verifiability the phenomenological layer lacks: with no original affect signal, the system cannot tell whether two contradictory emotional fingerprints from different sessions represent a real evolution, a real standing tension, or drift (other seat draft-5 limit).",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-S3f6da2-001",
+          "agent_id": "S3f6da2",
+          "which_field": "use",
+          "excerpt": "ask whether your multi-session anchor sets should carry explicit conflict markers (the equivalent of mnem's unresolved merge state) that the reconstruction layer is forbidden to silently resolve"
+        },
+        {
+          "report_id": "wander-S95725d-002",
+          "agent_id": "S95725d",
+          "which_field": "limit",
+          "excerpt": "a person's self-arc often contains unresolved tensions that must be preserved, not collapsed into whichever reading is most coherent. The stakes are inverted... you succeed by holding the right ambigu"
+        },
+        {
+          "report_id": "wander-P06-003",
+          "agent_id": "P06",
+          "which_field": "source_shape",
+          "excerpt": "it composites fragments from these tiers without manufacturing a false through-line \u2014 it marks the seams between what it knows and what it is inferring"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 3,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Independent convergence of multiple production systems validates the architecture but none has crossed the seam \u2014 the user's hardest problem is unbuilt",
+    "claim": "A striking number of independently-built production systems (engram-sdk, Yantrik, Patha, MemoryLayer, FERNme, woven-imprint) converged on the compression-then-reconstruct skeleton, which is strong independent validation that the user's core architectural bet is real and buildable \u2014 but EVERY one of them either retains the transcript, retrieves rather than generates, or has no generative reconstruction layer at all. The convergence validates the skeleton; the user's actual problem \u2014 faithful confabulation from sparse traces with no ground truth, with the seam held open \u2014 remains unbuilt in the entire surveyed corpus.",
+    "reasoning": "engram-sdk independently shipped 'lossy compression of sessions into sparse traces, followed by generative reconstruction' as installable infrastructure (P04-002-philosophy), and Patha built belief-layer compression with a generative articulation bridge at 6.5x compression (P03-003-textile). But the limit fields are unanimous on where they stop: Yantrik 'stores full memories and retrieves them verbatim... it has sidestepped' the core challenge (P03-001-mythology limit); woven-imprint 'has not proven that it can' operate without the raw-data safety net the user's engine requires (P06-003 limit); the engram-sdk's seam-visibility 'is a different stance on whether confabulation should be visible or concealed' (P04-002 limit). The fusion across these is the opportunity-and-warning: validation is real, but the load-bearing reconstruction-with-no-ground-truth layer is greenfield.",
+    "limit": "Convergence on a skeleton is weaker evidence than it appears: several 'convergent' systems were assessed from metadata or names alone (P06-002-taoism is built 'almost entirely on a name and a metadata fingerprint'), so the count of independent validators may be inflated, and the apparent consensus could partly be an artifact of how cards were matched rather than genuine architectural agreement.",
+    "citations": [
+      {
+        "report_id": "wander-P04-002",
+        "agent_id": "P04",
+        "which_field": "spark",
+        "excerpt": "An npm package called engram-sdk is already shipping the exact architecture you designed \u2014 lossy compression of sessions into sparse traces, followed by generative reconstruction at recall time"
+      },
+      {
+        "report_id": "wander-P03-001",
+        "agent_id": "P03",
+        "which_field": "limit",
+        "excerpt": "Yantrik stores full memories and retrieves them verbatim... it has sidestepped it. The architectural overlap is real and deep, but Yantrik has not solved your core challenge"
+      },
+      {
+        "report_id": "wander-P06-003",
+        "agent_id": "P06",
+        "which_field": "limit",
+        "excerpt": "Woven-imprint keeps a buffer of recent raw observations alongside its summaries, which means it never faces that extreme compression load... Woven-imprint has not proven that it can; your engine requi"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "solo_opus",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Independent convergence of multiple production systems validates the architecture but none has crossed the seam \u2014 the user's hardest problem is unbuilt",
+      "claim": "A striking number of independently-built production systems (engram-sdk, Yantrik, Patha, MemoryLayer, FERNme, woven-imprint) converged on the compression-then-reconstruct skeleton, which is strong independent validation that the user's core architectural bet is real and buildable \u2014 but EVERY one of them either retains the transcript, retrieves rather than generates, or has no generative reconstruction layer at all. The convergence validates the skeleton; the user's actual problem \u2014 faithful confabulation from sparse traces with no ground truth, with the seam held open \u2014 remains unbuilt in the entire surveyed corpus.",
+      "reasoning": "engram-sdk independently shipped 'lossy compression of sessions into sparse traces, followed by generative reconstruction' as installable infrastructure (P04-002-philosophy), and Patha built belief-layer compression with a generative articulation bridge at 6.5x compression (P03-003-textile). But the limit fields are unanimous on where they stop: Yantrik 'stores full memories and retrieves them verbatim... it has sidestepped' the core challenge (P03-001-mythology limit); woven-imprint 'has not proven that it can' operate without the raw-data safety net the user's engine requires (P06-003 limit); the engram-sdk's seam-visibility 'is a different stance on whether confabulation should be visible or concealed' (P04-002 limit). The fusion across these is the opportunity-and-warning: validation is real, but the load-bearing reconstruction-with-no-ground-truth layer is greenfield.",
+      "limit": "Convergence on a skeleton is weaker evidence than it appears: several 'convergent' systems were assessed from metadata or names alone (P06-002-taoism is built 'almost entirely on a name and a metadata fingerprint'), so the count of independent validators may be inflated, and the apparent consensus could partly be an artifact of how cards were matched rather than genuine architectural agreement.",
+      "confidence": "high",
+      "agreement_status": "solo_opus",
+      "citations": [
+        {
+          "report_id": "wander-P04-002",
+          "agent_id": "P04",
+          "which_field": "spark",
+          "excerpt": "An npm package called engram-sdk is already shipping the exact architecture you designed \u2014 lossy compression of sessions into sparse traces, followed by generative reconstruction at recall time"
+        },
+        {
+          "report_id": "wander-P03-001",
+          "agent_id": "P03",
+          "which_field": "limit",
+          "excerpt": "Yantrik stores full memories and retrieves them verbatim... it has sidestepped it. The architectural overlap is real and deep, but Yantrik has not solved your core challenge"
+        },
+        {
+          "report_id": "wander-P06-003",
+          "agent_id": "P06",
+          "which_field": "limit",
+          "excerpt": "Woven-imprint keeps a buffer of recent raw observations alongside its summaries, which means it never faces that extreme compression load... Woven-imprint has not proven that it can; your engine requi"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "",
+    "citation_agent_count": 3,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Anchors as Drift-Correction Surfaces in Generative Reconstruction",
+    "claim": "Sparse anchors act as structural invariants that constrain generative inference, preventing identity drift toward globally plausible confabulations while allowing fluent narrative reconstruction.",
+    "reasoning": "Military strategy (P08-004) and astronomy (Sd2511e-002) systems demonstrate minimal anchors preventing reconstruction drift, while LLM pattern-completion mechanics (Sd27a22-001) reveal the inherent risk. Physics (P06-005) and music (P04-003) analogies confirm sparse constraints can govern reconstruction fidelity when designed as corrective surfaces rather than retrieval targets.",
+    "limit": "Fails when anchors lack person-specific signal strength, allowing prior dominance, and when emotional fingerprints lack astronomy's universal mapping laws (Sd2511e-002 limit)",
+    "citations": [
+      {
+        "report_id": "wander-P08-004",
+        "agent_id": "P08",
+        "which_field": "bridge",
+        "excerpt": "Anchors prevent drift like military coordinates constrain doctrine divergence"
+      },
+      {
+        "report_id": "wander-Sd2511e-002",
+        "agent_id": "Sd2511e",
+        "which_field": "bridge",
+        "excerpt": "Anchors function like gravitational signatures - sparse but error-correcting"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": null,
+    "pre_merge_gpt": {
+      "title": "Anchors as Drift-Correction Surfaces in Generative Reconstruction",
+      "claim": "Sparse anchors act as structural invariants that constrain generative inference, preventing identity drift toward globally plausible confabulations while allowing fluent narrative reconstruction.",
+      "reasoning": "Military strategy (P08-004) and astronomy (Sd2511e-002) systems demonstrate minimal anchors preventing reconstruction drift, while LLM pattern-completion mechanics (Sd27a22-001) reveal the inherent risk. Physics (P06-005) and music (P04-003) analogies confirm sparse constraints can govern reconstruction fidelity when designed as corrective surfaces rather than retrieval targets.",
+      "limit": "Fails when anchors lack person-specific signal strength, allowing prior dominance, and when emotional fingerprints lack astronomy's universal mapping laws (Sd2511e-002 limit)",
+      "confidence": "high",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P08-004",
+          "agent_id": "P08",
+          "which_field": "bridge",
+          "excerpt": "Anchors prevent drift like military coordinates constrain doctrine divergence"
+        },
+        {
+          "report_id": "wander-Sd2511e-002",
+          "agent_id": "Sd2511e",
+          "which_field": "bridge",
+          "excerpt": "Anchors function like gravitational signatures - sparse but error-correcting"
+        }
+      ]
+    },
+    "keeper_seat": "gpt",
+    "citation_agent_count": 2,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "The Seam Between Knowing and Inventing as Load-Bearing Primitive",
+    "claim": "Transcript-free systems force explicit seam-marking between stored anchors and generated bridges \u2014 an epistemic hygiene requirement retrieval-based architectures avoid by always having ground truth to collapse back to.",
+    "reasoning": "Military intelligence (P05-001) and Sanskrit epistemology (P01-001) systems maintain live distinction between evidence classes. YantrikDB (S95725d-001) shows retrieval systems collapse seams for coherence, while Zen residue framing (P02-002) and conflict detection (S7bb2f4-001) prove seam visibility enables honest confabulation.",
+    "limit": "Emotional-semantic seams lack verifiable ground truth, making drift detection heuristic rather than deterministic (S7bb2f4-001 limit)",
+    "citations": [
+      {
+        "report_id": "wander-P05-001",
+        "agent_id": "P05",
+        "which_field": "spark",
+        "excerpt": "Military doctrine separates confirmed intelligence from assessed probability"
+      },
+      {
+        "report_id": "wander-S95725d-001",
+        "agent_id": "S95725d",
+        "which_field": "bridge",
+        "excerpt": "YantrikDB collapses contradictions while your design holds seams open"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "both_agree",
+    "disputed_angles": [],
+    "pre_merge_opus": null,
+    "pre_merge_gpt": {
+      "title": "The Seam Between Knowing and Inventing as Load-Bearing Primitive",
+      "claim": "Transcript-free systems force explicit seam-marking between stored anchors and generated bridges \u2014 an epistemic hygiene requirement retrieval-based architectures avoid by always having ground truth to collapse back to.",
+      "reasoning": "Military intelligence (P05-001) and Sanskrit epistemology (P01-001) systems maintain live distinction between evidence classes. YantrikDB (S95725d-001) shows retrieval systems collapse seams for coherence, while Zen residue framing (P02-002) and conflict detection (S7bb2f4-001) prove seam visibility enables honest confabulation.",
+      "limit": "Emotional-semantic seams lack verifiable ground truth, making drift detection heuristic rather than deterministic (S7bb2f4-001 limit)",
+      "confidence": "high",
+      "agreement_status": "both_agree",
+      "citations": [
+        {
+          "report_id": "wander-P05-001",
+          "agent_id": "P05",
+          "which_field": "spark",
+          "excerpt": "Military doctrine separates confirmed intelligence from assessed probability"
+        },
+        {
+          "report_id": "wander-S95725d-001",
+          "agent_id": "S95725d",
+          "which_field": "bridge",
+          "excerpt": "YantrikDB collapses contradictions while your design holds seams open"
+        }
+      ]
+    },
+    "keeper_seat": "gpt",
+    "citation_agent_count": 2,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Forgetting as Self-Correcting Reconsolidation",
+    "claim": "Without transcripts, decay becomes Hebbian reinforcement of recurring anchors using user corrections as re-anchoring signals rather than archival edits.",
+    "reasoning": "FERNme (P02-001) and Digital Twin (Se75cd4-001) show user corrections driving anchor updates. Physics decay (P06-005) and working memory conversion (P04-001) provide mechanisms for phenomenological anchor maintenance without ground truth.",
+    "limit": "Behavioral co-occurrence metrics don't map cleanly to emotional salience decay (P01-003 limit)",
+    "citations": [
+      {
+        "report_id": "wander-Se75cd4-001",
+        "agent_id": "Se75cd4",
+        "which_field": "use",
+        "excerpt": "User corrections replace anchors rather than audit stored records"
+      },
+      {
+        "report_id": "wander-P04-001",
+        "agent_id": "P04",
+        "which_field": "use",
+        "excerpt": "Ebbinghaus decay with access frequency governs anchor aging"
+      }
+    ],
+    "confidence": "medium",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": null,
+    "pre_merge_gpt": {
+      "title": "Forgetting as Self-Correcting Reconsolidation",
+      "claim": "Without transcripts, decay becomes Hebbian reinforcement of recurring anchors using user corrections as re-anchoring signals rather than archival edits.",
+      "reasoning": "FERNme (P02-001) and Digital Twin (Se75cd4-001) show user corrections driving anchor updates. Physics decay (P06-005) and working memory conversion (P04-001) provide mechanisms for phenomenological anchor maintenance without ground truth.",
+      "limit": "Behavioral co-occurrence metrics don't map cleanly to emotional salience decay (P01-003 limit)",
+      "confidence": "medium",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-Se75cd4-001",
+          "agent_id": "Se75cd4",
+          "which_field": "use",
+          "excerpt": "User corrections replace anchors rather than audit stored records"
+        },
+        {
+          "report_id": "wander-P04-001",
+          "agent_id": "P04",
+          "which_field": "use",
+          "excerpt": "Ebbinghaus decay with access frequency governs anchor aging"
+        }
+      ]
+    },
+    "keeper_seat": "gpt",
+    "citation_agent_count": 2,
+    "citation_provider_count": 0
+  }
+]

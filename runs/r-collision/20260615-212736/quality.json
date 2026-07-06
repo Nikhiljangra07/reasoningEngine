@@ -1,0 +1,67 @@
+{
+  "ranked": [
+    {
+      "blend_id": "blend-04",
+      "rank": 1,
+      "tied": false,
+      "score": 0.82,
+      "advancement": 0.82,
+      "advancement_note": "directly answers the QUESTION's 'when to STOP vs. keep going' sub-problem with an operational two-monitor truth table that converts an ambiguous divergence signal into a decidable closure rule",
+      "blind_spots_addressed": [
+        "G1"
+      ],
+      "opens_new_gap": "truth table assumes Monitor B (structural shape detection) is computable mid-run, but no mechanism is named for how 'load-bearing shape' is detected in real time — G14 is named but not resolved",
+      "novelty_bin": "novel",
+      "rationale": "The most direct answer to the QUESTION's hardest sub-problem; the truth table is a concrete governance rule, not a metaphor, but it inherits G14's unresolved shape-detection problem."
+    },
+    {
+      "blend_id": "blend-01",
+      "rank": 2,
+      "tied": false,
+      "score": 0.74,
+      "advancement": 0.74,
+      "advancement_note": "gives the pipeline a differentiable-in-time fertility instrument that operationalizes the 'when to keep going vs. stop' and 'when to re-route' sub-questions with a single content-blind quantity",
+      "blind_spots_addressed": [
+        "G1",
+        "G6"
+      ],
+      "opens_new_gap": "the sliding-window size for the emergence-link rate is unspecified — window length determines whether a pause reads as 'briefly flat' or 'genuinely decaying', and no calibration mechanism is named",
+      "novelty_bin": "novel",
+      "rationale": "Advances the QUESTION's stop/re-route governance directly and concretely; the three-derivative framing is a real instrument, not a restatement, though it leaves the window-calibration problem open."
+    },
+    {
+      "blend_id": "blend-02",
+      "rank": 3,
+      "tied": false,
+      "score": 0.65,
+      "advancement": 0.65,
+      "advancement_note": "answers the QUESTION's implicit 'where does the evaluator sit and what can it see' architectural prerequisite, which must be settled before any governance rule can be implemented",
+      "blind_spots_addressed": [
+        "G5",
+        "G13"
+      ],
+      "opens_new_gap": "the redirector fires on 'local cross-connection density stopping new links' but no signal format or data structure for that gradient is named — G13 is surfaced but not resolved",
+      "novelty_bin": "novel",
+      "rationale": "Resolves a real architectural ambiguity the QUESTION depends on, but the redirector's trigger signal remains underspecified, so the governance mechanism it enables is still incomplete."
+    },
+    {
+      "blend_id": "blend-03",
+      "rank": 4,
+      "tied": false,
+      "score": 0.44,
+      "advancement": 0.44,
+      "advancement_note": "addresses the amortization problem across runs rather than the within-run governance decisions the QUESTION asks about — useful infrastructure but answers a different checkpoint",
+      "blind_spots_addressed": [
+        "G15"
+      ],
+      "opens_new_gap": "trajectory similarity across runs requires a distance metric over fragment-volume-varying assemblies — no such metric is named, and without it the exemplar bank cannot score live trajectories",
+      "novelty_bin": "adjacent",
+      "rationale": "Solves a real problem (per-run governance re-derivation tax) but that problem is one layer removed from the QUESTION's explicit targets — stop/re-route triggers, cushion-twisting, and agent spawn/drop logic."
+    }
+  ],
+  "model": "anthropic/claude-sonnet-4-6",
+  "total_cost_usd": 0.0246,
+  "ok": true,
+  "note": "",
+  "parser_notes": []
+}

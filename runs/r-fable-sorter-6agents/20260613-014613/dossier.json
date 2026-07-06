@@ -1,0 +1,890 @@
+{
+  "metadata": {
+    "session_id": "r-fable-sorter-20260613-014613",
+    "mode": "absolute_chaos",
+    "anchor_summary": "I'm currently working on a system that helps people advance their concepts or the work they're currently working on. If there's a case or research that's already published, based on that inheritance, ",
+    "cushion_constellation_size": 19,
+    "agent_count": 6,
+    "report_count": 16,
+    "total_tokens_spent": 366102,
+    "elapsed_seconds": 253.74049925804138,
+    "completed_at": 1781340901.758559
+  },
+  "high": [
+    {
+      "report_id": "wander-P05-001",
+      "agent_id": "P05",
+      "domain": "physics",
+      "spark": "A physics benchmark built around agents that must infer hidden laws from constrained measurements turns out to share the exact causal skeleton as your system — in both cases, the anchor is not a destination the agent navigates toward, but a scoring surface that judges which wandering was productive after the fact.",
+      "source_shape": "MaD Physics gives an agent a measurement budget and a physical environment, then asks it to infer the underlying law — gravity, friction, some hidden regularity — purely from the observations it chooses to take. The agent never sees the law directly; it wanders through measurement space, spending budget on observations, and the hidden law silently scores which measurements were informative. Crucially, the constraint lives at the output layer, not the path layer: nothing tells the agent where to look, only whether what it found was useful — which means the incompleteness of information is not a flaw in the setup but the mechanism that makes discovery possible.",
+      "bridge": "Your three-signal anchor maps onto the MaD Physics structure point for point. The user's 'pursuit' corresponds to the measurement budget — a finite pressure that forces the agent to commit rather than sample everything. The user's 'vision' corresponds to the hidden physical law — not a coordinate the agent steers toward, but the implicit standard against which returned connections are judged alive or dead. The user's 'undone threads' correspond to the partial observations: the gaps in the picture are not problems to close before wandering begins, they are exactly what keeps the search space wide enough to find something surprising. And the deepest correspondence: in MaD Physics, the agent cannot predict in advance which measurements will matter — it must wander and let the law score the returns. Your wandering agents operate the same way across domains rather than measurement dimensions, but the causal shape is identical: anchored chaos where the anchor functions as a scoring surface, not a destination.",
+      "use": "Consider making the anchor's role in your system explicit to yourself as a design constraint: the anchor should never tell the agent where to go, only whether what it returned was resonant — if any part of your architecture lets the anchor narrow the search path rather than just score the output, that is where you are accidentally collapsing discovery into retrieval.",
+      "limit": "MaD Physics assumes a single ground-truth law already exists in the environment, waiting to be inferred from enough informative measurements — the success criterion is fixed before the agent takes a single step. Your system operates in territory where the 'law' the user is reaching toward may not exist yet: it may be genuinely novel, something that must be created rather than discovered. This breaks the bridge at its load-bearing point. MaD Physics is convergent motion toward a pre-existing fixed point; your system must support both convergent motion (the user is clarifying something latent) and divergent motion (the user is originating something that has no ground truth to converge on). The physics benchmark can bake success into the scoring surface in advance; your system's success criterion — whether the user recognizes a returned connection as alive — is post-hoc, subjective, and cannot be specified before the wander begins.",
+      "confidence": "high",
+      "confidence_detail": "act:0/7 ess:4/6 mec:5/6",
+      "citations": [
+        {
+          "title": "MaD Physics: Evaluating information seeking under constraints in physical environments",
+          "url": "https://arxiv.org/html/2605.10820",
+          "snippet": "[MaD Physics: Evaluating information seeking under constraints in physical environments]\nMaD Physics: Evaluating information seeking under constraints in physical environments\n\n\\uselogo\\correspondinga"
+        }
+      ],
+      "match_strength": 0.47368421052631576,
+      "serve_score": {
+        "score": 0.1308641975308642,
+        "verdict": "neutral",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:advance,commit"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P02-001",
+      "agent_id": "P02",
+      "domain": "mathematics",
+      "spark": "A system for automated mathematical discovery solves almost exactly your problem — how do you guide a search agent toward meaningful output when the space is combinatorially vast and you cannot predict which path leads somewhere real — and it solves it by putting the constraint on what counts as a good result, not on where the agent is allowed to go.",
+      "source_shape": "FERMAT frames mathematical theory formation as a decision-making process: an agent moves through a space of possible definitions, conjectures, and proofs, taking actions freely. What guides it is not a map of the territory but a learned scoring function called an interestingness measure — a signal that evaluates each mathematical object the agent produces against a sense of what mathematical value looks like. Critically, this scoring function is not hand-coded; it is learned from examples of known interesting mathematics, then used to reward the agent for producing objects that have the same structural character, even when those objects are new.",
+      "bridge": "Your system has the same load-bearing shape. The user's anchor — their felt sense of what they are working toward — is your interestingness measure: it does not tell the wandering agent where to go, it tells the agent whether what it found is worth surfacing. The agent's cross-domain traversal is FERMAT's policy: free to move unpredictably through the search space, bounded only by what scores well at the output. The 'partial input preserves search space width' principle you have already named maps directly onto FERMAT's use of cached positive and negative examples rather than full formal grounding — the system does not need a complete specification of the target to score outputs usefully, and demanding one would collapse the search. The mechanism that makes FERMAT work — constraint lives at the scoring layer, not the path layer — is exactly the mechanism your system needs to preserve genuine discovery rather than guided retrieval.",
+      "use": "Consider whether your anchor representation can be treated as a learned scoring surface rather than a semantic target — meaning the anchor is used to evaluate what the agents return, not to steer where they wander, and the anchor itself updates as the user's articulation sharpens across sessions.",
+      "limit": "FERMAT's anchor is retrospective and convergent: it trains the interestingness measure against ground-truth known mathematical concepts, so success means rediscovering entities that already exist in some form. Your anchor is prospective and divergent — the user's felt shape is not a known target to converge on, it is a launching point for something the user could not have specified in advance. FERMAT closes the search space by defining success as recognition; your system must stay open enough that the output can articulate something genuinely new to the user, not just retrieve a structural match to what they already half-knew. FERMAT also treats the interestingness function as static once learned; your system implies the scoring surface must remain live and responsive to an inarticulate vision that evolves as the user works — a dynamic anchor, not a fixed one.",
+      "confidence": "high",
+      "confidence_detail": "act:6/7 ess:5/6 mec:6/6",
+      "citations": [
+        {
+          "title": "openreview.net",
+          "url": "https://openreview.net/pdf?id=RespmwOoCH",
+          "snippet": "Title: 26397_Learning_Interestingness.pdf\n\nURL Source: https://openreview.net/pdf?id=RespmwOoCH\n\nNumber of Pages: 33\n\nMarkdown Content:\n# Learning Interestingness in Automated Mathematical Theory Form"
+        }
+      ],
+      "match_strength": 0.8947368421052632,
+      "serve_score": {
+        "score": 0.05298013245033113,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.05",
+          "goal-directed-signal:move",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P03-002",
+      "agent_id": "P03",
+      "domain": "physics",
+      "spark": "A system for automated mathematical discovery solves the same core problem your system does: how do you score whether an agent's wandering was *worth it* when you cannot fully specify in advance what 'worth it' means?",
+      "source_shape": "FERMAT treats mathematical theory formation as a navigation problem: an agent moves through a vast combinatorial space by producing definitions, conjectures, and proofs, and needs a way to decide which directions are worth pursuing. The key move is that 'interestingness' is not hard-coded as a rule — it is learned as an intrinsic reward function that scores generated mathematical objects against the current state of the agent's knowledge. EvoAbstract evolves these scoring functions programmatically, using LLM-driven mutation to discover what makes a mathematical entity worth pursuing *in context*, without ever requiring a full specification of what 'good mathematics' looks like.",
+      "bridge": "Your system faces the same scoring problem in a different skin. The user's anchor — the concept or work they bring — functions exactly as FERMAT's knowledge graph does: it is stable enough to serve as a scoring surface, but incomplete enough that the search space stays wide and surprising connections remain discoverable. FERMAT's constraint-at-output-layer pattern maps directly onto your architecture: agents explore freely along any path, and the anchor only exerts pressure *after* something is generated, scoring relevance post-hoc rather than pruning directions pre-emptively. The partial, inarticulate nature of what the user brings is preserved as signal rather than treated as noise — just as FERMAT's evolved interestingness measure must operate without a full specification of 'good mathematics,' your scoring layer must operate without a full specification of what will advance *this particular person's* work. The anchor is not a destination the agent navigates toward; it is a surface the agent's output is measured against.",
+      "use": "Consider whether your relevance-scoring layer could be designed as an evolved or learned function rather than a fixed rubric — one that updates its model of 'interesting for this anchor' as the session accumulates output, so that early cards implicitly train the scoring of later ones.",
+      "limit": "FERMAT's agents are locked inside a formal mathematical DSL — every production rule generates mathematical entities, and the search space, though vast, never crosses domain boundaries. Your system's entire value proposition requires agents to wander unpredictably across mathematics, physics, theater, literature, and back; FERMAT's architecture has no mechanism for that and was not designed to. Second, FERMAT's anchor — the knowledge graph — is fully observable and queryable by the scoring function; your anchor is a felt shape, partially inarticulate, knowable only in fragments. The scoring function FERMAT evolves assumes it can see the whole knowledge state; yours must score against something the user themselves cannot fully articulate. Finally, FERMAT assumes a single mode: theory formation in one domain for one kind of user. Your system must serve both the person tracing inheritance from existing work and the person trying to break from origin entirely — FERMAT collapses both into one mode and offers no guidance on how to hold them apart.",
+      "confidence": "high",
+      "confidence_detail": "act:0/7 ess:4/6 mec:5/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://arxiv.org/pdf/2511.14778",
+          "url": "https://arxiv.org/pdf/2511.14778",
+          "snippet": "Title: Learning Interestingness in Automated Mathematical Theory Formation\n\nURL Source: https://arxiv.org/pdf/2511.14778\n\nPublished Time: Thu, 20 Nov 2025 01:01:10 GMT\n\nNumber of Pages: 42\n\nMarkdown C"
+        }
+      ],
+      "match_strength": 0.47368421052631576,
+      "serve_score": {
+        "score": 0.040268456375838924,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:advance",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    }
+  ],
+  "medium": [
+    {
+      "report_id": "wander-Sd48e5e-001",
+      "agent_id": "Sd48e5e",
+      "domain": "physics",
+      "spark": "A system that turns frozen textbook diagrams into live simulations does it by treating the static image as a valid — if incomplete — specification, not a failure to provide a real one. Your system's entire bet is the same: that a felt, inarticulate shape is load-bearing input, not a placeholder until the user finds the right words.",
+      "source_shape": "Augmented Physics takes a printed circuit diagram or mechanics figure — fixed, non-executable, never designed as simulation input — and uses computer vision and multimodal LLMs to extract whatever latent structure is actually there. It does not require the diagram to conform to a formal schema; it scores and segments what it finds, then generates an interactive simulation from that partial read. The constraint lives at the output layer, not the input: the system accepts the artifact as-is and lets the extraction pipeline decide what is recoverable.",
+      "bridge": "Your anchor's core claim is that a user's vague, felt sense of their work is signal worth acting on — not noise to be filtered until they can articulate something cleaner. Augmented Physics operationalizes exactly this move: a static image is not a simulation spec, yet the system extracts enough latent structure to generate one anyway. The textbook diagram maps onto your user's half-formed input — both are incomplete representations that contain recoverable structure the user themselves could not have formally specified. The extraction pipeline maps onto your wandering agents: rather than demanding a legible formal input before proceeding, both systems read whatever shape is present and work forward from there. And the 'constraint at output layer' node is the key mechanism — neither system pre-filters what counts as valid input; both let the output stage do the work of deciding what was actually there.",
+      "use": "Consider whether your system's intake layer could be designed the same way — accepting the user's raw, unpolished expression as a first-class artifact and running extraction against it, rather than prompting the user to refine their input before the system engages. The question to test: what is the minimum legible structure your agents need to begin, and can that threshold be lower than it currently is?",
+      "limit": "Augmented Physics only works on content that is already fully externalized and domain-fixed — a printed diagram is incomplete as a simulation spec, but it is unambiguous about what domain it belongs to and every element in it is visually present and inspectable. Your system's hardest requirement is the opposite: handling input that is genuinely pre-articulate, where the user cannot yet name the domain, the shape, or even confirm what they are trying to say. Augmented Physics has no mechanism for that gap — it requires a legible artifact and immediately collapses into a single known domain. The cross-domain wandering that is central to your anchor — an agent reading a poem and recognizing it as structurally relevant to a tension-resolution problem in the user's unrelated work — has no analog here at all.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://huggingface.co/papers/2405.18614",
+          "url": "https://huggingface.co/papers/2405.18614",
+          "snippet": "Title: Paper page - Augmented Physics: Creating Interactive and Embedded Physics Simulations\n  from Static Textbook Diagrams\n\nURL Source: https://huggingface.co/papers/2405.18614\n\nMarkdown Content:\nPu"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.1512820512820513,
+        "verdict": "neutral",
+        "reasons": [
+          "overlap-with-real-goal:0.05",
+          "goal-directed-signal:test,move"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P05-002",
+      "agent_id": "P05",
+      "domain": "mathematics",
+      "spark": "A physics benchmark that deliberately breaks the laws of physics — so agents can't memorize their way to answers — turns out to share a skeleton with your system: the anchor doesn't tell the agent where to go, it scores what the agent finds when it gets there.",
+      "source_shape": "MaD Physics is a benchmark that tests whether AI agents can discover unknown physical laws under a strict measurement budget. The trick is that the physics has been deliberately altered — the laws the agent might have memorized no longer hold — so the agent must genuinely explore and observe, choosing which measurements to make and when to stop. The anchor (the true altered law) never guides the agent's path; it only scores the agent's final prediction. Constraint lives at the output, not the journey.",
+      "bridge": "Your system's wandering agents face the same structural split: the anchor is not a destination they navigate toward, it is a scoring surface that judges what they surface. In MaD Physics, the agent's exploration strategy is free but its prediction must match the altered law — your agents wander freely across domains but their finds are only 'musical' when they land in harmonic relationship with the user's anchor. The 'altered physics' design maps directly onto your partial-input preservation: just as breaking known laws forces the physics agent to treat incomplete observations as real signal rather than noise, your system's inarticulate anchor forces the wandering agent to treat partial resonance as meaningful rather than discarding it. And the three-domain structure in MaD — each domain a constraint surface that scores behavior — mirrors your three-point anchor, where each facet of the user's concept is a surface that scores relevance, not a waypoint that directs movement.",
+      "use": "Consider treating the three-point anchor not as a description of where agents should look, but as a budget-allocation scoring surface — agents that choose which domains to enter must justify that choice against the anchor, making the anchor do real filtering work before a result is ever surfaced, not just after.",
+      "limit": "MaD Physics operates on a closed, fully-specified problem space: three known physical domains with measurable, objective ground truth. Your system is structurally the opposite — the user's vision is inarticulate, the relevant domains are unknown in advance, and the wandering agent cannot know which domain matters until a match surfaces. MaD evaluates prediction accuracy against a fixed external law; your system has no fixed law, only a felt shape that sharpens as matches accumulate. The scoring surface in MaD is stable and external; yours is internal, evolving, and partly constructed by the very matches the agent returns — which means the budget-constrained measurement pattern transfers, but the evaluation logic does not.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://mad-physics.github.io",
+          "url": "https://mad-physics.github.io",
+          "snippet": "Title: MaD Physics\n\nURL Source: https://mad-physics.github.io/\n\nPublished Time: Tue, 12 May 2026 04:41:59 GMT\n\nMarkdown Content:\n## MaD Physics\n\n Evaluating Information Seeking Under Constraints in Ph"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.1510948905109489,
+        "verdict": "neutral",
+        "reasons": [
+          "overlap-with-real-goal:0.05",
+          "goal-directed-signal:ship,move"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P04-001",
+      "agent_id": "P04",
+      "domain": "mathematics",
+      "spark": "Mathematics generates genuinely new concepts — like Galois theory — not by prescribing a path of combination, but by holding multiple incomplete structures in tension and letting a coherence test score which blends survive. Your system is built on the same move: leave the path open, constrain only the output.",
+      "source_shape": "Conceptual blending in mathematics takes several partial, structurally incomplete domains and combines them without a predetermined recipe. The formal mechanism that makes this rigorous is a colimit: a category-theoretic construction that doesn't tell you which concepts to combine, but scores whether a proposed blend is internally consistent across all the input structures. The path of combination is free; the survival criterion is strict. Galois theory — a deep result connecting field extensions to group symmetry — emerged from blending five basic structural concepts this way, producing something none of the inputs contained.",
+      "bridge": "Your anchor plays the role of the colimit scoring surface: it doesn't prescribe which domains the wandering agents visit or which connections they surface, but it provides the criterion by which a proposed bridge either resonates or doesn't. The agents' traversal across unrelated domains is the free combination step — the blend space is genuinely open. The anchor is what makes that openness productive rather than random, because it gives every candidate connection a surface to be tested against. And just as the mathematical blend produces something neither input domain contained — Galois theory is not latent in any one of its five source concepts — your system's value proposition is that the connection returned to the user is one they could not have reached by elaborating their anchor directly.",
+      "use": "Consider framing the anchor's role explicitly as a scoring surface rather than a destination — when evaluating whether a wandering agent's find is worth surfacing, the test is not 'is this close to the anchor?' but 'does this candidate connection remain coherent when held against the anchor's structure?' That reframe may sharpen how you design the relevance signal.",
+      "limit": "The mathematics paper operates inside a closed formal system — first-order logic and category theory give it a shared language across all input domains and a deterministic coherence criterion. Your system crosses domains that share no formal language and have no pre-established coherence metric; the scoring surface is the user's felt sense of resonance, which is non-formalizable and shifts as the user's thinking evolves. The paper also assumes the blend space is bounded and that success criteria exist before the blend is attempted — you are designing for unbounded domain-crossing where whether a connection succeeded is often only legible in retrospect. The freedom-within-constraint shape maps cleanly; the mechanism by which coherence is actually judged does not.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:4/6 mec:4/6",
+      "citations": [
+        {
+          "title": "Conceptual Blending in Mathematical Creation/Invention | Springer Nature Link",
+          "url": "https://link.springer.com/chapter/10.1007/978-3-030-50273-7_7",
+          "snippet": "[Conceptual Blending in Mathematical Creation/Invention | Springer Nature Link]\nConceptual Blending in Mathematical Creation/Invention | Springer Nature Link\n\n# Conceptual Blending in Mathematical Cre"
+        }
+      ],
+      "match_strength": 0.42105263157894735,
+      "serve_score": {
+        "score": 0.14225352112676057,
+        "verdict": "neutral",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:test,move"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-Seaf411-002",
+      "agent_id": "Seaf411",
+      "domain": "mathematics",
+      "spark": "A 2025 NeurIPS system teaches an AI to judge whether a newly discovered mathematical object is *interesting* — not by defining what interesting means in advance, but by learning a scoring function that evolves alongside the discovery process itself. Your system does the same thing: it doesn't tell people where to go, it evaluates what comes back.",
+      "source_shape": "Fermat is a reinforcement learning environment for open-ended mathematical theory formation. An agent wanders through symbolic concept-space — generating conjectures, number-theoretic objects, novel definitions — and a learned 'interestingness' scorer evaluates each output. The scorer is not a fixed rubric; it is itself evolved using LLM-based algorithms, so the measure of what counts as a valuable discovery sharpens over time. The path the agent takes is unconstrained; what survives and gets reinforced is determined entirely at the output layer, by that scorer.",
+      "bridge": "Your system's anchor operates the same way the interestingness scorer does in Fermat: it doesn't constrain the wandering agent's path, it sits at the exit and judges what comes back. In Fermat, the agent can generate any symbolic object it likes — the constraint only activates when the scorer decides whether that object is worth keeping. In your system, the wandering agent can drift into any domain — the anchor only activates when it evaluates whether what the agent found has structural resonance with the user's concept. The critical correspondence is that in both cases the freedom of the search is preserved precisely because the constraint is downstream of the traversal, not woven into it. Fermat also formalizes something your system implies: the scoring surface itself can be learned and refined — the anchor need not be static, it can get better at recognizing what it's looking for as more returns come in.",
+      "use": "Consider whether your anchor mechanism could accumulate signal across sessions — each card the user finds resonant slightly sharpens the scoring surface, so the system's sense of what counts as a good match for this user's concept improves over time without the user ever having to articulate what they want more precisely.",
+      "limit": "Fermat's entire architecture depends on the search space being symbolically legible — every object it generates is a formal mathematical construct with verifiable truth conditions, and 'interestingness' is defined over that clean symbolic substrate. Your system is causally dependent on the opposite condition: the user does not fully know what they want, and that partial, inarticulate felt shape is not a bug to be resolved but the actual input signal. Fermat's RL formulation would break entirely if the inputs were underspecified, because it needs to evaluate objects against a learnable criterion — and you cannot run gradient descent on a feeling. The bridge holds for the output-layer-constraint shape and the learnable-scorer idea, but it breaks completely at the question of how you score resonance when the target is pre-linguistic and the user's own recognition of a match is the only ground truth available.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://neurips.cc/virtual/2025/loc/san-diego/poster/118008",
+          "url": "https://neurips.cc/virtual/2025/loc/san-diego/poster/118008",
+          "snippet": "Title: NeurIPS Poster Learning Interestingness in Automated Mathematical Theory Formation\n\nURL Source: https://neurips.cc/virtual/2025/loc/san-diego/poster/118008\n\nMarkdown Content:\n# NeurIPS Poster L"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.09195804195804196,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:advance,decide",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P04-002",
+      "agent_id": "P04",
+      "domain": "physics",
+      "spark": "A system that discovers *interesting* theorems — not just true ones — solves the same core problem yours does: how do you guide a search when you cannot specify in advance what you're looking for? The answer in both cases is the same structural move: don't predict the destination, score the output.",
+      "source_shape": "Tsoukalas et al. build an automated theorem-prover that doesn't just find valid proofs — it learns to recognize which theorems are *worth* finding. The key mechanism is that interestingness is treated as a property of outputs, not a specification of inputs: the system wanders the proof space freely, then filters what it finds against a learned scoring surface that captures what mathematicians care about. The system is causally dependent on *not knowing* the answer in advance — if you could specify interesting theorems ahead of time, you wouldn't need the system at all.",
+      "bridge": "Your anchor plays exactly the role that the learned interestingness metric plays in Tsoukalas: it is a scoring surface, not a waypoint. The wandering agent doesn't navigate *toward* the anchor the way a GPS routes toward a destination — it navigates *freely*, then the anchor judges what came back. This is why the constraint operates at output rather than input: locking the search to predicted outputs would collapse the search space before the interesting material could surface. The 'felt sense' the paper attributes to mathematicians — a shape of what a theorem should *do* before they can say what it *is* — maps directly onto your user's anchor: an incompletely articulated sense of what matters, which is valid signal precisely because it is not yet fully specified. Both systems are designed around the insight that partial articulation is not a bug to be corrected before the search begins; it is the condition that keeps the search space wide enough to find something surprising.",
+      "use": "Consider whether your scoring layer — the mechanism that judges whether a wandering agent's find is worth surfacing — should be learned or updated from user feedback over time, the way Tsoukalas's interestingness metric is trained rather than hand-coded; a static scoring surface may converge too quickly on what the user already knows they want.",
+      "limit": "Tsoukalas's system operates inside a single, formally closed domain: mathematical proof space has a stable grammar, and interestingness is learned entirely within that grammar. Your system's value proposition is explicitly cross-domain — the leap from theater to physics to literature is the point, not a complication to manage. This breaks the mapping at the scoring layer: Tsoukalas's interestingness metric is calibrated against a shared vocabulary that all theorems in the domain already speak. Your agents return from domains that do not share vocabulary with each other or with the anchor, which means the scoring surface itself may need to shift depending on which domain a find comes from. A single learned metric of the Tsoukalas type may be insufficient — cross-domain discovery may require a scoring primitive built around structural resonance across incommensurable frames, which is a fundamentally harder and different problem than recognizing elegance within one.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://mlanthology.org/neurips/2025/tsoukalas2025neurips-learning/",
+          "url": "https://mlanthology.org/neurips/2025/tsoukalas2025neurips-learning/",
+          "snippet": "Title: Learning Interestingness in Automated Mathematical Theory Formation\n\nURL Source: https://mlanthology.org/neurips/2025/tsoukalas2025neurips-learning/\n\nPublished Time: 2025\n\nMarkdown Content:\n`Ts"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.08821656050955413,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:advance,move",
+          "attachment-signal:not yet"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P01-002",
+      "agent_id": "P01",
+      "domain": "mathematics",
+      "spark": "A diagnostic system that treats a teacher's vague intuition — 'students who get fewer than 2 questions right feel like they're struggling' — as a precise, load-bearing input discovers something counterintuitive: tolerating fuzziness at the entry point sharpens the diagnosis at the exit point. Constellax is built on the same bet.",
+      "source_shape": "The FL-GLH system combines fuzzy logic with Gagné's learning hierarchy to assess where a student breaks down in mathematics. Fuzzy logic handles the input layer: instead of a hard cutoff between 'poor' and 'good' performance, it uses trapezoidal membership functions that let a score belong partially to both categories at once, encoding the real imprecision in how teachers experience student ability. The constraint enters only at the output layer — fuzzy rules and a defuzzification step that converts the blurred inputs into a crisp diagnostic verdict. The system never forces the input to be clean; it forces the output to be useful.",
+      "bridge": "Your system's core claim is that a user's partial, inarticulate anchor — a felt sense of what they're working toward, not a fully specified destination — is a valid and productive search input, not noise to be cleaned up before the real work begins. The FL-GLH paper demonstrates exactly this mechanism in a different domain: the teacher's fuzzy sense of what 'poor understanding' means is treated as load-bearing signal, not as a defect to be replaced with a precise rubric. In both cases, the fuzziness at the input layer is what preserves search space width — collapsing it to a binary too early would eliminate the diagnostic (or discovery) value. And in both cases, constraint operates at the output layer, not the path layer: the system doesn't restrict how the student learned or how the agent wanders, only how the result gets scored against the anchor.",
+      "use": "Consider this as a design test for your scoring or relevance layer: if your system evaluates agent output by collapsing the anchor into a binary match/no-match criterion early in the pipeline, you may be destroying the value that fuzziness was preserving. You might instead hold the anchor as a soft membership surface — letting candidate connections belong partially to 'relevant' before any hard ranking — and only defuzzify at the final presentation layer.",
+      "limit": "FL-GLH is structurally hierarchical and cumulative: a student must master lower-order skills before higher-order ones are even assessed, and the system is designed to find where that bottom-up chain broke. Constellax explicitly rejects strict hierarchy in favor of a loose, non-ordered network of concepts — the wandering is domain-agnostic and the anchor does not predetermine a learning path. More critically, FL-GLH diagnoses what a learner already failed to acquire along a known structure; your system is trying to discover what the user didn't yet know they needed, with no predetermined structure to navigate. The direction of motion is opposite: FL-GLH moves upward through a fixed scaffold, your agents move outward through open space. The bridge holds for the fuzziness-at-input, constraint-at-output shape — it breaks entirely at the question of hierarchy, direction, and whether the destination is known in advance.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://pmc.ncbi.nlm.nih.gov/articles/PMC10585238/",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10585238/",
+          "snippet": "Title: Fuzzy logic and Gagné learning hierarchy for assessing mathematics skills\n\nURL Source: https://pmc.ncbi.nlm.nih.gov/articles/PMC10585238/\n\nMarkdown Content:\n## [](https://pmc.ncbi.nlm.nih.gov/a"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.08797468354430381,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:ship,test",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P03-001",
+      "agent_id": "P03",
+      "domain": "physics",
+      "spark": "A physics education paper designed a system that deliberately preserves students' half-formed, inarticulate intuitions as valid input — and only applies constraint at the moment of output validation, not before. Your system is built on the same structural bet.",
+      "source_shape": "Dual-process theory distinguishes fast, intuitive reasoning from slow, deliberate reasoning. This intervention does not try to suppress or replace the intuitive response — it lets students generate their answer from gut sense first, then strengthens the 'mindware' (reflective tools) they use to evaluate whether that answer holds up against a criterion. The constraint never touches the path the student takes to their answer; it only waits at the door and asks: does this survive scrutiny? The result is that intuition remains the engine, and reflection becomes the filter.",
+      "bridge": "Your system treats the user's partial, undone, not-yet-articulate concept as the starting signal — not something to be clarified before the agents move, but the actual fuel. That is the same structural bet this paper makes: the student's misconception is not noise to be eliminated upfront, it is the input the system is causally dependent on. The intervention fires precisely because the reasoning is still half-formed. In your case, the wandering agents are the output-layer filter — they do not constrain where the user's thinking goes, they return from the outside with something that lets the user score what their own intuition has been circling. And just as the physics intervention would fail if students were forced to fully articulate their reasoning before it ran (because articulation would collapse the productive ambiguity), your system would fail if the anchor were required to be complete before agents depart.",
+      "use": "Consider whether your system could surface not just external connections but a lightweight scoring moment — something that hands the user back their own half-formed concept with a new lens attached, so they can feel whether the wandering agent's find resonates or doesn't. The agents would then function as mindware strengthening, not just retrieval.",
+      "limit": "This paper's intervention is corrective and inward-facing: it checks a student's intuition against a known criterion within a single, bounded domain (Newtonian mechanics). Your system is generative and outward-facing: it sends agents across unpredictable domains to retrieve connections that do not yet exist in the user's frame. Their anchor is binary — intuitive response versus established criterion — and the goal is error prevention. Your anchor is three-point and open-ended, and the goal is discovery. The directional arrow is opposite: they constrain to prevent error propagation; you need the absence of constraint to preserve the discovery value. The structural shape of 'partial input plus output-layer validation' holds, but the purpose it serves, and the kind of output being validated, are fundamentally different.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "Designing research-based instructional materials that leverage dual-process theories of reasoning: Insights from testing one specific, theory-driven intervention",
+          "url": "https://journals.aps.org/prper/pdf/10.1103/PhysRevPhysEducRes.16.020140",
+          "snippet": "[Designing research-based instructional materials that leverage dual-process theories of reasoning: Insights from testing one specific, theory-driven intervention]\nDesigning research-based instruction"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.044117647058823525,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:move",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P06-001",
+      "agent_id": "P06",
+      "domain": "physics",
+      "spark": "A system that turns static textbook diagrams into live physics simulations works by treating the teacher's incomplete sketch as a valid starting point — not a deficiency to fix, but a deliberate opening that keeps the search space wide enough for something unexpected to emerge.",
+      "source_shape": "Augmented Physics takes a static diagram — a drawing of a pendulum, a lens, a ramp — and uses computer vision to extract its elements without requiring the teacher to specify every parameter. The physics engine then scores candidate simulations against the diagram's implied pedagogical intent: does this simulation show what forces are acting here? The constraint lives at the output layer, not the extraction layer — the system is free to wander through segmentation and object recognition, but the simulation it produces must satisfy physical law. That separation is what allows emergent behaviors to surface: the teacher didn't script the interaction, the system found it.",
+      "bridge": "Your anchor functions the same way the teacher's static diagram does: it is a felt shape, not a full specification — 'I'm working on something like this' rather than 'find me exactly this.' The wandering agents are the vision-and-segmentation layer, free to traverse domains without a predetermined path. The anchor is not the destination they're navigating toward; it is the scoring surface they check against on arrival — does this structural match resonate with what the user is trying to advance? And just as Augmented Physics preserves discovery value by keeping the extraction layer unconstrained, your system preserves surprise by not pre-filtering which domains the agents enter. The constraint only activates at the output layer, when a candidate result is measured against the anchor's pull.",
+      "use": "Consider making the anchor evaluation explicit as a scoring pass that happens after wandering, not during it — agents roam freely, then each candidate result is scored against the anchor's felt shape before surfacing. This would mirror Augmented Physics's architecture: free search, constrained output.",
+      "limit": "Augmented Physics operates entirely inside a single closed domain with deterministic rules — Newton's laws don't change, and every simulation is validated against physics that has known ground truth. Your system requires agents to wander across domains with no shared rule set: a structural resonance between orbital mechanics and narrative arc cannot be verified the way a force diagram can. The bridge holds for the architecture — partial input, free search, anchor-as-scoring-surface — but breaks at the question of how you validate a match when there is no equivalent of physical law to confirm it. The paper's discovery is emergent within a closed system; yours must be emergent across open, incommensurable ones.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams",
+          "url": "https://nandi-zhang.github.io/static/media/uist-24-augmented-physics.82cb67edfe2ebde2e1a9.pdf",
+          "snippet": "Title: Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams\n\nURL Source: https://nandi-zhang.github.io/static/media/uist-24-augmented-physics.82cb67ed"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.044117647058823525,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "goal-directed-signal:advance",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P04-003",
+      "agent_id": "P04",
+      "domain": "physics",
+      "spark": "A system that turns a static textbook diagram into a living physics simulation — by treating the incomplete image as a valid load-bearing input rather than a broken one — is running the same core move your system makes when it treats a half-formed user vision as signal worth amplifying, not noise to be filtered out.",
+      "source_shape": "Augmented Physics takes a static diagram from a textbook — a force arrow, a pulley system, a circuit — and extracts the latent dynamics the image implies but cannot show: motion over time, interacting forces, causal chains. It does this by keeping the diagram itself as the anchor, rather than sending the student to a generic external simulator that won't match their specific context. The key mechanism is that the incomplete, static form is treated as a precise enough input to drive meaningful output — the incompleteness is not a bug to be patched before the work begins, it is the starting material.",
+      "bridge": "Your system's anchor is the user's half-formed concept — not a clean specification, but a felt shape, an inarticulate vision of what they're working toward. Augmented Physics establishes that this kind of input is structurally sufficient: a static diagram carries enough latent signal to generate interactive, dynamic output without first being 'completed' into something more explicit. The correspondence holds at each step — the diagram maps to the user's anchor (both are incomplete, both are real), the extraction of latent dynamics maps to your system's surfacing of structural resonance across domains (both make implicit structure explicit), and the decision to keep the original artifact embedded rather than outsourcing to a generic tool maps to your system's insistence on scoring against the user's specific vision rather than a canonical goal. The principle is the same: preserve the partial input, because its incompleteness is what keeps the search space wide.",
+      "use": "Consider whether the way Augmented Physics embeds the anchor — keeping the original diagram present and operative throughout, rather than abstracting it away — suggests anything about how your system holds the user's vision across a session: not as a one-time intake to be processed and set aside, but as a continuously active scoring surface that every output is measured against.",
+      "limit": "Augmented Physics is a completion system, not an expansion system — it extracts and simulates what is already latent in the diagram, and the physics governing that output is fixed and convergent. Your system requires structurally constrained randomness to surface what the user could not have found through directed search, which means the constraint operates at a fundamentally different layer: not at recognition (what to extract from a known source) but at output scoring (what counts as resonant across unpredictable domains). The bridge holds for the principle of treating partial input as valid and generative, but breaks entirely at the question of how the two systems handle the space beyond the anchor — Augmented Physics closes that space down to what the diagram already contains; your system's entire value depends on keeping it open.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] http://arxiv.org/pdf/2405.18614",
+          "url": "http://arxiv.org/pdf/2405.18614",
+          "snippet": "Title: Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams\n\nURL Source: http://arxiv.org/pdf/2405.18614\n\nPublished Time: Tue, 13 Aug 2024 01:05:18 GM"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.03225806451612903,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:move",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-Seaf411-001",
+      "agent_id": "Seaf411",
+      "domain": "physics",
+      "spark": "A system that turns a rough, static diagram into a live interactive simulation — without waiting for the user to specify what they want — is running the same bet your system runs: that an underspecified input still carries enough structure to generate useful possibility space.",
+      "source_shape": "Augmented Physics takes a textbook diagram — no equations entered, no simulation parameters set, just a static image — and uses ML to extract whatever latent structure is already encoded in the visual. From that partial signal, it generates four kinds of interactive augmentation: runnable experiments, animations, bi-directional parameter bindings, and visualizations of hidden variables. The key move is that the system never asks the user to fully specify their intent before it acts; the diagram's existing shape is treated as a sufficient anchor to open an exploration space rather than a complete instruction to execute.",
+      "bridge": "Your system faces the same foundational question: how much specification does an input need before it becomes load-bearing? Augmented Physics answers that question by treating the 'felt shape' of a diagram — its visible structure, even without explicit simulation parameters — as a valid starting point, not a deficient one. That maps directly to your anchor mechanism: the user's concept or work-in-progress doesn't need to be fully articulated for agents to begin finding resonant structure elsewhere. The diagram in Augmented Physics is your anchor — a partial, static artifact that still has enough surface area for a retrieval or generation process to grip. And the four augmentation strategies the system produces aren't prescribed by the diagram; they're scored against it — which is exactly the 'constraint at output layer, not path layer' mechanism your agents use when they evaluate what they find against the anchor rather than being told where to look.",
+      "use": "Consider whether your system's intake surface could explicitly accept rougher, more visual or gestural inputs — a sketch, a fragment, a half-formed diagram — and treat that incompleteness as signal rather than asking the user to refine before anything happens. The Augmented Physics model suggests that acting on the partial shape first, then letting the user steer from the generated output, may be more productive than front-loading specification.",
+      "limit": "Augmented Physics is domain-locked by design: it extracts and simulates what is already explicitly present in a physics diagram, within physics. There is no cross-domain leap, no metaphorical retrieval, and no tension between what the source contains and what a distant domain might contribute. Your system's value depends on agents that escape domain gravity — that find structure in jazz or thermodynamics or supply chains that the user would never have looked for. Augmented Physics cannot model that move; it would simply give the user back a more interactive version of what they already had. The bridge holds for the 'partial input as valid anchor' shape, but breaks entirely at the question of how to generate genuinely surprising, cross-domain resonance.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://programs.sigchi.org/uist/2024/program/content/170907",
+          "url": "https://programs.sigchi.org/uist/2024/program/content/170907",
+          "snippet": "Title: Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams - UIST '24\n\nURL Source: https://programs.sigchi.org/uist/2024/program/content/170907\n\nPubl"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.031055900621118012,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-P01-001",
+      "agent_id": "P01",
+      "domain": "mathematics",
+      "spark": "Gagné's learning hierarchy scores student knowledge with a constraint placed at the measurement layer — not at the learning path — so the student's route stays free while the assessment stays precise. Your anchor works the same way: a scoring surface, not a fence.",
+      "source_shape": "In Gagné's system, every mathematical skill is built on prerequisite skills, forming a strict hierarchy — you cannot divide fractions until you can multiply them. To test where a student actually stands, each assessment question is encoded as a vector that inherits all the lower-skill concepts plus exactly one new concept. The constraint lives entirely in how mastery is measured, not in which steps the student took to get there — the hierarchy is a diagnostic frame, not a prescribed path.",
+      "bridge": "Your anchor functions the same structural role as Gagné's inheritance vector: it is a measurement frame that reveals what a wandering agent actually found, not a prescription for where it should go. The agent's traversal is free — analogous to a student arriving at a skill through any number of routes — but the anchor scores the return by asking how much of the anchor's structure the result actually inherits. The constraint operating at the output layer, not the path layer, is precisely what preserves discovery value: the agent is never told which direction to wander, only whether what it brought back resonates with the anchor. And just as Gagné's vector exposes a student's real possession of a concept rather than their performance of a procedure, your anchor exposes whether the agent's find is genuinely structurally related or merely superficially adjacent.",
+      "use": "Consider making the anchor's scoring surface explicit as an inheritance check — when an agent returns a candidate, test not just 'does this touch the anchor' but 'which components of the anchor does this result actually carry?' A partial inheritance score would let you rank returns by depth of resonance rather than treating all matches as binary.",
+      "limit": "Gagné's hierarchy is fully articulated and stable before a single test is administered — every learnable skill, every prerequisite relationship, every valid path is known in advance and locked. Your system requires the anchor to score returns that the user could not have anticipated, meaning the measurement frame must remain open to concepts that don't yet exist in any known hierarchy. Gagné's constraint closes the search space to what is already proven learnable within a domain; yours must stay permeable to what crosses domain boundaries entirely. The inheritance-vector shape holds as an analogy for how scoring can operate at the output without constraining the path — but the moment you ask how to handle a return that doesn't fit any existing hierarchy node, Gagné's system has no answer. That rupture is exactly where your system has to begin.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:2/6 mec:3/6",
+      "citations": [
+        {
+          "title": "Inheritance Coding with Gagné-Based Learning Hierarchy Approach to Developing Mathematics Skills Assessment Systems",
+          "url": "https://www.mdpi.com/2076-3417/10/4/1465",
+          "snippet": "Title: Inheritance Coding with Gagné-Based Learning Hierarchy Approach to Developing Mathematics Skills Assessment Systems\n\nURL Source: https://www.mdpi.com/2076-3417/10/4/1465\n\nPublished Time: 2020-0"
+        }
+      ],
+      "match_strength": 0.2631578947368421,
+      "serve_score": {
+        "score": 0.02962962962962963,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:test",
+          "attachment-signal:preserve"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-S051f78-001",
+      "agent_id": "S051f78",
+      "domain": "physics",
+      "spark": "A system for automated mathematical discovery learned to judge which ideas are worth chasing — not by predicting the answer, but by evolving a scoring surface that rewards interestingness. Your wandering agents are built on the same skeleton.",
+      "source_shape": "The Fermat system (named after Pierre de Fermat) explores an open-ended combinatorial space of mathematical objects — conjectures, constructions, relationships in number theory — without a fixed target. Instead of directing the search toward a known goal, it learns an 'interestingness function' (IF) via evolutionary reinforcement learning: a scorer that evaluates each object the agent surfaces and decides whether it's worth pursuing further. The IF is not a hardcoded heuristic; it evolves because the space is too open and unpredictable for any fixed rule to stay useful. The constraint lives at the output layer — judging what comes back — not at the path layer, which remains free.",
+      "bridge": "Your anchor plays the same structural role as Fermat's interestingness function. In Fermat, the IF is a scoring surface: the agent wanders freely, and the IF evaluates what returns against a learned sense of 'worth.' In your system, the user's anchor — partial, felt, not yet fully articulated — is exactly that scoring surface: it doesn't direct the wandering agents toward a destination, it judges whether what they find resonates. The second mapping is the design philosophy around unpredictability. Fermat's authors explicitly reject hardcoded heuristics because the combinatorial openness of mathematical space is the point — constraining the path would destroy the discovery value. Your system makes the same claim: the anchor constrains the output layer (is this resonant?) while leaving the path layer (where should I wander?) genuinely free. Fermat independently validates that this is not a limitation to apologize for — it is the mechanism.",
+      "use": "Consider whether your interestingness scoring — the moment a wandering agent decides a found connection is worth surfacing — could be made more explicit as a learnable or evolvable function, rather than a fixed resonance threshold. Fermat's architecture suggests that the scorer itself can be the thing that improves over time, shaped by which returns the user actually found useful.",
+      "limit": "Fermat operates entirely inside a formal, domain-closed symbolic space: number theory, Galois fields, well-defined mathematical actions. Its interestingness function learns what is interesting *within* that domain, from within-domain priors. It has no mechanism for ingesting a half-formed human vision as a valid starting signal — productive incompleteness, the load-bearing feature of your anchor, is simply not a concept the system handles. More critically, the cross-domain metaphorical retrieval that defines your wandering agents — moving across physics, music, biology, history to find structural resonance with a felt human problem — has no analog in Fermat at all. The bridge holds for the constraint-at-output-layer shape and the non-prediction-as-design-requirement principle. It breaks completely at the question of how a vague, partially articulated human anchor becomes a valid input signal in the first place.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:4/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://openreview.net/forum?id=RespmwOoCH",
+          "url": "https://openreview.net/forum?id=RespmwOoCH",
+          "snippet": "Title: Learning Interestingness in Automated Mathematical Theory Formation\n\nURL Source: https://openreview.net/forum?id=RespmwOoCH\n\nMarkdown Content:\n# Learning Interestingness in Automated Mathematic"
+        }
+      ],
+      "match_strength": 0.3684210526315789,
+      "serve_score": {
+        "score": 0.027777777777777776,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.03",
+          "goal-directed-signal:decide",
+          "attachment-signal:not yet"
+        ],
+        "serves_attachment_only": false
+      }
+    },
+    {
+      "report_id": "wander-Sd48e5e-002",
+      "agent_id": "Sd48e5e",
+      "domain": "mathematics",
+      "spark": "A system that takes a static, half-drawn physics diagram — no equations, no labels, no specified model — and generates a live, interactive simulation from it. The diagram is not a complete instruction; it is a felt shape, and that turns out to be enough to start.",
+      "source_shape": "Augmented Physics uses ML to read a static textbook diagram and extract the latent physical structure implied by its visual form — the rough sketch of a lens, a circuit loop, a pendulum — then instantiates that structure as a running simulation the user can interact with. The system never asks the user to fully specify the underlying physics model before proceeding; the partial, implicit signal is treated as a valid, load-bearing input. Physical coherence is enforced on what comes back out — the simulation must obey physics — but the extraction path between diagram and simulation is ML-driven and unconstrained by hand-specified rules.",
+      "bridge": "Your system's core bet is that a user's felt shape — something real and directional but not yet fully articulate — is sufficient signal to launch a productive search. Augmented Physics makes the same bet in its domain: the static diagram is the felt shape, and the system proceeds from it rather than waiting for a complete specification. The constraint placement maps too: in Augmented Physics, physical validity is enforced at the output layer, not imposed on the extraction path — the system is free to find the structure however it can, as long as what it returns is coherent. Your wandering agents follow the same logic — the anchor constrains what counts as a relevant return, not how the agent traverses the space to get there. The deeper implication from the paper's bi-directional binding feature is worth sitting with: when the simulation updates back into the diagram, there is a feedback loop between what the system returned and the user's original input — which raises the question of whether your anchor itself should be refineable by what the agents bring back, rather than staying fixed throughout a session.",
+      "use": "Consider whether your architecture needs a back-channel: a mechanism by which high-resonance results returned by wandering agents can surface pressure on the anchor's own formulation — not overwriting it, but offering the user a concrete prompt to sharpen or shift the three-point anchor based on what the search has already found.",
+      "limit": "Augmented Physics operates inside a single, closed domain with a bounded ontology — optics, circuits, kinematics — so its 'extraction' is pattern-matching against a known schema, not genuine cross-domain traversal. There is no unpredictability of the kind your system requires: an Augmented Physics agent handed a theater script or a mathematical proof would have no schema to match against and would produce nothing. The inheritance-versus-origination tension your anchor is designed to hold — the difference between a result that merely reflects the anchor back and one that arrives from somewhere genuinely alien — is a tension Augmented Physics never faces and has no mechanism to navigate.",
+      "confidence": "medium",
+      "confidence_detail": "act:0/7 ess:3/6 mec:3/6",
+      "citations": [
+        {
+          "title": "[followon · findsimilar] https://arxiv.gg/abs/2405.18614",
+          "url": "https://arxiv.gg/abs/2405.18614",
+          "snippet": "Title: Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams\n\nURL Source: https://arxiv.gg/abs/2405.18614\n\nPublished Time: 2024-08-10\n\nMarkdown Content"
+        }
+      ],
+      "match_strength": 0.3157894736842105,
+      "serve_score": {
+        "score": 0.0,
+        "verdict": "diverts",
+        "reasons": [
+          "overlap-with-real-goal:0.04",
+          "attachment-signal:not yet"
+        ],
+        "serves_attachment_only": false
+      }
+    }
+  ],
+  "low": [],
+  "synthesis": {
+    "top_insights": [
+      "wander-P02-001",
+      "wander-P03-002",
+      "wander-P05-001",
+      "wander-P01-001",
+      "wander-P01-002",
+      "wander-P03-001",
+      "wander-P04-001",
+      "wander-P04-002",
+      "wander-P04-003",
+      "wander-P05-002",
+      "wander-P06-001",
+      "wander-S051f78-001",
+      "wander-Sd48e5e-001",
+      "wander-Sd48e5e-002",
+      "wander-Seaf411-001",
+      "wander-Seaf411-002"
+    ],
+    "clusters": [
+      {
+        "label": "Constraint-at-output-layer: the anchor scores returns, it does not steer the path",
+        "card_ids": [
+          "wander-P02-001",
+          "wander-P03-002",
+          "wander-P04-002",
+          "wander-P05-001",
+          "wander-P05-002",
+          "wander-S051f78-001",
+          "wander-Seaf411-002"
+        ],
+        "summary": "The most structurally consistent finding across the session is a single architectural principle: the anchor should function as a post-hoc scoring surface, not a pre-hoc search directive. FERMAT, Tsoukalas's theorem-prover, MaD Physics, and the Fermat RL environment all independently arrive at the same design: the agent's traversal is left free, and whatever returns is evaluated against a learned or felt sense of value only after it arrives. Every card in this cluster names the same failure mode — letting the anchor narrow the path rather than judge the output collapses discovery into retrieval. The convergence here is strong and crosses multiple independent source domains."
+      },
+      {
+        "label": "Partial input as valid load-bearing signal: incompleteness is the mechanism, not the defect",
+        "card_ids": [
+          "wander-P01-002",
+          "wander-P03-001",
+          "wander-P04-003",
+          "wander-P06-001",
+          "wander-Sd48e5e-001",
+          "wander-Sd48e5e-002",
+          "wander-Seaf411-001"
+        ],
+        "summary": "A second cluster converges on the claim that a user's inarticulate, felt anchor is not a deficiency requiring correction before the system engages — it is the actual input signal, and its incompleteness is structurally productive. FL-GLH, Augmented Physics (appearing in multiple cards), and the dual-process physics intervention all demonstrate that fuzziness or partiality at the input layer preserves search-space width that premature specification would destroy. The cluster weakly converges: every card makes the same directional claim, but the source systems vary significantly in how they operationalize 'partial input' — some handle visual artifacts, some handle teacher intuitions, some handle student misconceptions — and none of them face the cross-domain, pre-linguistic condition your anchor must handle."
+      },
+      {
+        "label": "Anchor as inheritance vector: scoring depth of resonance, not binary match",
+        "card_ids": [
+          "wander-P01-001",
+          "wander-P01-002",
+          "wander-P04-001"
+        ],
+        "summary": "Three cards draw on Gagné's learning hierarchy and conceptual blending to suggest that the anchor's scoring function could be made more granular than a binary match/no-match. Gagné's inheritance vector scores which components of a prerequisite structure a result actually carries; the colimit in conceptual blending scores whether a proposed blend remains coherent across all input structures. Both suggest a partial-inheritance model: a returned connection could be ranked by how many facets of the anchor it genuinely inherits, rather than treated as either resonant or not. This cluster is structurally interesting but carries a shared limit — both source systems operate inside closed, formally specified hierarchies, and your anchor is open-ended and pre-linguistic."
+      },
+      {
+        "label": "The anchor as a learnable, evolving scoring surface — not a fixed rubric",
+        "card_ids": [
+          "wander-P02-001",
+          "wander-P03-002",
+          "wander-P04-002",
+          "wander-S051f78-001",
+          "wander-Seaf411-002",
+          "wander-Sd48e5e-002"
+        ],
+        "summary": "Several cards independently surface a design suggestion: the scoring surface the anchor provides should not be static. FERMAT evolves its interestingness function; Tsoukalas trains rather than hand-codes the scorer; Augmented Physics's bi-directional binding implies feedback from output back to input. The shared implication is that early high-resonance returns could implicitly sharpen the anchor's scoring behavior for later returns — the system gets better at recognizing what this particular user's concept is reaching toward without requiring the user to articulate it more precisely. This cluster overlaps heavily with the constraint-at-output cluster but adds a temporal dimension: the anchor as a surface that updates across a session."
+      },
+      {
+        "label": "The back-channel question: should high-resonance returns reshape the anchor itself?",
+        "card_ids": [
+          "wander-Sd48e5e-002",
+          "wander-Seaf411-002",
+          "wander-P02-001"
+        ],
+        "summary": "A smaller cluster specifically raises the question of whether the anchor should be refineable by what agents return — not just scored against. Augmented Physics's bi-directional binding (where simulation updates back into the diagram) and FERMAT's evolved scorer both suggest a feedback loop between output and the scoring surface. This is distinct from the 'learnable scorer' cluster in that it raises the possibility of the user's anchor formulation itself shifting in response to what the wander surfaces — a more radical claim than simply improving scoring accuracy."
+      }
+    ],
+    "contradictions": [
+      {
+        "description": "Convergent discovery (finding a pre-existing target) vs. divergent origination (creating something that has no ground truth): several cards assume the anchor is a fixed target to converge on, while others require it to support genuinely novel output that did not exist before the search",
+        "card_ids": [
+          "wander-P02-001",
+          "wander-P03-002",
+          "wander-P05-001",
+          "wander-P04-002",
+          "wander-S051f78-001"
+        ]
+      },
+      {
+        "description": "Static anchor vs. evolving anchor: some cards treat the anchor as a fixed scoring surface throughout a session, while others argue the anchor must update in response to what agents return",
+        "card_ids": [
+          "wander-P02-001",
+          "wander-Sd48e5e-002",
+          "wander-Seaf411-002",
+          "wander-P05-001"
+        ]
+      },
+      {
+        "description": "Formal-domain scoring (interestingness measurable against a shared vocabulary) vs. cross-domain resonance scoring (no shared vocabulary, no ground truth, only the user's felt recognition): the FERMAT and Tsoukalas cards claim the scoring surface can be learned, but their limits sections each note this breaks when the target is pre-linguistic and cross-domain",
+        "card_ids": [
+          "wander-P03-002",
+          "wander-P04-002",
+          "wander-S051f78-001",
+          "wander-Seaf411-002"
+        ]
+      },
+      {
+        "description": "Partial input as sufficient anchor (Augmented Physics cluster) vs. partial input as a genuine unsolved problem (FERMAT and MaD Physics limits): Augmented Physics treats incompleteness as manageable because the domain is fixed; your system's incompleteness is pre-domain and pre-linguistic, which the same cards' limits sections name as uncharted",
+        "card_ids": [
+          "wander-P04-003",
+          "wander-Sd48e5e-001",
+          "wander-Seaf411-001",
+          "wander-P02-001",
+          "wander-P05-001"
+        ]
+      }
+    ],
+    "opportunity_paths": [
+      {
+        "description": "Design the anchor explicitly as a partial-inheritance scoring surface — rank returns by how many facets of the anchor they carry, rather than treating resonance as binary",
+        "supporting_card_ids": [
+          "wander-P01-001",
+          "wander-P01-002",
+          "wander-P04-001",
+          "wander-P02-001"
+        ],
+        "confidence_estimate": "medium"
+      },
+      {
+        "description": "Build a back-channel mechanism: high-resonance returns surface as prompts that let the user consciously sharpen or shift the anchor itself, rather than leaving the anchor frozen at intake",
+        "supporting_card_ids": [
+          "wander-Sd48e5e-002",
+          "wander-Seaf411-002",
+          "wander-P03-001"
+        ],
+        "confidence_estimate": "low"
+      },
+      {
+        "description": "Formalize the constraint-at-output-layer principle as an explicit architectural constraint in your system's design documentation — every component that touches the path layer should be audited for whether it is accidentally doing scoring work that belongs downstream",
+        "supporting_card_ids": [
+          "wander-P02-001",
+          "wander-P05-001",
+          "wander-P03-002",
+          "wander-S051f78-001",
+          "wander-Seaf411-002"
+        ],
+        "confidence_estimate": "high"
+      }
+    ],
+    "open_questions": [
+      "If the anchor must remain open to concepts that don't yet exist in any known hierarchy (named in wander-P01-001's limit), what is the minimum legible structure an anchor needs to score returns at all — and can that threshold be specified without closing the search space?",
+      "When the user's felt recognition of a match is the only ground truth available (wander-Seaf411-002 limit), how do you distinguish a scoring surface that is genuinely sharpening from one that is merely converging on what the user already knew they wanted?",
+      "The FERMAT and MaD Physics cards both name the convergent/divergent split: some users are clarifying something latent, others are originating something genuinely new. Does your system need to detect which mode it's in, and does the anchor mechanism need to behave differently in each case?",
+      "If the anchor updates in response to high-resonance returns (the back-channel path), what prevents the anchor from drifting toward whatever the agents happen to find well — collapsing discovery into a feedback loop that reinforces the agents' own biases rather than the user's actual vision?",
+      "The Augmented Physics cluster suggests accepting rougher, more gestural inputs and acting on them immediately. What is the minimum legible structure your agents need to begin, and is your current intake threshold higher than it needs to be?",
+      "Partial-inheritance scoring (wander-P01-001) would let you rank returns by depth of resonance — but this requires decomposing the anchor into separable facets. Is the user's anchor actually decomposable into facets, or does decomposing it destroy the felt-shape quality that makes it a valid signal in the first place?",
+      "The cards consistently name cross-domain scoring as the unsolved problem: no shared vocabulary, no ground truth, only felt resonance. Is there a structural primitive — analogous to the colimit in conceptual blending — that could serve as a cross-domain coherence test without requiring a shared formal language?"
+    ],
+    "recommended_next_direction": "The session's cards weakly converge on one architectural principle strongly enough that it might be worth pressure-testing it as a design constraint before exploring anything else: the anchor should function as a post-hoc scoring surface, never as a pre-hoc path filter. Every high-confidence card and most medium-confidence cards independently arrive at this shape from different source domains — mathematical discovery, physics benchmarks, educational diagnostics, simulation systems. A direction worth exploring is whether you can audit your current system against this principle component by component: for each part of the architecture that touches the wandering agents, ask whether it is doing path-narrowing work that belongs downstream at the scoring layer instead. The secondary direction the cards open — whether the scoring surface itself should update across a session, shaped by which returns the user finds resonant — is structurally interesting but carries a real risk named in the contradictions: a scoring surface that learns from returns could drift toward reinforcing the agents' own biases rather than the user's actual vision. That tension between a live, responsive anchor and an anchor that stays true to the user's original felt shape may be the most productive open question the session has surfaced.",
+    "what_would_change_the_verdict": "Evidence that the anchor, when used as a path-narrowing input rather than an output-layer scoring surface, produces higher-quality or more genuinely surprising returns for users — which would suggest the constraint-at-output-layer principle, while structurally consistent across all source domains, does not transfer to your specific cross-domain, pre-linguistic context."
+  },
+  "master_synthesis": null,
+  "master_sorted": {
+    "known": [],
+    "invalid": [
+      {
+        "card": {
+          "report_id": "wander-S051f78-001",
+          "agent_id": "S051f78",
+          "spark": "A system for automated mathematical discovery learned to judge which ideas are worth chasing — not by predicting the answer, but by evolving a scoring surface that rewards interestingness. Your wandering agents are built on the same skeleton.",
+          "bridge": "Your anchor plays the same structural role as Fermat's interestingness function. In Fermat, the IF is a scoring surface: the agent wanders freely, and the IF evaluates what returns against a learned sense of 'worth.' In your system, the user's anchor — partial, felt, not yet fully articulated — is exactly that scoring surface: it doesn't direct the wandering agents toward a destination, it judges whether what they find resonates. The second mapping is the design philosophy around unpredictability. Fermat's authors explicitly reject hardcoded heuristics because the combinatorial openness of mathematical space is the point — constraining the path would destroy the discovery value. Your system makes the same claim: the anchor constrains the output layer (is this resonant?) while leaving the path layer (where should I wander?) genuinely free. Fermat independently validates that this is not a limitation to apologize for — it is the mechanism.",
+          "source_shape": "The Fermat system (named after Pierre de Fermat) explores an open-ended combinatorial space of mathematical objects — conjectures, constructions, relationships in number theory — without a fixed target. Instead of directing the search toward a known goal, it learns an 'interestingness function' (IF) via evolutionary reinforcement learning: a scorer that evaluates each object the agent surfaces and decides whether it's worth pursuing further. The IF is not a hardcoded heuristic; it evolves because the space is too open and unpredictable for any fixed rule to stay useful. The constraint lives at the output layer — judging what comes back — not at the path layer, which remains free.",
+          "use": "Consider whether your interestingness scoring — the moment a wandering agent decides a found connection is worth surfacing — could be made more explicit as a learnable or evolvable function, rather than a fixed resonance threshold. Fermat's architecture suggests that the scorer itself can be the thing that improves over time, shaped by which returns the user actually found useful.",
+          "limit": "Fermat operates entirely inside a formal, domain-closed symbolic space: number theory, Galois fields, well-defined mathematical actions. Its interestingness function learns what is interesting *within* that domain, from within-domain priors. It has no mechanism for ingesting a half-formed human vision as a valid starting signal — productive incompleteness, the load-bearing feature of your anchor, is simply not a concept the system handles. More critically, the cross-domain metaphorical retrieval that defines your wandering agents — moving across physics, music, biology, history to find structural resonance with a felt human problem — has no analog in Fermat at all. The bridge holds for the constraint-at-output-layer shape and the non-prediction-as-design-requirement principle. It breaks completely at the question of how a vague, partially articulated human anchor becomes a valid input signal in the first place."
+        },
+        "contradicts": "The card attributes the FERMAT system's name to 'Pierre de Fermat' and presents it as an established automated discovery system; the bridge depends on a system whose interestingness-function-via-evolutionary-RL details cannot be verified, but the explicit factual claim that it is 'named after Pierre de Fermat' is an unverifiable attribution asserted as fact.",
+        "reasoning": "Asserts a specific factual attribution about a named system that cannot be confirmed against known published work, and the surrounding system claims are not citable.",
+        "confidence": 0.4
+      }
+    ],
+    "unplaced": [
+      {
+        "card": {
+          "report_id": "wander-P05-001",
+          "agent_id": "P05",
+          "spark": "A physics benchmark built around agents that must infer hidden laws from constrained measurements turns out to share the exact causal skeleton as your system — in both cases, the anchor is not a destination the agent navigates toward, but a scoring surface that judges which wandering was productive after the fact.",
+          "bridge": "Your three-signal anchor maps onto the MaD Physics structure point for point. The user's 'pursuit' corresponds to the measurement budget — a finite pressure that forces the agent to commit rather than sample everything. The user's 'vision' corresponds to the hidden physical law — not a coordinate the agent steers toward, but the implicit standard against which returned connections are judged alive or dead. The user's 'undone threads' correspond to the partial observations: the gaps in the picture are not problems to close before wandering begins, they are exactly what keeps the search space wide enough to find something surprising. And the deepest correspondence: in MaD Physics, the agent cannot predict in advance which measurements will matter — it must wander and let the law score the returns. Your wandering agents operate the same way across domains rather than measurement dimensions, but the causal shape is identical: anchored chaos where the anchor functions as a scoring surface, not a destination.",
+          "source_shape": "MaD Physics gives an agent a measurement budget and a physical environment, then asks it to infer the underlying law — gravity, friction, some hidden regularity — purely from the observations it chooses to take. The agent never sees the law directly; it wanders through measurement space, spending budget on observations, and the hidden law silently scores which measurements were informative. Crucially, the constraint lives at the output layer, not the path layer: nothing tells the agent where to look, only whether what it found was useful — which means the incompleteness of information is not a flaw in the setup but the mechanism that makes discovery possible.",
+          "use": "Consider making the anchor's role in your system explicit to yourself as a design constraint: the anchor should never tell the agent where to go, only whether what it returned was resonant — if any part of your architecture lets the anchor narrow the search path rather than just score the output, that is where you are accidentally collapsing discovery into retrieval.",
+          "limit": "MaD Physics assumes a single ground-truth law already exists in the environment, waiting to be inferred from enough informative measurements — the success criterion is fixed before the agent takes a single step. Your system operates in territory where the 'law' the user is reaching toward may not exist yet: it may be genuinely novel, something that must be created rather than discovered. This breaks the bridge at its load-bearing point. MaD Physics is convergent motion toward a pre-existing fixed point; your system must support both convergent motion (the user is clarifying something latent) and divergent motion (the user is originating something that has no ground truth to converge on). The physics benchmark can bake success into the scoring surface in advance; your system's success criterion — whether the user recognizes a returned connection as alive — is post-hoc, subjective, and cannot be specified before the wander begins."
+        },
+        "why_unplaced": "the named source ('MaD Physics') and its central transfer claim cannot be matched to a citable published framework",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P02-001",
+          "agent_id": "P02",
+          "spark": "A system for automated mathematical discovery solves almost exactly your problem — how do you guide a search agent toward meaningful output when the space is combinatorially vast and you cannot predict which path leads somewhere real — and it solves it by putting the constraint on what counts as a good result, not on where the agent is allowed to go.",
+          "bridge": "Your system has the same load-bearing shape. The user's anchor — their felt sense of what they are working toward — is your interestingness measure: it does not tell the wandering agent where to go, it tells the agent whether what it found is worth surfacing. The agent's cross-domain traversal is FERMAT's policy: free to move unpredictably through the search space, bounded only by what scores well at the output. The 'partial input preserves search space width' principle you have already named maps directly onto FERMAT's use of cached positive and negative examples rather than full formal grounding — the system does not need a complete specification of the target to score outputs usefully, and demanding one would collapse the search. The mechanism that makes FERMAT work — constraint lives at the scoring layer, not the path layer — is exactly the mechanism your system needs to preserve genuine discovery rather than guided retrieval.",
+          "source_shape": "FERMAT frames mathematical theory formation as a decision-making process: an agent moves through a space of possible definitions, conjectures, and proofs, taking actions freely. What guides it is not a map of the territory but a learned scoring function called an interestingness measure — a signal that evaluates each mathematical object the agent produces against a sense of what mathematical value looks like. Critically, this scoring function is not hand-coded; it is learned from examples of known interesting mathematics, then used to reward the agent for producing objects that have the same structural character, even when those objects are new.",
+          "use": "Consider whether your anchor representation can be treated as a learned scoring surface rather than a semantic target — meaning the anchor is used to evaluate what the agents return, not to steer where they wander, and the anchor itself updates as the user's articulation sharpens across sessions.",
+          "limit": "FERMAT's anchor is retrospective and convergent: it trains the interestingness measure against ground-truth known mathematical concepts, so success means rediscovering entities that already exist in some form. Your anchor is prospective and divergent — the user's felt shape is not a known target to converge on, it is a launching point for something the user could not have specified in advance. FERMAT closes the search space by defining success as recognition; your system must stay open enough that the output can articulate something genuinely new to the user, not just retrieve a structural match to what they already half-knew. FERMAT also treats the interestingness function as static once learned; your system implies the scoring surface must remain live and responsive to an inarticulate vision that evolves as the user works — a dynamic anchor, not a fixed one."
+        },
+        "why_unplaced": "the named source ('FERMAT' interestingness measure) and the specific transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P03-002",
+          "agent_id": "P03",
+          "spark": "A system for automated mathematical discovery solves the same core problem your system does: how do you score whether an agent's wandering was *worth it* when you cannot fully specify in advance what 'worth it' means?",
+          "bridge": "Your system faces the same scoring problem in a different skin. The user's anchor — the concept or work they bring — functions exactly as FERMAT's knowledge graph does: it is stable enough to serve as a scoring surface, but incomplete enough that the search space stays wide and surprising connections remain discoverable. FERMAT's constraint-at-output-layer pattern maps directly onto your architecture: agents explore freely along any path, and the anchor only exerts pressure *after* something is generated, scoring relevance post-hoc rather than pruning directions pre-emptively. The partial, inarticulate nature of what the user brings is preserved as signal rather than treated as noise — just as FERMAT's evolved interestingness measure must operate without a full specification of 'good mathematics,' your scoring layer must operate without a full specification of what will advance *this particular person's* work. The anchor is not a destination the agent navigates toward; it is a surface the agent's output is measured against.",
+          "source_shape": "FERMAT treats mathematical theory formation as a navigation problem: an agent moves through a vast combinatorial space by producing definitions, conjectures, and proofs, and needs a way to decide which directions are worth pursuing. The key move is that 'interestingness' is not hard-coded as a rule — it is learned as an intrinsic reward function that scores generated mathematical objects against the current state of the agent's knowledge. EvoAbstract evolves these scoring functions programmatically, using LLM-driven mutation to discover what makes a mathematical entity worth pursuing *in context*, without ever requiring a full specification of what 'good mathematics' looks like.",
+          "use": "Consider whether your relevance-scoring layer could be designed as an evolved or learned function rather than a fixed rubric — one that updates its model of 'interesting for this anchor' as the session accumulates output, so that early cards implicitly train the scoring of later ones.",
+          "limit": "FERMAT's agents are locked inside a formal mathematical DSL — every production rule generates mathematical entities, and the search space, though vast, never crosses domain boundaries. Your system's entire value proposition requires agents to wander unpredictably across mathematics, physics, theater, literature, and back; FERMAT's architecture has no mechanism for that and was not designed to. Second, FERMAT's anchor — the knowledge graph — is fully observable and queryable by the scoring function; your anchor is a felt shape, partially inarticulate, knowable only in fragments. The scoring function FERMAT evolves assumes it can see the whole knowledge state; yours must score against something the user themselves cannot fully articulate. Finally, FERMAT assumes a single mode: theory formation in one domain for one kind of user. Your system must serve both the person tracing inheritance from existing work and the person trying to break from origin entirely — FERMAT collapses both into one mode and offers no guidance on how to hold them apart."
+        },
+        "why_unplaced": "the named sources ('FERMAT', 'EvoAbstract') and the bridge claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-Sd48e5e-001",
+          "agent_id": "Sd48e5e",
+          "spark": "A system that turns frozen textbook diagrams into live simulations does it by treating the static image as a valid — if incomplete — specification, not a failure to provide a real one. Your system's entire bet is the same: that a felt, inarticulate shape is load-bearing input, not a placeholder until the user finds the right words.",
+          "bridge": "Your anchor's core claim is that a user's vague, felt sense of their work is signal worth acting on — not noise to be filtered until they can articulate something cleaner. Augmented Physics operationalizes exactly this move: a static image is not a simulation spec, yet the system extracts enough latent structure to generate one anyway. The textbook diagram maps onto your user's half-formed input — both are incomplete representations that contain recoverable structure the user themselves could not have formally specified. The extraction pipeline maps onto your wandering agents: rather than demanding a legible formal input before proceeding, both systems read whatever shape is present and work forward from there. And the 'constraint at output layer' node is the key mechanism — neither system pre-filters what counts as valid input; both let the output stage do the work of deciding what was actually there.",
+          "source_shape": "Augmented Physics takes a printed circuit diagram or mechanics figure — fixed, non-executable, never designed as simulation input — and uses computer vision and multimodal LLMs to extract whatever latent structure is actually there. It does not require the diagram to conform to a formal schema; it scores and segments what it finds, then generates an interactive simulation from that partial read. The constraint lives at the output layer, not the input: the system accepts the artifact as-is and lets the extraction pipeline decide what is recoverable.",
+          "use": "Consider whether your system's intake layer could be designed the same way — accepting the user's raw, unpolished expression as a first-class artifact and running extraction against it, rather than prompting the user to refine their input before the system engages. The question to test: what is the minimum legible structure your agents need to begin, and can that threshold be lower than it currently is?",
+          "limit": "Augmented Physics only works on content that is already fully externalized and domain-fixed — a printed diagram is incomplete as a simulation spec, but it is unambiguous about what domain it belongs to and every element in it is visually present and inspectable. Your system's hardest requirement is the opposite: handling input that is genuinely pre-articulate, where the user cannot yet name the domain, the shape, or even confirm what they are trying to say. Augmented Physics has no mechanism for that gap — it requires a legible artifact and immediately collapses into a single known domain. The cross-domain wandering that is central to your anchor — an agent reading a poem and recognizing it as structurally relevant to a tension-resolution problem in the user's unrelated work — has no analog here at all."
+        },
+        "why_unplaced": "the named source ('Augmented Physics') and the partial-input-as-valid-anchor transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P05-002",
+          "agent_id": "P05",
+          "spark": "A physics benchmark that deliberately breaks the laws of physics — so agents can't memorize their way to answers — turns out to share a skeleton with your system: the anchor doesn't tell the agent where to go, it scores what the agent finds when it gets there.",
+          "bridge": "Your system's wandering agents face the same structural split: the anchor is not a destination they navigate toward, it is a scoring surface that judges what they surface. In MaD Physics, the agent's exploration strategy is free but its prediction must match the altered law — your agents wander freely across domains but their finds are only 'musical' when they land in harmonic relationship with the user's anchor. The 'altered physics' design maps directly onto your partial-input preservation: just as breaking known laws forces the physics agent to treat incomplete observations as real signal rather than noise, your system's inarticulate anchor forces the wandering agent to treat partial resonance as meaningful rather than discarding it. And the three-domain structure in MaD — each domain a constraint surface that scores behavior — mirrors your three-point anchor, where each facet of the user's concept is a surface that scores relevance, not a waypoint that directs movement.",
+          "source_shape": "MaD Physics is a benchmark that tests whether AI agents can discover unknown physical laws under a strict measurement budget. The trick is that the physics has been deliberately altered — the laws the agent might have memorized no longer hold — so the agent must genuinely explore and observe, choosing which measurements to make and when to stop. The anchor (the true altered law) never guides the agent's path; it only scores the agent's final prediction. Constraint lives at the output, not the journey.",
+          "use": "Consider treating the three-point anchor not as a description of where agents should look, but as a budget-allocation scoring surface — agents that choose which domains to enter must justify that choice against the anchor, making the anchor do real filtering work before a result is ever surfaced, not just after.",
+          "limit": "MaD Physics operates on a closed, fully-specified problem space: three known physical domains with measurable, objective ground truth. Your system is structurally the opposite — the user's vision is inarticulate, the relevant domains are unknown in advance, and the wandering agent cannot know which domain matters until a match surfaces. MaD evaluates prediction accuracy against a fixed external law; your system has no fixed law, only a felt shape that sharpens as matches accumulate. The scoring surface in MaD is stable and external; yours is internal, evolving, and partly constructed by the very matches the agent returns — which means the budget-constrained measurement pattern transfers, but the evaluation logic does not."
+        },
+        "why_unplaced": "the named source ('MaD Physics') and the altered-law scoring-surface transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P04-001",
+          "agent_id": "P04",
+          "spark": "Mathematics generates genuinely new concepts — like Galois theory — not by prescribing a path of combination, but by holding multiple incomplete structures in tension and letting a coherence test score which blends survive. Your system is built on the same move: leave the path open, constrain only the output.",
+          "bridge": "Your anchor plays the role of the colimit scoring surface: it doesn't prescribe which domains the wandering agents visit or which connections they surface, but it provides the criterion by which a proposed bridge either resonates or doesn't. The agents' traversal across unrelated domains is the free combination step — the blend space is genuinely open. The anchor is what makes that openness productive rather than random, because it gives every candidate connection a surface to be tested against. And just as the mathematical blend produces something neither input domain contained — Galois theory is not latent in any one of its five source concepts — your system's value proposition is that the connection returned to the user is one they could not have reached by elaborating their anchor directly.",
+          "source_shape": "Conceptual blending in mathematics takes several partial, structurally incomplete domains and combines them without a predetermined recipe. The formal mechanism that makes this rigorous is a colimit: a category-theoretic construction that doesn't tell you which concepts to combine, but scores whether a proposed blend is internally consistent across all the input structures. The path of combination is free; the survival criterion is strict. Galois theory — a deep result connecting field extensions to group symmetry — emerged from blending five basic structural concepts this way, producing something none of the inputs contained.",
+          "use": "Consider framing the anchor's role explicitly as a scoring surface rather than a destination — when evaluating whether a wandering agent's find is worth surfacing, the test is not 'is this close to the anchor?' but 'does this candidate connection remain coherent when held against the anchor's structure?' That reframe may sharpen how you design the relevance signal.",
+          "limit": "The mathematics paper operates inside a closed formal system — first-order logic and category theory give it a shared language across all input domains and a deterministic coherence criterion. Your system crosses domains that share no formal language and have no pre-established coherence metric; the scoring surface is the user's felt sense of resonance, which is non-formalizable and shifts as the user's thinking evolves. The paper also assumes the blend space is bounded and that success criteria exist before the blend is attempted — you are designing for unbounded domain-crossing where whether a connection succeeded is often only legible in retrospect. The freedom-within-constraint shape maps cleanly; the mechanism by which coherence is actually judged does not."
+        },
+        "why_unplaced": "the colimit/conceptual-blending source concept is real but no named framework performs the specific cross-domain anchor-as-coherence-scoring transfer this bridge asserts",
+        "confidence": 0.5
+      },
+      {
+        "card": {
+          "report_id": "wander-Seaf411-002",
+          "agent_id": "Seaf411",
+          "spark": "A 2025 NeurIPS system teaches an AI to judge whether a newly discovered mathematical object is *interesting* — not by defining what interesting means in advance, but by learning a scoring function that evolves alongside the discovery process itself. Your system does the same thing: it doesn't tell people where to go, it evaluates what comes back.",
+          "bridge": "Your system's anchor operates the same way the interestingness scorer does in Fermat: it doesn't constrain the wandering agent's path, it sits at the exit and judges what comes back. In Fermat, the agent can generate any symbolic object it likes — the constraint only activates when the scorer decides whether that object is worth keeping. In your system, the wandering agent can drift into any domain — the anchor only activates when it evaluates whether what the agent found has structural resonance with the user's concept. The critical correspondence is that in both cases the freedom of the search is preserved precisely because the constraint is downstream of the traversal, not woven into it. Fermat also formalizes something your system implies: the scoring surface itself can be learned and refined — the anchor need not be static, it can get better at recognizing what it's looking for as more returns come in.",
+          "source_shape": "Fermat is a reinforcement learning environment for open-ended mathematical theory formation. An agent wanders through symbolic concept-space — generating conjectures, number-theoretic objects, novel definitions — and a learned 'interestingness' scorer evaluates each output. The scorer is not a fixed rubric; it is itself evolved using LLM-based algorithms, so the measure of what counts as a valuable discovery sharpens over time. The path the agent takes is unconstrained; what survives and gets reinforced is determined entirely at the output layer, by that scorer.",
+          "use": "Consider whether your anchor mechanism could accumulate signal across sessions — each card the user finds resonant slightly sharpens the scoring surface, so the system's sense of what counts as a good match for this user's concept improves over time without the user ever having to articulate what they want more precisely.",
+          "limit": "Fermat's entire architecture depends on the search space being symbolically legible — every object it generates is a formal mathematical construct with verifiable truth conditions, and 'interestingness' is defined over that clean symbolic substrate. Your system is causally dependent on the opposite condition: the user does not fully know what they want, and that partial, inarticulate felt shape is not a bug to be resolved but the actual input signal. Fermat's RL formulation would break entirely if the inputs were underspecified, because it needs to evaluate objects against a learnable criterion — and you cannot run gradient descent on a feeling. The bridge holds for the output-layer-constraint shape and the learnable-scorer idea, but it breaks completely at the question of how you score resonance when the target is pre-linguistic and the user's own recognition of a match is the only ground truth available."
+        },
+        "why_unplaced": "the named source ('Fermat' NeurIPS 2025 interestingness scorer) and the bridge claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P04-002",
+          "agent_id": "P04",
+          "spark": "A system that discovers *interesting* theorems — not just true ones — solves the same core problem yours does: how do you guide a search when you cannot specify in advance what you're looking for? The answer in both cases is the same structural move: don't predict the destination, score the output.",
+          "bridge": "Your anchor plays exactly the role that the learned interestingness metric plays in Tsoukalas: it is a scoring surface, not a waypoint. The wandering agent doesn't navigate *toward* the anchor the way a GPS routes toward a destination — it navigates *freely*, then the anchor judges what came back. This is why the constraint operates at output rather than input: locking the search to predicted outputs would collapse the search space before the interesting material could surface. The 'felt sense' the paper attributes to mathematicians — a shape of what a theorem should *do* before they can say what it *is* — maps directly onto your user's anchor: an incompletely articulated sense of what matters, which is valid signal precisely because it is not yet fully specified. Both systems are designed around the insight that partial articulation is not a bug to be corrected before the search begins; it is the condition that keeps the search space wide enough to find something surprising.",
+          "source_shape": "Tsoukalas et al. build an automated theorem-prover that doesn't just find valid proofs — it learns to recognize which theorems are *worth* finding. The key mechanism is that interestingness is treated as a property of outputs, not a specification of inputs: the system wanders the proof space freely, then filters what it finds against a learned scoring surface that captures what mathematicians care about. The system is causally dependent on *not knowing* the answer in advance — if you could specify interesting theorems ahead of time, you wouldn't need the system at all.",
+          "use": "Consider whether your scoring layer — the mechanism that judges whether a wandering agent's find is worth surfacing — should be learned or updated from user feedback over time, the way Tsoukalas's interestingness metric is trained rather than hand-coded; a static scoring surface may converge too quickly on what the user already knows they want.",
+          "limit": "Tsoukalas's system operates inside a single, formally closed domain: mathematical proof space has a stable grammar, and interestingness is learned entirely within that grammar. Your system's value proposition is explicitly cross-domain — the leap from theater to physics to literature is the point, not a complication to manage. This breaks the mapping at the scoring layer: Tsoukalas's interestingness metric is calibrated against a shared vocabulary that all theorems in the domain already speak. Your agents return from domains that do not share vocabulary with each other or with the anchor, which means the scoring surface itself may need to shift depending on which domain a find comes from. A single learned metric of the Tsoukalas type may be insufficient — cross-domain discovery may require a scoring primitive built around structural resonance across incommensurable frames, which is a fundamentally harder and different problem than recognizing elegance within one."
+        },
+        "why_unplaced": "the attributed work ('Tsoukalas et al.' interestingness theorem-prover) and the transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.5
+      },
+      {
+        "card": {
+          "report_id": "wander-P01-002",
+          "agent_id": "P01",
+          "spark": "A diagnostic system that treats a teacher's vague intuition — 'students who get fewer than 2 questions right feel like they're struggling' — as a precise, load-bearing input discovers something counterintuitive: tolerating fuzziness at the entry point sharpens the diagnosis at the exit point. Constellax is built on the same bet.",
+          "bridge": "Your system's core claim is that a user's partial, inarticulate anchor — a felt sense of what they're working toward, not a fully specified destination — is a valid and productive search input, not noise to be cleaned up before the real work begins. The FL-GLH paper demonstrates exactly this mechanism in a different domain: the teacher's fuzzy sense of what 'poor understanding' means is treated as load-bearing signal, not as a defect to be replaced with a precise rubric. In both cases, the fuzziness at the input layer is what preserves search space width — collapsing it to a binary too early would eliminate the diagnostic (or discovery) value. And in both cases, constraint operates at the output layer, not the path layer: the system doesn't restrict how the student learned or how the agent wanders, only how the result gets scored against the anchor.",
+          "source_shape": "The FL-GLH system combines fuzzy logic with Gagné's learning hierarchy to assess where a student breaks down in mathematics. Fuzzy logic handles the input layer: instead of a hard cutoff between 'poor' and 'good' performance, it uses trapezoidal membership functions that let a score belong partially to both categories at once, encoding the real imprecision in how teachers experience student ability. The constraint enters only at the output layer — fuzzy rules and a defuzzification step that converts the blurred inputs into a crisp diagnostic verdict. The system never forces the input to be clean; it forces the output to be useful.",
+          "use": "Consider this as a design test for your scoring or relevance layer: if your system evaluates agent output by collapsing the anchor into a binary match/no-match criterion early in the pipeline, you may be destroying the value that fuzziness was preserving. You might instead hold the anchor as a soft membership surface — letting candidate connections belong partially to 'relevant' before any hard ranking — and only defuzzify at the final presentation layer.",
+          "limit": "FL-GLH is structurally hierarchical and cumulative: a student must master lower-order skills before higher-order ones are even assessed, and the system is designed to find where that bottom-up chain broke. Constellax explicitly rejects strict hierarchy in favor of a loose, non-ordered network of concepts — the wandering is domain-agnostic and the anchor does not predetermine a learning path. More critically, FL-GLH diagnoses what a learner already failed to acquire along a known structure; your system is trying to discover what the user didn't yet know they needed, with no predetermined structure to navigate. The direction of motion is opposite: FL-GLH moves upward through a fixed scaffold, your agents move outward through open space. The bridge holds for the fuzziness-at-input, constraint-at-output shape — it breaks entirely at the question of hierarchy, direction, and whether the destination is known in advance."
+        },
+        "why_unplaced": "the named source ('FL-GLH' fuzzy logic plus Gagné hierarchy) and the fuzziness-at-input transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P03-001",
+          "agent_id": "P03",
+          "spark": "A physics education paper designed a system that deliberately preserves students' half-formed, inarticulate intuitions as valid input — and only applies constraint at the moment of output validation, not before. Your system is built on the same structural bet.",
+          "bridge": "Your system treats the user's partial, undone, not-yet-articulate concept as the starting signal — not something to be clarified before the agents move, but the actual fuel. That is the same structural bet this paper makes: the student's misconception is not noise to be eliminated upfront, it is the input the system is causally dependent on. The intervention fires precisely because the reasoning is still half-formed. In your case, the wandering agents are the output-layer filter — they do not constrain where the user's thinking goes, they return from the outside with something that lets the user score what their own intuition has been circling. And just as the physics intervention would fail if students were forced to fully articulate their reasoning before it ran (because articulation would collapse the productive ambiguity), your system would fail if the anchor were required to be complete before agents depart.",
+          "source_shape": "Dual-process theory distinguishes fast, intuitive reasoning from slow, deliberate reasoning. This intervention does not try to suppress or replace the intuitive response — it lets students generate their answer from gut sense first, then strengthens the 'mindware' (reflective tools) they use to evaluate whether that answer holds up against a criterion. The constraint never touches the path the student takes to their answer; it only waits at the door and asks: does this survive scrutiny? The result is that intuition remains the engine, and reflection becomes the filter.",
+          "use": "Consider whether your system could surface not just external connections but a lightweight scoring moment — something that hands the user back their own half-formed concept with a new lens attached, so they can feel whether the wandering agent's find resonates or doesn't. The agents would then function as mindware strengthening, not just retrieval.",
+          "limit": "This paper's intervention is corrective and inward-facing: it checks a student's intuition against a known criterion within a single, bounded domain (Newtonian mechanics). Your system is generative and outward-facing: it sends agents across unpredictable domains to retrieve connections that do not yet exist in the user's frame. Their anchor is binary — intuitive response versus established criterion — and the goal is error prevention. Your anchor is three-point and open-ended, and the goal is discovery. The directional arrow is opposite: they constrain to prevent error propagation; you need the absence of constraint to preserve the discovery value. The structural shape of 'partial input plus output-layer validation' holds, but the purpose it serves, and the kind of output being validated, are fundamentally different."
+        },
+        "why_unplaced": "dual-process theory is a real named concept but the specific transfer to output-layer-validation discovery architecture has no named matching framework",
+        "confidence": 0.5
+      },
+      {
+        "card": {
+          "report_id": "wander-P06-001",
+          "agent_id": "P06",
+          "spark": "A system that turns static textbook diagrams into live physics simulations works by treating the teacher's incomplete sketch as a valid starting point — not a deficiency to fix, but a deliberate opening that keeps the search space wide enough for something unexpected to emerge.",
+          "bridge": "Your anchor functions the same way the teacher's static diagram does: it is a felt shape, not a full specification — 'I'm working on something like this' rather than 'find me exactly this.' The wandering agents are the vision-and-segmentation layer, free to traverse domains without a predetermined path. The anchor is not the destination they're navigating toward; it is the scoring surface they check against on arrival — does this structural match resonate with what the user is trying to advance? And just as Augmented Physics preserves discovery value by keeping the extraction layer unconstrained, your system preserves surprise by not pre-filtering which domains the agents enter. The constraint only activates at the output layer, when a candidate result is measured against the anchor's pull.",
+          "source_shape": "Augmented Physics takes a static diagram — a drawing of a pendulum, a lens, a ramp — and uses computer vision to extract its elements without requiring the teacher to specify every parameter. The physics engine then scores candidate simulations against the diagram's implied pedagogical intent: does this simulation show what forces are acting here? The constraint lives at the output layer, not the extraction layer — the system is free to wander through segmentation and object recognition, but the simulation it produces must satisfy physical law. That separation is what allows emergent behaviors to surface: the teacher didn't script the interaction, the system found it.",
+          "use": "Consider making the anchor evaluation explicit as a scoring pass that happens after wandering, not during it — agents roam freely, then each candidate result is scored against the anchor's felt shape before surfacing. This would mirror Augmented Physics's architecture: free search, constrained output.",
+          "limit": "Augmented Physics operates entirely inside a single closed domain with deterministic rules — Newton's laws don't change, and every simulation is validated against physics that has known ground truth. Your system requires agents to wander across domains with no shared rule set: a structural resonance between orbital mechanics and narrative arc cannot be verified the way a force diagram can. The bridge holds for the architecture — partial input, free search, anchor-as-scoring-surface — but breaks at the question of how you validate a match when there is no equivalent of physical law to confirm it. The paper's discovery is emergent within a closed system; yours must be emergent across open, incommensurable ones."
+        },
+        "why_unplaced": "the named source ('Augmented Physics') and the felt-shape-as-scoring-surface transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P04-003",
+          "agent_id": "P04",
+          "spark": "A system that turns a static textbook diagram into a living physics simulation — by treating the incomplete image as a valid load-bearing input rather than a broken one — is running the same core move your system makes when it treats a half-formed user vision as signal worth amplifying, not noise to be filtered out.",
+          "bridge": "Your system's anchor is the user's half-formed concept — not a clean specification, but a felt shape, an inarticulate vision of what they're working toward. Augmented Physics establishes that this kind of input is structurally sufficient: a static diagram carries enough latent signal to generate interactive, dynamic output without first being 'completed' into something more explicit. The correspondence holds at each step — the diagram maps to the user's anchor (both are incomplete, both are real), the extraction of latent dynamics maps to your system's surfacing of structural resonance across domains (both make implicit structure explicit), and the decision to keep the original artifact embedded rather than outsourcing to a generic tool maps to your system's insistence on scoring against the user's specific vision rather than a canonical goal. The principle is the same: preserve the partial input, because its incompleteness is what keeps the search space wide.",
+          "source_shape": "Augmented Physics takes a static diagram from a textbook — a force arrow, a pulley system, a circuit — and extracts the latent dynamics the image implies but cannot show: motion over time, interacting forces, causal chains. It does this by keeping the diagram itself as the anchor, rather than sending the student to a generic external simulator that won't match their specific context. The key mechanism is that the incomplete, static form is treated as a precise enough input to drive meaningful output — the incompleteness is not a bug to be patched before the work begins, it is the starting material.",
+          "use": "Consider whether the way Augmented Physics embeds the anchor — keeping the original diagram present and operative throughout, rather than abstracting it away — suggests anything about how your system holds the user's vision across a session: not as a one-time intake to be processed and set aside, but as a continuously active scoring surface that every output is measured against.",
+          "limit": "Augmented Physics is a completion system, not an expansion system — it extracts and simulates what is already latent in the diagram, and the physics governing that output is fixed and convergent. Your system requires structurally constrained randomness to surface what the user could not have found through directed search, which means the constraint operates at a fundamentally different layer: not at recognition (what to extract from a known source) but at output scoring (what counts as resonant across unpredictable domains). The bridge holds for the principle of treating partial input as valid and generative, but breaks entirely at the question of how the two systems handle the space beyond the anchor — Augmented Physics closes that space down to what the diagram already contains; your system's entire value depends on keeping it open."
+        },
+        "why_unplaced": "the named source ('Augmented Physics') and the partial-input-as-load-bearing transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-Seaf411-001",
+          "agent_id": "Seaf411",
+          "spark": "A system that turns a rough, static diagram into a live interactive simulation — without waiting for the user to specify what they want — is running the same bet your system runs: that an underspecified input still carries enough structure to generate useful possibility space.",
+          "bridge": "Your system faces the same foundational question: how much specification does an input need before it becomes load-bearing? Augmented Physics answers that question by treating the 'felt shape' of a diagram — its visible structure, even without explicit simulation parameters — as a valid starting point, not a deficient one. That maps directly to your anchor mechanism: the user's concept or work-in-progress doesn't need to be fully articulated for agents to begin finding resonant structure elsewhere. The diagram in Augmented Physics is your anchor — a partial, static artifact that still has enough surface area for a retrieval or generation process to grip. And the four augmentation strategies the system produces aren't prescribed by the diagram; they're scored against it — which is exactly the 'constraint at output layer, not path layer' mechanism your agents use when they evaluate what they find against the anchor rather than being told where to look.",
+          "source_shape": "Augmented Physics takes a textbook diagram — no equations entered, no simulation parameters set, just a static image — and uses ML to extract whatever latent structure is already encoded in the visual. From that partial signal, it generates four kinds of interactive augmentation: runnable experiments, animations, bi-directional parameter bindings, and visualizations of hidden variables. The key move is that the system never asks the user to fully specify their intent before it acts; the diagram's existing shape is treated as a sufficient anchor to open an exploration space rather than a complete instruction to execute.",
+          "use": "Consider whether your system's intake surface could explicitly accept rougher, more visual or gestural inputs — a sketch, a fragment, a half-formed diagram — and treat that incompleteness as signal rather than asking the user to refine before anything happens. The Augmented Physics model suggests that acting on the partial shape first, then letting the user steer from the generated output, may be more productive than front-loading specification.",
+          "limit": "Augmented Physics is domain-locked by design: it extracts and simulates what is already explicitly present in a physics diagram, within physics. There is no cross-domain leap, no metaphorical retrieval, and no tension between what the source contains and what a distant domain might contribute. Your system's value depends on agents that escape domain gravity — that find structure in jazz or thermodynamics or supply chains that the user would never have looked for. Augmented Physics cannot model that move; it would simply give the user back a more interactive version of what they already had. The bridge holds for the 'partial input as valid anchor' shape, but breaks entirely at the question of how to generate genuinely surprising, cross-domain resonance."
+        },
+        "why_unplaced": "the named source ('Augmented Physics') and the underspecified-input transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      },
+      {
+        "card": {
+          "report_id": "wander-P01-001",
+          "agent_id": "P01",
+          "spark": "Gagné's learning hierarchy scores student knowledge with a constraint placed at the measurement layer — not at the learning path — so the student's route stays free while the assessment stays precise. Your anchor works the same way: a scoring surface, not a fence.",
+          "bridge": "Your anchor functions the same structural role as Gagné's inheritance vector: it is a measurement frame that reveals what a wandering agent actually found, not a prescription for where it should go. The agent's traversal is free — analogous to a student arriving at a skill through any number of routes — but the anchor scores the return by asking how much of the anchor's structure the result actually inherits. The constraint operating at the output layer, not the path layer, is precisely what preserves discovery value: the agent is never told which direction to wander, only whether what it brought back resonates with the anchor. And just as Gagné's vector exposes a student's real possession of a concept rather than their performance of a procedure, your anchor exposes whether the agent's find is genuinely structurally related or merely superficially adjacent.",
+          "source_shape": "In Gagné's system, every mathematical skill is built on prerequisite skills, forming a strict hierarchy — you cannot divide fractions until you can multiply them. To test where a student actually stands, each assessment question is encoded as a vector that inherits all the lower-skill concepts plus exactly one new concept. The constraint lives entirely in how mastery is measured, not in which steps the student took to get there — the hierarchy is a diagnostic frame, not a prescribed path.",
+          "use": "Consider making the anchor's scoring surface explicit as an inheritance check — when an agent returns a candidate, test not just 'does this touch the anchor' but 'which components of the anchor does this result actually carry?' A partial inheritance score would let you rank returns by depth of resonance rather than treating all matches as binary.",
+          "limit": "Gagné's hierarchy is fully articulated and stable before a single test is administered — every learnable skill, every prerequisite relationship, every valid path is known in advance and locked. Your system requires the anchor to score returns that the user could not have anticipated, meaning the measurement frame must remain open to concepts that don't yet exist in any known hierarchy. Gagné's constraint closes the search space to what is already proven learnable within a domain; yours must stay permeable to what crosses domain boundaries entirely. The inheritance-vector shape holds as an analogy for how scoring can operate at the output without constraining the path — but the moment you ask how to handle a return that doesn't fit any existing hierarchy node, Gagné's system has no answer. That rupture is exactly where your system has to begin."
+        },
+        "why_unplaced": "Gagné's learning hierarchy is a real named concept but the inheritance-vector-as-anchor-scoring transfer claim has no named matching framework",
+        "confidence": 0.5
+      },
+      {
+        "card": {
+          "report_id": "wander-Sd48e5e-002",
+          "agent_id": "Sd48e5e",
+          "spark": "A system that takes a static, half-drawn physics diagram — no equations, no labels, no specified model — and generates a live, interactive simulation from it. The diagram is not a complete instruction; it is a felt shape, and that turns out to be enough to start.",
+          "bridge": "Your system's core bet is that a user's felt shape — something real and directional but not yet fully articulate — is sufficient signal to launch a productive search. Augmented Physics makes the same bet in its domain: the static diagram is the felt shape, and the system proceeds from it rather than waiting for a complete specification. The constraint placement maps too: in Augmented Physics, physical validity is enforced at the output layer, not imposed on the extraction path — the system is free to find the structure however it can, as long as what it returns is coherent. Your wandering agents follow the same logic — the anchor constrains what counts as a relevant return, not how the agent traverses the space to get there. The deeper implication from the paper's bi-directional binding feature is worth sitting with: when the simulation updates back into the diagram, there is a feedback loop between what the system returned and the user's original input — which raises the question of whether your anchor itself should be refineable by what the agents bring back, rather than staying fixed throughout a session.",
+          "source_shape": "Augmented Physics uses ML to read a static textbook diagram and extract the latent physical structure implied by its visual form — the rough sketch of a lens, a circuit loop, a pendulum — then instantiates that structure as a running simulation the user can interact with. The system never asks the user to fully specify the underlying physics model before proceeding; the partial, implicit signal is treated as a valid, load-bearing input. Physical coherence is enforced on what comes back out — the simulation must obey physics — but the extraction path between diagram and simulation is ML-driven and unconstrained by hand-specified rules.",
+          "use": "Consider whether your architecture needs a back-channel: a mechanism by which high-resonance results returned by wandering agents can surface pressure on the anchor's own formulation — not overwriting it, but offering the user a concrete prompt to sharpen or shift the three-point anchor based on what the search has already found.",
+          "limit": "Augmented Physics operates inside a single, closed domain with a bounded ontology — optics, circuits, kinematics — so its 'extraction' is pattern-matching against a known schema, not genuine cross-domain traversal. There is no unpredictability of the kind your system requires: an Augmented Physics agent handed a theater script or a mathematical proof would have no schema to match against and would produce nothing. The inheritance-versus-origination tension your anchor is designed to hold — the difference between a result that merely reflects the anchor back and one that arrives from somewhere genuinely alien — is a tension Augmented Physics never faces and has no mechanism to navigate."
+        },
+        "why_unplaced": "the named source ('Augmented Physics' bi-directional binding) and the felt-shape transfer claim cannot be matched to a citable published reference",
+        "confidence": 0.6
+      }
+    ],
+    "total_cost_usd": 0.4155,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_demotions": [],
+    "call_log": [
+      {
+        "round": "sort",
+        "model": "anthropic/claude-opus-4-8",
+        "in_tok": 19562,
+        "out_tok": 1628,
+        "cost_usd": 0.4155,
+        "ms": 18575.5,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_card_count": 16,
+    "classified_count": 16,
+    "dropped_report_ids": []
+  },
+  "suppressed_framings": []
+}

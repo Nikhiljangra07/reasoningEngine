@@ -43,6 +43,7 @@ from src.bridge.thread_persistence import (
     schedule_record_iteration as _persist_iteration,
 )
 from src.wandering.routes import get_router as _get_wandering_router
+from src.wandering.credits_routes import get_router as _get_credits_router
 from src.bridge.web_search import (
     format_web_context_block as _format_web_context_block,
     web_search as _web_search,
@@ -138,7 +139,7 @@ MAX_PHASE1_SUMMARY_CHARS = int(os.environ.get("MAX_PHASE1_SUMMARY_CHARS", "20000
 
 # Default effort tier when a request does not specify one. Mapped to an
 # iteration budget via src/llm/effort.py (low=3, medium=6, high=10).
-DEFAULT_EFFORT = normalize_effort(os.environ.get("LORA_EFFORT"))
+DEFAULT_EFFORT = normalize_effort((os.environ.get("CONSTELLAX_EFFORT") or os.environ.get("LORA_EFFORT")))
 
 # Conversation store backend selection.
 #
@@ -155,7 +156,7 @@ DEFAULT_EFFORT = normalize_effort(os.environ.get("LORA_EFFORT"))
 #
 # Redis support was removed in the Phase 6 cleanup of the Neo4j migration —
 # Neo4j is the sole persistent backend now.
-CONVERSATION_STORE_PATH = os.environ.get("LORA_CONVERSATION_STORE_PATH", "")
+CONVERSATION_STORE_PATH = (os.environ.get("CONSTELLAX_CONVERSATION_STORE_PATH") or os.environ.get("LORA_CONVERSATION_STORE_PATH", ""))
 CONSTELLAX_DB_BACKEND = os.environ.get("CONSTELLAX_DB_BACKEND", "neo4j").strip().lower()
 
 _CONV_BACKEND: dict = {}
@@ -685,8 +686,8 @@ def _persist_after_engine_done(*, request_id: str, memo_id: str) -> None:
 # Background sweep — periodic deletion of expired conversation entries.
 # Filter-on-read already hides them from queries; this is what actually
 # frees the heap (and disk, when persistence is enabled).
-SWEEP_ENABLED = os.environ.get("LORA_SWEEP_ENABLED", "1") not in ("0", "false", "False", "")
-SWEEP_INTERVAL_SECONDS = int(os.environ.get("LORA_SWEEP_INTERVAL_SECONDS", "3600"))
+SWEEP_ENABLED = (os.environ.get("CONSTELLAX_SWEEP_ENABLED") or os.environ.get("LORA_SWEEP_ENABLED", "1")) not in ("0", "false", "False", "")
+SWEEP_INTERVAL_SECONDS = int((os.environ.get("CONSTELLAX_SWEEP_INTERVAL_SECONDS") or os.environ.get("LORA_SWEEP_INTERVAL_SECONDS", "3600")))
 _sweep_task: "asyncio.Task | None" = None  # populated on startup, cancelled on shutdown
 
 
@@ -745,6 +746,19 @@ app.include_router(_get_thread_persistence_router())
 #   GET  /api/v2/wandering/session/{id}
 #   POST /api/v2/wandering/session/{id}/dig-deeper
 app.include_router(_get_wandering_router(), prefix="/api/v2/wandering")
+
+# Credit ledger — the money layer underneath Wandering Room. Sibling
+# to /wandering; the wander endpoints call into CreditService for
+# reserve/commit/release, and these routes are the user-facing read
+# surface plus the (env-gated) admin grant path. Stripe top-up stub
+# returns 501 until billing is wired.
+#   GET  /api/v2/credits/balance
+#   GET  /api/v2/credits/transactions
+#   GET  /api/v2/credits/packs
+#   POST /api/v2/credits/grant_starter
+#   POST /api/v2/credits/admin/grant
+#   POST /api/v2/credits/topup           (stub: 501)
+app.include_router(_get_credits_router(), prefix="/api/v2/credits")
 
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 if os.path.isdir(WEB_DIR):
@@ -3091,6 +3105,68 @@ async def _close_redis_client() -> None:
     _REDIS_CLIENT = None
 
 
+# ── Wandering Room job durability (F5) ────────────────────────────────────
+# Mirror the in-process JobState registry to the durable WanderingStore so
+# wanders survive Railway redeploys / OOM kills cleanly. On startup we
+# sweep any jobs left RUNNING by the prior process and mark them failed
+# with reason=server_restart_during_wander; the frontend offers "Restart?"
+# rather than pretending we can resume mid-flight (see N3).
+
+@app.on_event("startup")
+async def _wire_wandering_job_store() -> None:
+    """Inject the durable store into the wandering jobs module and sweep
+    interrupted jobs from prior PID."""
+    try:
+        from src.wandering import jobs as wandering_jobs
+        from src.wandering.routes import get_store as get_wandering_store
+        store = get_wandering_store()
+        wandering_jobs.set_store(store)
+        # Best-effort schema bootstrap so the WanderingJob index exists
+        # before the first save_job_state call. Only relevant for the
+        # Neo4j backend; in-memory store has no schema.
+        if hasattr(store, "init_schema"):
+            try:
+                await store.init_schema()
+            except Exception as init_err:
+                log.debug("wandering store init_schema: %s", init_err)
+        swept = await wandering_jobs.sweep_interrupted_from_store()
+        if swept:
+            log.info("wandering: marked %d interrupted jobs failed at startup", swept)
+        else:
+            log.info("wandering: job store wired (no interrupted jobs to sweep)")
+    except Exception as e:
+        # Non-fatal — wanders still work in-process, they just won't
+        # survive restarts until the store is reachable.
+        log.warning("wandering: durable job mirror unavailable (%s)", e)
+
+
+@app.on_event("shutdown")
+async def _drain_wandering_jobs() -> None:
+    """On clean shutdown (SIGTERM / SIGINT under Railway), transition any
+    still-RUNNING jobs to FAILED with the restart reason and persist
+    them. Railway gives ~30s grace; this typically completes in <1s."""
+    try:
+        from src.wandering import jobs as wandering_jobs
+        running = wandering_jobs.drain_running_for_shutdown()
+        if not running:
+            return
+        log.info("wandering: draining %d running jobs for shutdown", len(running))
+        # Persist each as a server_restart failure so the next process
+        # boot finds them (or they're already there from the running-state
+        # mirror) and the frontend can show a clean message.
+        for state in running:
+            state.status       = wandering_jobs.JobStatus.FAILED
+            state.error        = "server_restart_during_wander"
+            state.completed_at = time.time()
+            state.task         = None
+            wandering_jobs._mirror_state_async(state)
+        # Yield once so the create_task'd mirror coroutines actually
+        # get a chance to run before the loop tears down.
+        await asyncio.sleep(0.1)
+    except Exception as e:
+        log.warning("wandering: shutdown drain failed (%s)", e)
+
+
 # ── Decision Trace memory recall (Phase 4) ─────────────────────────────────
 # Builds a "PRIOR MEMORY" directive for each substantive trace request,
 # injecting cross-thread / cross-platform Decision Trace context into the
@@ -3101,7 +3177,7 @@ async def _close_redis_client() -> None:
 # When disabled, build_memory_directive returns "" and dispatch is
 # unchanged.
 
-MEMORY_RECALL_ENABLED = os.environ.get("LORA_MEMORY_RECALL_ENABLED", "1") not in ("0", "false", "no")
+MEMORY_RECALL_ENABLED = (os.environ.get("CONSTELLAX_MEMORY_RECALL_ENABLED") or os.environ.get("LORA_MEMORY_RECALL_ENABLED", "1")) not in ("0", "false", "no")
 _MEMORY_RETRIEVER: "MemoryRetriever | None" = None
 
 
@@ -3185,10 +3261,10 @@ async def _build_memory_for_request(
 #
 # Disable for dev / specific deploys via LORA_DT_SWEEP_ENABLED=0.
 
-DT_SWEEP_ENABLED = os.environ.get("LORA_DT_SWEEP_ENABLED", "1") not in ("0", "false", "no")
-DT_IDLE_SEC = int(os.environ.get("LORA_DT_IDLE_SEC", "1800"))            # 30 min default
-DT_BATCH = int(os.environ.get("LORA_DT_BATCH", "50"))
-DT_INTERVAL_SEC = int(os.environ.get("LORA_DT_INTERVAL_SEC", "300"))     # 5 min default
+DT_SWEEP_ENABLED = (os.environ.get("CONSTELLAX_DT_SWEEP_ENABLED") or os.environ.get("LORA_DT_SWEEP_ENABLED", "1")) not in ("0", "false", "no")
+DT_IDLE_SEC = int((os.environ.get("CONSTELLAX_DT_IDLE_SEC") or os.environ.get("LORA_DT_IDLE_SEC", "1800")))            # 30 min default
+DT_BATCH = int((os.environ.get("CONSTELLAX_DT_BATCH") or os.environ.get("LORA_DT_BATCH", "50")))
+DT_INTERVAL_SEC = int((os.environ.get("CONSTELLAX_DT_INTERVAL_SEC") or os.environ.get("LORA_DT_INTERVAL_SEC", "300")))     # 5 min default
 
 _dt_sweep_task: "asyncio.Task | None" = None
 _dt_sweeper: "object | None" = None     # DecisionTraceSweeper, lazily imported

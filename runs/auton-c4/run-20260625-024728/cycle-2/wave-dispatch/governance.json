@@ -1,0 +1,212 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": false,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 43,
+  "edges_found": 7,
+  "probes_used": 123,
+  "confirm_probes": 23,
+  "bidirectional": true,
+  "emergence_rate_series": [
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0
+  ],
+  "decisions": [
+    {
+      "round": 1,
+      "r_series": [
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 1,
+      "findings": 5,
+      "probes_used": 9,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382579.796652
+    },
+    {
+      "round": 2,
+      "r_series": [
+        1,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 2,
+      "findings": 9,
+      "probes_used": 21,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382639.923427
+    },
+    {
+      "round": 3,
+      "r_series": [
+        1,
+        1,
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 2,
+      "findings": 13,
+      "probes_used": 33,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382718.623577
+    },
+    {
+      "round": 4,
+      "r_series": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 2,
+      "findings": 17,
+      "probes_used": 45,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382813.8338199
+    },
+    {
+      "round": 5,
+      "r_series": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 2,
+      "findings": 21,
+      "probes_used": 57,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382839.289452
+    },
+    {
+      "round": 6,
+      "r_series": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 3,
+      "findings": 27,
+      "probes_used": 75,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382910.533149
+    },
+    {
+      "round": 7,
+      "r_series": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 4,
+      "findings": 32,
+      "probes_used": 90,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782382989.793983
+    },
+    {
+      "round": 8,
+      "r_series": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 5,
+      "findings": 36,
+      "probes_used": 102,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782383054.9972448
+    },
+    {
+      "round": 9,
+      "r_series": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 5,
+      "findings": 40,
+      "probes_used": 114,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1782383144.686518
+    }
+  ],
+  "final_action": "HOLD",
+  "skeleton_gaps": {
+    "isolated_findings": [
+      "[theater] The episodic-memory repo is a practical, lightweight implementation of many of the anchor's mechanism-level concepts: temporal supersession acts as decay, roleplay filtering prevents cross-context ble | principle: The source valid",
+      "[chemistry] VividnessMem is a single-file, zero-dependency memory system for AI agents that models organic forgetting and recall through a vividness score \u2014 a weighted blend of importance, recency, and access fre | principle: This resonates",
+      "[investigative_journalism] The agent-memory library is a practical implementation that stores full conversation histories, extracts facts, and applies decay to manage context windows. It uses vector search and token budgeting t | principle:",
+      "[zen] This source details a pragmatic, multi-tier memory system for AI agents \u2014 working, long-term, and episodic \u2014 using summarization, vector search, and structured storage. It resonates with the anchor's  | principle: The structured memor",
+      "[dark_humor] The episodic memory source from Kinda Technical stores full interaction episodes\u2014task, plan, actions, outcomes, lessons\u2014as a verbatim record for retrieval and few-shot injection. This resonates with t | principle: The source\u2019s ",
+      "[zen] Yantrik Memory is a practical, retrieval-based memory system that stores facts, traits, and relationships explicitly, then assembles context for LLMs. It resonates with the anchor's focus on anchor de | principle: The source operation",
+      "[music] This source describes a conventional agent memory architecture with four storage tiers, while the anchor demands a radical inverse: a system that keeps almost nothing and reconstructs continuity from  | principle: The source's disti",
+      "[biology] This source describes a practical engineering implementation of episodic memory for task-oriented AI agents \u2014 storing full interaction traces, retrieving by semantic similarity, and injecting past suc | principle: The source valid",
+      "[music] This source is a conventional AI agent memory guide covering short-term buffers, vector-based long-term stores, and hybrid architectures. It matches our anchor structurally in that it distinguishes fa | principle: The notion of sema",
+      "[architecture] The npm package @ivan_zwb/agent-memory appears to implement a memory system for AI agents that resonates with the anchor's sparse trace approach\u2014likely using compressed summaries or fact anchors and g | principle: This librar",
+      "[mysticism] The 'woven-imprint' project resonates deeply with the anchor's vision of a persistent AI memory that forgoes raw transcripts in favor of structured anchors and summaries, yet it falls short of the rad | principle: Both designs c",
+      "[habits] The source\u2014a general guide on AI agent memory systems\u2014resonates with the anchor's core architecture of compression, gist-based reconstruction, and epistemic uncertainty, but the content extraction fai | principle: The anchor's 'rec"
+    ],
+    "isolated_count": 35,
+    "component_count": 36
+  }
+}

@@ -30,11 +30,15 @@ src.core.types. No reverse imports.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from src.bridge.conversation_store import ConversationStore
 from src.capabilities import CapabilityRegistry
 from src.core.types import Direction, FrameworkID, Problem, Variable
+from src.identity import MAP_NOT_MARCH_THRESHOLD, compose_system_prompt, gate_output_async
+from src.identity.sovereignty import AntiLawKind, get_anti_law
+from src.identity.voice.lint import LintContext
 from src.llm.budget import BudgetCaps, BudgetTracker
 from src.llm.checklist import build_checklist_block, get_checklist_codes
 from src.llm.client import LLMClient
@@ -171,12 +175,16 @@ async def dispatch(
         result = await _dispatch_direct(
             text, client, triage_result, budget, reg,
             memory_directive=memory_directive,
+            conversation_store=conversation_store,
+            session_id=session_id,
         )
     elif route == Route.DIRECT_PLUS:
         result = await _dispatch_direct_plus(
             text, client, triage_result, budget, reg,
             memory_directive=memory_directive,
             mcp_handlers=mcp_handlers,
+            conversation_store=conversation_store,
+            session_id=session_id,
         )
     else:
         # DEEP route — memory injection appends to the speech extra_directives
@@ -274,6 +282,67 @@ async def resume_with_choice(
 
 
 # ---------------------------------------------------------------------------
+# Identity-layer enforcement helpers (0.3.4)
+# ---------------------------------------------------------------------------
+
+def _map_not_march_enabled() -> bool:
+    """Feature flag for the MapNotMarch cartography directive.
+
+    Read on every dispatch (not cached at module import) so operators
+    can flip the env var without redeploying. Default is enabled —
+    Codex's enforcement push lands as on-by-default. Operators can
+    disable fast with `CONSTELLAX_MAP_NOT_MARCH=0`."""
+    return os.getenv("CONSTELLAX_MAP_NOT_MARCH", "1") != "0"
+
+
+def _maybe_cartography_directive(
+    text: str,
+    conversation_store: ConversationStore | None,
+    session_id: str | None,
+) -> str:
+    """Return the cartography directive when the user has restated this
+    position past the Map-Not-March threshold; empty string otherwise.
+
+    The directive matches the AntiLaw NO_ARGUMENT remediation text so
+    the wording stays in sync with the doctrine. The check is
+    defensive: missing store, missing session_id, missing counter
+    accessor, or any unexpected error returns empty string (no
+    directive). That keeps the worst case "no behavior change" rather
+    than "directive fires when it shouldn't."
+
+    Why the check happens BEFORE add_iteration records this turn:
+    `map_not_march_strike(session_id, text)` returns the count of
+    PRIOR recordings. If the user is now sending their (N+1)th
+    statement of the same position, the count is N. With
+    MAP_NOT_MARCH_THRESHOLD=2, the directive fires on the 3rd+
+    statement — exactly the "stated once, restated once, restated
+    again" sequence the doctrine warns about."""
+
+    if not _map_not_march_enabled():
+        return ""
+    if conversation_store is None or not session_id:
+        return ""
+    if not text or not text.strip():
+        return ""
+    try:
+        strike = conversation_store.map_not_march_strike(session_id, text)
+    except AttributeError:
+        # Older ConversationStore / mock without the accessor.
+        return ""
+    except Exception:  # pragma: no cover — defensive
+        return ""
+    if strike < MAP_NOT_MARCH_THRESHOLD:
+        return ""
+
+    remediation = get_anti_law(AntiLawKind.NO_ARGUMENT).remediation
+    return (
+        "CARTOGRAPHY MODE (identity enforcement — Map-Not-March "
+        f"threshold reached: {strike} prior restatements of this "
+        f"position).\n{remediation}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Per-route handlers
 # ---------------------------------------------------------------------------
 
@@ -303,6 +372,8 @@ async def _dispatch_direct(
     registry: CapabilityRegistry,
     *,
     memory_directive: str = "",
+    conversation_store: ConversationStore | None = None,
+    session_id: str | None = None,
 ) -> DispatchResult:
     """Single LLM call. No retrieval. ~3s on live."""
     check = budget.check()
@@ -311,21 +382,36 @@ async def _dispatch_direct(
             triage_result, budget, registry, Route.DIRECT, check.reason
         )
 
-    system_prompt = (
-        "You are a thinking partner — a brain extension for a developer "
-        "working in an IDE or web app. Give a direct, concise answer. "
-        "No hedging, no 'on the other hand'. Pick a side. If they've "
+    # Local mode-specific prompt — direct route asks for a short, decisive
+    # answer with a guardrail around irreversible intents. Identity (no
+    # therapy, no execution-promise, failure-mode attached, etc.) is
+    # supplied by `compose_system_prompt` below; this block only carries
+    # the direct-route-specific guidance.
+    local_prompt = (
+        "Direct-route guidance: give a short, decisive answer. No "
+        "hedging, no 'on the other hand'. Pick a side. If the user has "
         "stated intent to do something irreversible, flag what they "
         "should think through BEFORE commenting on the action itself."
     )
+    # Identity-layer ENFORCEMENT (0.3.4): when the Map-Not-March
+    # counter sees a position restated past threshold, append the
+    # cartography directive so the response switches from arguing to
+    # mapping paths. Helper returns "" when the counter is below
+    # threshold or unavailable — direct dispatch stays unchanged in
+    # the steady state.
+    cartography = _maybe_cartography_directive(text, conversation_store, session_id)
+    if cartography:
+        local_prompt = local_prompt + "\n\n" + cartography
     checklist = build_checklist_block(Route.DIRECT, Effort.LOW)
     if checklist:
-        system_prompt = system_prompt + "\n\n" + checklist
+        local_prompt = local_prompt + "\n\n" + checklist
     if memory_directive:
         # Phase 4 wiring: prior memory block (Decision Trace recall).
         # Appended last so it's the most recent context the model sees
         # before the user message.
-        system_prompt = system_prompt + "\n\n" + memory_directive
+        local_prompt = local_prompt + "\n\n" + memory_directive
+
+    system_prompt = compose_system_prompt(local_prompt, mode="direct")
 
     response = await client.call(
         system_prompt=system_prompt,
@@ -335,12 +421,33 @@ async def _dispatch_direct(
     )
     budget.record_llm_response(response)
 
+    # Output gate — run user-facing prose through strip + lint, and
+    # regenerate once with a stronger directive if any blocking rule
+    # fires. The regenerate is a budget-paid second model call; the
+    # gate is async-only so we can await it without blocking the loop.
+    if response.success and response.content:
+        async def _regen_direct(directive: str) -> str:
+            resp = await client.call(
+                system_prompt=system_prompt + "\n\n" + directive,
+                user_message=text,
+                domain="synthesizer",
+                concept="direct_answer",
+            )
+            budget.record_llm_response(resp)
+            return resp.content if resp.success else ""
+
+        gated = await gate_output_async(
+            response.content,
+            regenerate_fn=_regen_direct,
+            context=LintContext(),
+        )
+        response_text = gated.text
+    else:
+        response_text = f"[direct call failed: {response.error}]"
+
     return DispatchResult(
         route=Route.DIRECT,
-        response_text=(
-            response.content if response.success
-            else f"[direct call failed: {response.error}]"
-        ),
+        response_text=response_text,
         triage_result=triage_result,
         budget_summary=budget.summary(),
         capability_state=_summarize_capabilities(registry),
@@ -356,6 +463,8 @@ async def _dispatch_direct_plus(
     *,
     memory_directive: str = "",
     mcp_handlers: McpHandlerRegistry | None = None,
+    conversation_store: ConversationStore | None = None,
+    session_id: str | None = None,
 ) -> DispatchResult:
     """
     Single LLM call + bridge retrieval.
@@ -416,24 +525,36 @@ async def _dispatch_direct_plus(
             # Successful fire counts toward the budget's MCP cap.
             budget.record_mcp_call(mcp.name)
 
-    system_prompt = (
-        "You are a thinking partner. The user is asking about prior "
-        "decisions or project context. Answer based on what's available. "
-        "If context is missing or you don't have access to it, say so "
-        "plainly rather than making up details. Be direct."
+    # Local mode-specific prompt — direct_plus answers from memory /
+    # MCP context the user is asking about. Identity rules (no therapy,
+    # no execution promise, failure mode, etc.) come from
+    # `compose_system_prompt`; this block only carries direct_plus
+    # guidance.
+    local_prompt = (
+        "Direct-plus guidance: the user is asking about prior decisions "
+        "or project context. Answer from what's available. If context "
+        "is missing or you don't have access to it, say so plainly "
+        "rather than making up details. Be direct."
     )
+    # Identity-layer ENFORCEMENT (0.3.4): cartography directive when
+    # the Map-Not-March counter is past threshold. See helper docstring.
+    cartography = _maybe_cartography_directive(text, conversation_store, session_id)
+    if cartography:
+        local_prompt = local_prompt + "\n\n" + cartography
     checklist = build_checklist_block(Route.DIRECT_PLUS, Effort.LOW)
     if checklist:
-        system_prompt = system_prompt + "\n\n" + checklist
+        local_prompt = local_prompt + "\n\n" + checklist
     if memory_directive:
         # Phase 4 — Decision Trace prior memory.
-        system_prompt = system_prompt + "\n\n" + memory_directive
+        local_prompt = local_prompt + "\n\n" + memory_directive
     # Phase B1 — fold real MCP handler results into the prompt. Stubs
     # and blocked fires are filtered out by format_mcp_results_for_prompt;
     # empty string when no real results, so the concat is no-op-safe.
     mcp_block = format_mcp_results_for_prompt(mcp_results)
     if mcp_block:
-        system_prompt = system_prompt + "\n\n" + mcp_block
+        local_prompt = local_prompt + "\n\n" + mcp_block
+
+    system_prompt = compose_system_prompt(local_prompt, mode="direct_plus")
 
     response = await client.call(
         system_prompt=system_prompt,
@@ -443,12 +564,31 @@ async def _dispatch_direct_plus(
     )
     budget.record_llm_response(response)
 
+    # Output gate — direct_plus prose is user-facing. Strip + lint +
+    # one regenerate budget-paid retry if any blocking rule fires.
+    if response.success and response.content:
+        async def _regen_direct_plus(directive: str) -> str:
+            resp = await client.call(
+                system_prompt=system_prompt + "\n\n" + directive,
+                user_message=text,
+                domain="synthesizer",
+                concept="direct_plus_answer",
+            )
+            budget.record_llm_response(resp)
+            return resp.content if resp.success else ""
+
+        gated = await gate_output_async(
+            response.content,
+            regenerate_fn=_regen_direct_plus,
+            context=LintContext(),
+        )
+        response_text = gated.text
+    else:
+        response_text = f"[direct_plus call failed: {response.error}]"
+
     return DispatchResult(
         route=Route.DIRECT_PLUS,
-        response_text=(
-            response.content if response.success
-            else f"[direct_plus call failed: {response.error}]"
-        ),
+        response_text=response_text,
         triage_result=triage_result,
         budget_summary=budget.summary(),
         capability_state=_summarize_capabilities(registry),

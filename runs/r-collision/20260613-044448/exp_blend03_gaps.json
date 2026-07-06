@@ -1,0 +1,108 @@
+{
+  "run_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-collision/20260613-044448",
+  "model": "anthropic/claude-sonnet-4-6",
+  "elapsed_s": 63.4,
+  "cost_usd": 0.0309,
+  "inherited_works": [
+    "Sim2Reason: Solving Physics Olympiad via Reinforcement Learning on Physics Simulators",
+    "FERMAT: Learning Interestingness in Automated Mathematical Theory Formation",
+    "MaD Physics: Evaluating Information-Seeking Under Constraints in Physical Environments",
+    "Augmented Physics: Creating Interactive and Embedded Physics Simulations from Static Textbook Diagrams",
+    "Inheritance Coding with Gagné-Based Learning Hierarchy Approach to Developing Mathematics Skills Assessment Systems",
+    "Fuzzy logic and Gagné learning hierarchy for assessing mathematics skills",
+    "Designing research-based instructional materials that leverage dual-process theories of reasoning",
+    "A Neuro-Fuzzy Approach in the Classification of Students' Academic Performance",
+    "Neuro-fuzzy (architecture overview)",
+    "Fuzzy Logic (Stanford Encyclopedia of Philosophy)",
+    "Fuzzy logic"
+  ],
+  "gaps": [
+    {
+      "gap": "No mechanism exists for mapping a user's vague, pre-linguistic inspiration onto a structured inheritance path through prior work — the translation layer between inchoate intent and formalized concept lineage is absent.",
+      "why_implied": "The user's system requires bridging 'vague inspirations' to articulable concepts, and the inherited work (Gagné hierarchy, fuzzy logic, neuro-fuzzy classification) all presuppose a formalized input; none address the upstream problem of eliciting and structuring pre-formal ideation before inheritance can begin."
+    },
+    {
+      "gap": "No framework defines how 'advancement level' is measured across a concept inheritance chain — there is no metric for whether a derivative work is a lateral variation, an incremental extension, or a genuine next-level contribution.",
+      "why_implied": "Sim2Reason, FERMAT, and Augmented Physics all represent advances on prior work, but the body of work contains no shared ontology or scoring rubric for advancement depth; the user's system must distinguish 'same level with similar inspiration' from 'next level' but no existing structure provides this axis."
+    },
+    {
+      "gap": "No system resolves the inheritance conflict problem: when a user's concept draws from multiple incompatible parent works simultaneously, there is no arbitration structure for handling contradictory presuppositions inherited from each lineage.",
+      "why_implied": "Inheritance Coding with Gagné and Fuzzy Logic both model hierarchical skill/concept dependencies, but single-lineage only; the user's system implies multi-parent inheritance (e.g., combining RL simulation methods with fuzzy assessment), and no work addresses how conflicting axioms from divergent parent works are reconciled."
+    },
+    {
+      "gap": "No operationalized model exists for 'interestingness' transfer — FERMAT identifies interestingness in mathematical theory formation but there is no mechanism to apply an interestingness signal from one domain's published work to evaluate or guide concept development in a different domain.",
+      "why_implied": "FERMAT's interestingness learning is domain-internal; the user's system must assess whether a new concept direction is worth pursuing across heterogeneous inherited bodies of work, implying a cross-domain interestingness transfer function that nothing in the corpus provides."
+    },
+    {
+      "gap": "No architecture connects fuzzy membership grading of concept maturity to a generative output stage — fuzzy logic and neuro-fuzzy systems classify or assess states but no work closes the loop from a fuzzy 'partial concept' assessment back into a system that produces concrete next-step articulations.",
+      "why_implied": "The neuro-fuzzy and fuzzy logic works model degrees of belonging and skill states; the user's system requires that a partially-formed concept (fuzzy membership < 1 in 'fully articulated') trigger generative scaffolding, but the corpus treats fuzzy output as terminal classification, not as input to a generative continuation engine."
+    },
+    {
+      "gap": "No model addresses the dual-process asymmetry in concept inheritance: existing dual-process instructional design work targets learner reasoning, but no framework applies dual-process theory to the system-side problem of when to surface inherited work intuitively versus when to require the user to reason analytically through lineage.",
+      "why_implied": "Designing research-based instructional materials leveraging dual-process theories addresses human reasoning about content, but the user's system is itself an intermediary that must decide how to present inheritance paths — implying a dual-process design layer for the system's own interaction logic that no existing work instantiates."
+    }
+  ],
+  "gap_verdicts": [
+    {
+      "gap": "No mechanism exists for mapping a user's vague",
+      "implied": 0.55,
+      "unfilled": 0.45,
+      "nontrivial": 0.5,
+      "real_gap_score": 0.45,
+      "note": "Sketch-to-concept and intent-modeling literature (e.g., query expansion, concept elicitation) partially addresses this; the framing is novel but the gap is not as clean as claimed"
+    },
+    {
+      "gap": "No framework defines how 'advancement level' is measured",
+      "implied": 0.5,
+      "unfilled": 0.5,
+      "nontrivial": 0.55,
+      "real_gap_score": 0.5,
+      "note": "Citation analysis and novelty metrics exist but don't operationalize a chain-level advancement metric; moderately real but somewhat niche"
+    },
+    {
+      "gap": "No system resolves the inheritance conflict problem: when",
+      "implied": 0.6,
+      "unfilled": 0.55,
+      "nontrivial": 0.65,
+      "real_gap_score": 0.55,
+      "note": "Ontology merging and belief revision literature touches this but not in a concept-lineage/creative-inheritance framing; reasonably genuine"
+    },
+    {
+      "gap": "No operationalized model exists for 'interestingness' transfer",
+      "implied": 0.65,
+      "unfilled": 0.6,
+      "nontrivial": 0.65,
+      "real_gap_score": 0.6,
+      "note": "Cross-domain interestingness transfer is not well-solved; FERMAT-specific framing is narrow but the structural gap is real"
+    },
+    {
+      "gap": "No architecture connects fuzzy membership grading of concept",
+      "implied": 0.5,
+      "unfilled": 0.55,
+      "nontrivial": 0.5,
+      "real_gap_score": 0.5,
+      "note": "Neuro-fuzzy generative systems exist in control and NLP contexts; the specific 'concept maturity to articulation' loop is underspecified but not obviously absent"
+    },
+    {
+      "gap": "No model addresses the dual-process asymmetry in concept",
+      "implied": 0.45,
+      "unfilled": 0.6,
+      "nontrivial": 0.55,
+      "real_gap_score": 0.45,
+      "note": "The system-side dual-process framing is creative but feels invented rather than implied by a coherent body of work; low implied score drags it down"
+    }
+  ],
+  "P1_gap_quality": {
+    "mean_real_gap_score": 0.508,
+    "verdict": "WEAK"
+  },
+  "P2_off_cluster": {
+    "cluster_intra_spread": 0.243,
+    "control_dist_to_cluster": 0.4706,
+    "control_hits": 24,
+    "gap_dist_to_cluster": 0.5653,
+    "gap_hits": 54,
+    "gap_pushes_past_adjacency": true,
+    "margin": 0.0947
+  }
+}
