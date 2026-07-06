@@ -1,0 +1,12 @@
+{
+  "timestamp": "20260613-041240",
+  "blend_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-fable-sorter-6agents/20260613-001204/verified-20260613-035149/blend-20260613-040606",
+  "model": "deepseek/deepseek-v4-pro",
+  "blend_count": 4,
+  "on_course": 4,
+  "drifting": 0,
+  "drifting_ids": [],
+  "duration_seconds": 7.02,
+  "llm_cost_usd": 0.0051,
+  "parser_notes": []
+}

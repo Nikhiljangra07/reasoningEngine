@@ -1,0 +1,104 @@
+{
+  "timestamp": "20260613-035149",
+  "source_run": "/Users/nikhil/Desktop/reasoningEngine/runs/r-fable-sorter-6agents/20260613-001204",
+  "card_count": 22,
+  "query_model": "anthropic/claude-sonnet-4-6",
+  "sort_model": "anthropic/claude-sonnet-4-6",
+  "duration_seconds": 108.49,
+  "evidence": {
+    "total_queries": 66,
+    "total_hits": 311,
+    "search_errors": 0,
+    "extraction_ok": true
+  },
+  "buckets": {
+    "known": 20,
+    "invalid": 0,
+    "unplaced": 2,
+    "demotions": 0,
+    "dropped": 0
+  },
+  "llm_cost_usd": 0.3654,
+  "bin_movements": [
+    {
+      "report_id": "wander-P04-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-S435cce-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P06-002",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-S43d63a-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P03-002",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P04-002",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P06-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P05-002",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-S195150-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-Sb4b50f-003",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-S413861-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P01-003",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P01-002",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P03-001",
+      "from": "unplaced",
+      "to": "known"
+    },
+    {
+      "report_id": "wander-P05-001",
+      "from": "unplaced",
+      "to": "known"
+    }
+  ]
+}

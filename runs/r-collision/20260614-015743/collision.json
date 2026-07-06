@@ -1,0 +1,853 @@
+{
+  "blends": {
+    "blends": [
+      {
+        "blend_id": "blend-01",
+        "source_card_ids": [
+          "wander-Seaec2d-001",
+          "wander-S55f547-002",
+          "wander-P06-003"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-Seaec2d-001",
+            "agent_id": "Seaec2d",
+            "spark": "A 2025 NeurIPS system learns to discover what mathematicians would find *interesting* — without being told in advance what interesting means. Your system already has that answer locked in: the user's anchor. The gap between those two designs reveals exactly what your architecture is doing and why.",
+            "bridge": "Your system and Fermat share the same architectural skeleton: neither tells the traversal layer where to go, and both rely on an evaluation function — not a search directive — to filter signal from noise. In Fermat, the interestingness measure plays the role your user's anchor plays: it is the thing that makes a found result worth surfacing rather than discarding. The stochastic wandering in both systems produces surface area — a wide, unpredictable sweep — and the evaluator is what converts that chaos into signal. The correspondence holds at the mechanism level: recognition precedes articulation in both designs, meaning the system can identify a valuable find before the user (or mathematician) could have specified it in advance.",
+            "source_shape": "Fermat (NeurIPS 2025) is an automated mathematical theory formation system that uses evolutionary algorithms and LLMs to synthesize 'interestingness measures' — scoring functions that separate nontrivial mathematical objects from trivial ones. The key move: it does not search for mathematical truths by following a predefined direction. Instead, it learns to evaluate what is worth keeping, and lets that learned evaluator guide what gets explored. The scoring function is the load-bearing structure; the traversal is secondary and stochastic.",
+            "use": "You might use Fermat's architecture as a stress-test for your own evaluation layer — specifically, ask whether your anchor is doing as much filtering work as Fermat's interestingness measure does, or whether some of that load is quietly falling on the traversal logic instead. If the anchor is underspecified, the wandering agents may be compensating in ways that are hard to inspect.",
+            "limit": "Fermat's interestingness measure is not given — it is the thing being learned. The entire optimization loop exists to discover what the evaluation function should be, using RL and evolutionary search to approximate what a mathematician would recognize as valuable. In your system, the evaluation function is provided by the user upfront as the anchor and held fixed throughout; only the traversal is open-ended. This is a structural inversion, not a minor gap: Fermat's open-endedness runs in both directions simultaneously (what to look for and where to look), while your system's open-endedness is strictly one-directional. The bridge holds for the 'anchored evaluation over stochastic traversal' shape, but breaks the moment you ask how the anchor itself should be formed or updated."
+          },
+          {
+            "report_id": "wander-S55f547-002",
+            "agent_id": "S55f547",
+            "spark": "A NeurIPS 2025 system called Fermat teaches itself what 'interesting' looks like in mathematics — not by knowing the destination, but by wandering widely and scoring what it finds against a learned structural sense of interestingness. That is the same move Constellax makes with a user's anchor.",
+            "bridge": "Your system runs the same two-phase architecture. The wandering agents are Fermat's generator: they traverse broadly without being told where to go, producing candidates that have no guaranteed relevance. The user's anchor is Fermat's interestingness measure: it does not specify a destination, it provides a scoring skeleton that can recognize resonance when a candidate lands near it. The key correspondence is that both systems exploit the same asymmetry — recognition is cheaper and more reliable than prediction, so you generate chaotically and filter with structure rather than trying to aim the search. Just as Fermat's measure never tells the generator which object to produce next, your anchor never tells the agents which domain to enter — it only tells the system which finds are worth surfacing.",
+            "source_shape": "Fermat separates two jobs that most search systems collapse into one: generation and evaluation. The generator wanders the space of mathematical objects using symbolic actions, producing candidates it has no reason to expect are valuable. The evaluator — trained by evolutionary algorithms and LLMs — scores those candidates against a learned measure of interestingness derived from structural properties, not from prior knowledge of what good results look like. The system never predicts where interesting things are; it recognizes them after they appear.",
+            "use": "Consider treating the agent's confidence scoring as explicitly analogous to Fermat's interestingness function — not a similarity metric, but a structural resonance detector — and ask whether the current scoring mechanism is sensitive to the same kind of structural properties Fermat's measure tracks (novelty relative to the anchor, unexpectedness of the match, density of contact points) rather than surface-level topical overlap.",
+            "limit": "Fermat's interestingness measure is designed to converge: the system learns, stabilizes, and eventually produces a scoring function reusable across future runs and exportable as a general theory-formation tool. Your anchor is the opposite — it is deliberately underspecified, user-specific, and rebuilt fresh each session; its productive power comes precisely from not converging. This means Fermat's full architecture cannot be imported: any mechanism Fermat uses that depends on accumulated learning across sessions, or on the measure becoming more precise over time, has no direct analog in a system where the skeleton is meant to stay half-formed and ephemeral."
+          },
+          {
+            "report_id": "wander-P06-003",
+            "agent_id": "P06",
+            "spark": "A system that teaches itself what 'interesting' looks like — without ever being told in advance — turns out to share the same skeleton as a system that finds what's resonant for a half-formed idea without the user being able to say what they're looking for.",
+            "bridge": "The anchor your system uses — the user's half-formed concept — functions exactly like Fermat's learned interestingness function: it is a skeleton that can evaluate resonance without predicting in advance what form the resonant thing will take. In Fermat, the search space is mathematical statement-space; in your system, it is the space of all external human knowledge. In Fermat, the interestingness function judges a conjecture after it surfaces; in your system, the anchor judges a retrieved source after the wandering agent finds it. The deepest correspondence is the asymmetry: the path forward is unpredictable (the agent wanders, Fermat's generator fires stochastically), but the path backward is fully traceable — you can always reconstruct why a catch scored high against the anchor, even though you could not have predicted the catch before the wander. This means the anchor is doing the same epistemic work as Fermat's evolved scorer: it makes the unarticulated legible by reflection, not by prescription.",
+            "source_shape": "The Fermat system (the paper's subject) generates mathematical conjectures automatically, but the hard problem isn't generation — it's evaluation. Which conjectures are worth keeping? Fermat answers this by learning an interestingness function through reinforcement: it explores a vast space of possible mathematical statements, a theorem prover (Z3) verifies which ones are formally true, and over many iterations the system learns to score candidates by how surprising and non-trivial they are, not just whether they're correct. The crucial move is that this scoring function is never hand-coded — it evolves from accumulated experience of what turned out to matter, so the system gets better at recognizing value without anyone articulating the criteria up front.",
+            "use": "Consider whether your anchor's scoring skeleton could be allowed to evolve across sessions — each time a user confirms a card as genuinely resonant, that signal could be used to refine what 'structural match' means for that user's concept, without requiring them to say anything explicit about why it landed.",
+            "limit": "Fermat operates inside a closed formal system: Z3 is an oracle that delivers a binary verdict on mathematical truth, so interestingness is always bounded by provable correctness. Your system has no such oracle — relevance to a half-formed concept is irreducibly subjective, and no external verifier can confirm that a retrieved source actually fits. This means the evolutionary refinement loop that makes Fermat's approach rigorous has no direct equivalent here; you would be evolving a scoring function against noisy, implicit human signal rather than clean prover output. The second break: Fermat generates genuinely novel knowledge — new conjectures and definitions that did not exist before. Your system retrieves existing external work; it crystallizes rather than creates, which is a different task with a different success condition."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "These cards collide the fixed, user-provided anchor of Constellax with Fermat's learned, evolving interestingness measure. The tension is between a static evaluation function and an adaptive one, and the resolution addresses a core limitation of the cushion: the anchor may be too rigid to capture shifting user resonance.",
+          "spark": "Fermat learns what 'interesting' means without being told; Constellax's anchor is told once and never learns. What if the anchor could learn from the user's own recognition events?",
+          "motive": "To make the evaluation layer responsive to the user's evolving sense of resonance, so that the system's filtering improves within a session without requiring the user to re-articulate their concept.",
+          "tension": "Card A (wander-Seaec2d-001) explicitly states that Constellax's anchor is fixed while Fermat's interestingness measure is learned — a structural inversion. Card B (wander-S55f547-002) describes Fermat's evolutionary learning loop that produces a stable scoring function. Card C (wander-P06-003) emphasizes that Fermat's learning depends on a closed formal verifier (Z3) that Constellax lacks. The productive tension is: can an evaluation function adapt online in an open, subjective domain without ground truth?",
+          "discovery_path": "Card A asserts that Constellax's anchor is static and user-provided. Card B shows that Fermat's evaluator improves through iterative feedback from a formal verifier. Card C warns that Constellax has no such verifier. The question becomes: what minimal signal could stand in for a verifier? The user's accept/reject behavior is a weak, implicit label. If we treat each interaction as a data point about the user's tacit resonance function, we can update a model of the anchor — not to converge on a global 'correct' function, but to better predict what will resonate for this user in this session. This yields a 'living anchor' that bootstraps from the initial sketch and adapts online, remaining subjective and non-ground-truthed."
+        },
+        "thesis": "A 'living anchor' that initializes from the user's half-formed concept but continuously refines itself from implicit feedback (accepts, dismissals, dwell time) during a session, functioning as a personalized, online-learned resonance model that sharpens the system's filtering without ever requiring the user to articulate why something fits.",
+        "mechanism": "The anchor is represented as a parameterized resonance model (e.g., a learned embedding or a weighting over structural features). Each time the user accepts a card, the model is updated to increase the predicted resonance of similar structural patterns; each dismissal decreases it. The model acts as a dynamic filter that biases the wandering agents' stochastic traversal toward regions likely to yield high-resonance catches, while still preserving exploration breadth. The learning is online and session-scoped, so it never assumes a stable ground truth — it only tracks the moving target of the user's current felt sense.",
+        "emergent_structure": "A subjective resonance model that bootstraps from a user's initial sketch and then learns from their accept/reject signals to better predict what will resonate, all while operating without an objective verifier and remaining local to the session.",
+        "advances_cushion": "It directly addresses the problem of helping users advance half-formed concepts by making the system's evaluation layer adaptive. As the user's understanding deepens through exposure to cards, the anchor evolves with them, preventing the system from over-indexing on the initial, possibly naive, formulation and instead tracking the moving edge of their thinking.",
+        "confidence": 0.85
+      },
+      {
+        "blend_id": "blend-02",
+        "source_card_ids": [
+          "wander-S7e9247-001",
+          "wander-P04-001",
+          "wander-S933db6-002"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-S7e9247-001",
+            "agent_id": "S7e9247",
+            "spark": "A benchmark built to study how AI agents discover hidden physics laws — by controlling exactly how much prior knowledge they're given before they start — turns out to be a near-exact structural model of how your wandering agents work: the anchor isn't a search directive, it's a scoring skeleton that judges the catch without predicting it.",
+            "bridge": "Your anchor plays exactly the role PhysGym's 'controlled priors' play: it does not tell the wandering agent where to go, it tells the system what counts as a meaningful catch when something surfaces. In PhysGym, the agent cannot know the target law before probing — but it can evaluate candidate hypotheses against gathered evidence. Your agents cannot know what will resonate with the user's concept before wandering — but the anchor provides the skeleton against which resonance is judged. The asymmetry PhysGym operationalizes — recognition precedes articulation, you can score a find without having predicted it — is the same asymmetry your system runs on. And PhysGym's empirical finding that performance degrades at both extremes (too much prior collapses exploration; too little loses the scoring skeleton) maps directly onto a design question your system has not yet resolved: how much anchor is the right amount to give your agents before they wander.",
+            "source_shape": "PhysGym places LLM agents inside physics simulations where the governing laws are hidden. Agents cannot retrieve the answer — they must probe the environment, gather evidence, and form hypotheses. Critically, the benchmark controls how much prior knowledge agents receive before they begin: more prior narrows the search space; less prior forces broader exploration. Evaluation is anchored to hypothesis accuracy against the ground truth law — the agent's job is not to search in the right direction, but to recognize a valid answer when the evidence supports one.",
+            "use": "Pull PhysGym's baseline LLM result tables and look specifically at how hypothesis accuracy changes as prior knowledge is varied — the shape of that curve could give you an empirical starting point for calibrating how much anchor to expose to your wandering agents before a session begins.",
+            "limit": "PhysGym's agents operate inside closed, well-defined simulations where the unknown is structured and bounded — there is a real physical law to converge on, and accuracy against that law is measurable. Your wandering agents traverse open, heterogeneous knowledge space with no ground truth: the evaluation mechanism is not objective fidelity but subjective resonance — the user's recognition response. This means PhysGym's quantitative performance curves cannot be imported directly; they can inform the shape of your calibration problem but not its answer, because the thing being measured is categorically different."
+          },
+          {
+            "report_id": "wander-P04-001",
+            "agent_id": "P04",
+            "spark": "A system built to test whether AI can discover physics laws by probing a hidden simulation turns out to be a near-perfect structural mirror for how your wandering agents work — an agent exploring an unknown space, scoring its findings against a skeleton it didn't design, surfacing structure from incomplete information.",
+            "bridge": "Your anchor plays the role of PhysGym's controlled prior — it is the hidden structure the wandering agent is being scored against, without the agent ever being told explicitly what it is looking for. The agent's traversal across domains maps directly to the LLM's experimental probing: both are stochastic, both generate candidates, and both depend on something external to filter which candidates matter. The critical asymmetry PhysGym makes explicit — that an agent can recognize a good hypothesis before it can articulate why it is good — is exactly the asymmetry your system exploits: the user can feel resonance before they can name the concept, so the anchor functions as a scoring filter rather than a search map. And just as PhysGym's benchmark reveals that richer priors (more controlled starting knowledge) improve discovery, your system's anchor richness directly governs how precisely the wandering agents can distinguish signal from noise.",
+            "source_shape": "PhysGym is a benchmark where an LLM is dropped into a physics simulation it cannot see directly. It can run experiments — poke the environment, observe what happens — and must formulate hypotheses about the underlying laws. The simulation has a 'controlled prior': a known, correct answer that the benchmark uses to score the agent's hypotheses. The agent never gets the answer handed to it; it has to earn signal through repeated, structured probing. Discovery is the output of stochastic traversal scored against a hidden ground truth.",
+            "use": "Consider treating the anchor's level of articulation as a tunable prior — a sparse anchor produces wider, noisier traversal with higher surprise; a denser anchor narrows the field but increases precision — and expose that tradeoff to the user as a dial they can move as their concept sharpens.",
+            "limit": "PhysGym operates inside a closed sandbox with a single correct answer: the hypothesis either matches the physics or it doesn't, and the benchmark exists to measure that gap objectively. Your system has neither a sandbox nor a ground truth — it must traverse all knowledge domains, and the only scoring signal is the user's subjective, evolving sense of resonance. That means the evaluation mechanism in PhysGym (objective accuracy against a known law) has no equivalent here; what your system is optimizing for cannot be verified from outside the user's head, which makes the 'controlled prior' analogy structurally useful but functionally incomplete."
+          },
+          {
+            "report_id": "wander-S933db6-002",
+            "agent_id": "S933db6",
+            "spark": "A physics benchmark discovered that giving AI agents LESS prior knowledge sometimes makes them better at finding the answer — stripping context forced genuine exploration where rich priors produced overconfident dead ends. Your system is built on exactly this mechanism.",
+            "bridge": "Your anchor is the skeleton — the user's incomplete, half-formed concept that the system receives as raw input. PhysGym's finding maps directly onto your design bet: that incompleteness is not a defect to compensate for, but the condition that forces the wandering agents into genuinely generative traversal. Where PhysGym's anonymized-variable agents had to induce structure from scratch rather than pattern-match to a known physics family, your agents have to find resonance across domains rather than retrieve topically obvious matches — the sparseness of the anchor is what makes the traversal productive rather than predictable. The 'bounded chaos' mechanism is the same shape in both systems: the anchor provides just enough signal to filter what the chaos surfaces, without predicting which direction the chaos should go. PhysGym's empirical result is, in effect, an external validation that this design choice is not merely a philosophical preference — it has been shown to outperform over-specification in a measurable discovery task.",
+            "source_shape": "PhysGym tests LLMs on physics discovery by controlling how much background knowledge the agent receives before it experiments — full context, partial context, or fully anonymized variables with no semantic labels at all. The counterintuitive finding: agents given anonymized variables (the 'skeleton' condition) sometimes outperform agents given complete prior knowledge, because full priors bias the agent toward familiar solution paths and suppress inductive wandering. The mechanism is: constrained starting knowledge + stochastic experimental probing + iterative hypothesis refinement against a known target equation.",
+            "use": "Consider whether there is a minimum viable anchor specification for your system — a 'L3 equivalent' — below which the wandering agents lose enough signal that their catches become noise, and above which the anchor over-constrains the traversal back toward obvious matches. Mapping that threshold, even informally, would let you advise users on how to phrase their anchor for maximum generative yield.",
+            "limit": "PhysGym's agents evaluate against a known ground truth: the correct physics equation exists, can be derived, and can be checked symbolically with a SymPy verifier. Your system has no equivalent — the user cannot verify a 'correct' resonance, only recognize one, which means your scoring function is irreducibly subjective and cannot be formalized the way PhysGym's checker is. The second break is equally important: PhysGym's prior-level control is a deliberate experimental variable imposed by the benchmark designer, with clean tiers (L1 through L4). Your anchor's incompleteness is not controlled — it is whatever raw, unstructured state the user happens to be in — so the 'skeleton' varies in quality and granularity in ways that cannot be tiered or held constant across users or sessions."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "These cards all describe PhysGym's architecture, where agents probe an environment with controlled priors and a hidden ground truth. The tension is between objective verification (the benchmark's scoring) and Constellax's subjective resonance, and the blend resolves it by turning the user's recognition into a pseudo-experimental signal.",
+          "spark": "PhysGym agents run experiments to test hypotheses against a hidden law. What if Constellax could run 'resonance experiments' against the user's anchor, using quick user reactions as data?",
+          "motive": "To give the system an active probing mechanism that sharpens traversal without requiring the user to explicitly evaluate every card, thereby making the discovery loop tighter and more informative.",
+          "tension": "Card A (wander-S7e9247-001) details PhysGym's controlled priors and hypothesis testing against ground truth. Card B (wander-P04-001) highlights that Constellax has no ground truth — the only signal is subjective resonance. Card C (wander-S933db6-002) shows that varying prior knowledge changes exploration behavior. The tension is that PhysGym's productive loop depends on an objective verifier, which Constellax lacks; yet the structure of probing and scoring is too valuable to abandon.",
+          "discovery_path": "Card A establishes that an agent can probe and score hypotheses when a verifier exists. Card B states that Constellax's verifier is the user's internal, inarticulable sense of fit. Card C suggests that the amount of prior knowledge can be tuned to balance exploration and exploitation. The question is: can we simulate a verifier by designing micro-interactions that elicit the user's recognition without demanding articulation? If we generate a candidate and ask a forced-choice question ('Does this feel closer to X or Y?'), the answer is a weak but real signal, like a measurement in an experiment. By treating the anchor as a set of testable dimensions and actively probing the user's resonance along those dimensions, we can gather data that refines the traversal — analogous to an agent running experiments to infer a hidden law. This yields a 'resonance probe' mechanism that operationalizes subjective resonance as a learnable signal."
+        },
+        "thesis": "A 'resonance probe' mechanism that actively tests the user's anchor by generating micro-hypotheses (e.g., forced-choice comparisons between two candidate structural patterns) and uses the user's quick, intuitive responses as pseudo-experimental data to update a model of their resonance landscape, thereby steering subsequent wandering without requiring articulated feedback.",
+        "mechanism": "The system decomposes the anchor into a small set of structural dimensions (e.g., mechanism-type, domain distance, abstraction level). During a session, it periodically presents the user with a pair of brief concept sketches or card summaries and asks 'Which feels more like what you're reaching for?' The choice is recorded as a weak label. These labels are used to update a lightweight online learner (e.g., a Bayesian preference model) that re-weights the dimensions. The updated weights then bias the stochastic traversal, effectively narrowing the search toward regions with higher predicted resonance while still allowing surprise. The probes are designed to be fast (System 1) and non-disruptive.",
+        "emergent_structure": "A resonance probe mechanism that converts the anchor into testable micro-hypotheses and uses quick user reactions as pseudo-experimental data to refine traversal, analogous to an agent running experiments in a simulation, but operating purely on subjective resonance without ground truth.",
+        "advances_cushion": "It transforms the system from a passive retriever into an active discovery partner that learns the user's tacit criteria through lightweight interaction. This directly helps users who cannot articulate their concept by giving the system a way to 'ask' what they mean in a format they can answer intuitively, progressively sharpening the focus of the wandering.",
+        "confidence": 0.8
+      },
+      {
+        "blend_id": "blend-03",
+        "source_card_ids": [
+          "wander-P06-003",
+          "wander-P02-001",
+          "wander-P06-002"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-P06-003",
+            "agent_id": "P06",
+            "spark": "A system that teaches itself what 'interesting' looks like — without ever being told in advance — turns out to share the same skeleton as a system that finds what's resonant for a half-formed idea without the user being able to say what they're looking for.",
+            "bridge": "The anchor your system uses — the user's half-formed concept — functions exactly like Fermat's learned interestingness function: it is a skeleton that can evaluate resonance without predicting in advance what form the resonant thing will take. In Fermat, the search space is mathematical statement-space; in your system, it is the space of all external human knowledge. In Fermat, the interestingness function judges a conjecture after it surfaces; in your system, the anchor judges a retrieved source after the wandering agent finds it. The deepest correspondence is the asymmetry: the path forward is unpredictable (the agent wanders, Fermat's generator fires stochastically), but the path backward is fully traceable — you can always reconstruct why a catch scored high against the anchor, even though you could not have predicted the catch before the wander. This means the anchor is doing the same epistemic work as Fermat's evolved scorer: it makes the unarticulated legible by reflection, not by prescription.",
+            "source_shape": "The Fermat system (the paper's subject) generates mathematical conjectures automatically, but the hard problem isn't generation — it's evaluation. Which conjectures are worth keeping? Fermat answers this by learning an interestingness function through reinforcement: it explores a vast space of possible mathematical statements, a theorem prover (Z3) verifies which ones are formally true, and over many iterations the system learns to score candidates by how surprising and non-trivial they are, not just whether they're correct. The crucial move is that this scoring function is never hand-coded — it evolves from accumulated experience of what turned out to matter, so the system gets better at recognizing value without anyone articulating the criteria up front.",
+            "use": "Consider whether your anchor's scoring skeleton could be allowed to evolve across sessions — each time a user confirms a card as genuinely resonant, that signal could be used to refine what 'structural match' means for that user's concept, without requiring them to say anything explicit about why it landed.",
+            "limit": "Fermat operates inside a closed formal system: Z3 is an oracle that delivers a binary verdict on mathematical truth, so interestingness is always bounded by provable correctness. Your system has no such oracle — relevance to a half-formed concept is irreducibly subjective, and no external verifier can confirm that a retrieved source actually fits. This means the evolutionary refinement loop that makes Fermat's approach rigorous has no direct equivalent here; you would be evolving a scoring function against noisy, implicit human signal rather than clean prover output. The second break: Fermat generates genuinely novel knowledge — new conjectures and definitions that did not exist before. Your system retrieves existing external work; it crystallizes rather than creates, which is a different task with a different success condition."
+          },
+          {
+            "report_id": "wander-P02-001",
+            "agent_id": "P02",
+            "spark": "A system that learns to recognize 'interesting' mathematical concepts before it can fully explain why they matter turns out to share the same operating logic as a system that surfaces resonant external work before a user can fully articulate what they're looking for.",
+            "bridge": "Your anchor plays the role of FERMAT's interestingness scorer: it doesn't fully specify what the user wants, it provides a skeleton that can recognize fit when fit appears. The wandering agents play the role of FERMAT's generator — producing candidate concepts stochastically, not by following a map. The key structural match is that recognition precedes articulation in both systems: FERMAT scores a concept as interesting before its mathematical value is established, and your system surfaces a resonant source before the user has fully named what they're looking for. In both cases, a half-formed evaluative signal — an anchor, an interestingness function — is sufficient to separate signal from noise without requiring a complete specification of the target.",
+            "source_shape": "FERMAT is an RL environment where an agent generates candidate mathematical definitions, scores them for 'interestingness' using an imperfect and continuously improving evaluator, then uses that score to steer what it generates next. The evaluator never knows whether a concept will prove important — it only knows whether the concept feels structurally promising right now. That half-formed signal is enough: the system doesn't wait for certainty before acting on it, because certainty would require knowing the future of the theory being built.",
+            "use": "Consider treating the anchor not as a query to be matched but as an interestingness scorer in FERMAT's sense — something that accepts a candidate and returns a fit signal, even imperfectly, so the traversal can be steered without waiting for the user to articulate a complete target.",
+            "limit": "FERMAT operates inside a closed symbolic world, generating new mathematical objects from scratch within a formal system where every candidate is the same kind of thing. Your system works across heterogeneous knowledge domains, retrieving existing artifacts to reflect a partially articulated human idea back to its author. FERMAT's purpose is to expand a theory; your system's purpose is to close a cognitive gap — to make the unarticulated visible through external resonance. The scoring-as-skeleton shape holds, but the analogy breaks at the question of what the candidates are and where they come from: FERMAT never has to cross the boundary between a symbolic world and a user's half-formed mental model."
+          },
+          {
+            "report_id": "wander-P06-002",
+            "agent_id": "P06",
+            "spark": "A system that turns incomplete textbook diagrams into full physics simulations works because the skeleton — not the finished picture — is enough signal to drive generation. Your system runs on the same fuel: a half-formed concept is not a deficiency, it is the input.",
+            "bridge": "Your system's anchor — a user's half-formed concept or in-progress work — is exactly the textbook diagram: structurally present, semantically incomplete, sufficient as signal. The wandering agents are the pipeline: they take that skeleton and generate outputs the user was not able to specify in advance. The moment of resonance your system is chasing — when a user sees a card and thinks 'yes, that's it' — is the same asymmetry the paper exploits: recognition is cheaper and faster than articulation, so the system produces candidates and lets the user's recognition faculty do the work. The skeleton does not need to be a full map for this to function; it only needs to be specific enough to bound the generation space, which is exactly what an anchor does.",
+            "source_shape": "The paper's pipeline takes a static diagram — something with clear components but no dynamics — segments it into parts, infers the physics relationships between those parts, and generates an interactive simulation the user can manipulate. The diagram never specifies the simulation; it only specifies enough structure that the simulation can be built and then evaluated by the user on contact. Crucially, the user does not need to know what the simulation should look like before seeing it — recognition happens at the output stage, not the input stage.",
+            "use": "Consider making the 'skeleton-as-sufficient-signal' principle explicit in how you evaluate agent outputs — rather than asking whether the agent's find matches what the user would have asked for, ask whether it matches what the user would recognize on contact, which is a meaningfully different and more tractable test.",
+            "limit": "The paper's pipeline is deterministic and tightly domain-coupled: it knows it is working inside physics, and every augmentation step stays bound to the original diagram's content. Your system's value comes precisely from stochastic, cross-domain wandering that produces outputs structurally disconnected from the anchor's surface. The paper also produces a concrete interactive artifact — something you can run and test — while your system produces conceptual resonance, which has no equivalent ground truth. The skeleton-to-generation shape holds; the evaluation and traversal mechanisms do not transfer."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "These cards contrast generation of novel artifacts (Fermat, Augmented Physics) with Constellax's retrieval of existing work. The tension is between creating new knowledge and finding old knowledge, and the blend proposes a hybrid where the system first generates a novel intermediate articulation to guide retrieval.",
+          "spark": "Fermat generates new math objects that didn't exist before; Augmented Physics generates a simulation from a sketch. What if Constellax generated a new conceptual sketch from the anchor before searching for existing work?",
+          "motive": "To give users who have only a vague inspiration a concrete, novel articulation that they can react to, which then serves as a far more precise retrieval query than the raw anchor, bridging the gap between half-formed idea and existing literature.",
+          "tension": "Card A (wander-P06-003) describes Fermat generating genuinely new mathematical conjectures and definitions. Card B (wander-P02-001) frames FERMAT's output as novel mathematical objects. Card C (wander-P06-002) shows Augmented Physics generating a simulation from an incomplete diagram — a novel artifact that the user then recognizes. The tension is that Constellax deliberately retrieves existing published work, not invents new concepts; yet the user's anchor is often too vague to retrieve well. Generation could fill the gap.",
+          "discovery_path": "Card A establishes that Fermat creates new knowledge by wandering a formal space and scoring against interestingness. Card B emphasizes that this generation is open-ended within a closed symbolic world. Card C shows that a skeleton (a diagram) can be enough to generate a useful novel artifact (a simulation) in a specific domain. The challenge for Constellax is that it must operate across all domains without a formal grammar. The question: can we use the anchor to generate a 'concept sketch' — a structured, novel description of what the user might be reaching for — that is not retrieved from any corpus but synthesized by an LLM? That sketch would be an intermediate artifact, not the final output. It would then be used as a rich query to find existing work that aligns with its structure. This combines generation and retrieval: the system first imagines a possible articulation, then finds real-world precedents. The emergent structure is a generation-first pipeline that creates a synthetic bridge between the user's vague anchor and the corpus."
+        },
+        "thesis": "A 'conceptual synthesis engine' that, given a user's half-formed anchor, first generates a novel intermediate articulation — a structured concept sketch that the user can recognize and refine — and then uses that sketch as a multi-faceted query to retrieve existing published work, effectively creating a new idea before searching for its precedents.",
+        "mechanism": "The user's anchor is fed to a generative LLM prompted to produce a 'concept paper abstract' or 'design doc outline' that fleshes out the idea into a coherent, novel formulation. This sketch is shown to the user for a rapid recognition check ('Does this capture the direction?'). If confirmed, the sketch is decomposed into structural components (claims, mechanisms, domain tags), and each component becomes a separate retrieval probe for the wandering agents. The agents then search for existing work that matches these components, returning cards that are anchored to the generated sketch rather than the raw, vague input. The user can also edit the sketch, creating a tight feedback loop.",
+        "emergent_structure": "A generation-first pipeline where a synthetic concept sketch is created from the anchor to serve as an intermediary retrieval query, enabling the system to find existing work that aligns with a novel articulation the user may not have been able to produce unaided.",
+        "advances_cushion": "It directly tackles the core problem: users who have vague inspirations but cannot articulate them. By generating a concrete, novel sketch, the system gives the user something to react to, externalizing the concept. It then uses that sketch to retrieve supporting or contrasting existing work, advancing the concept from vague inspiration to grounded, literature-connected idea. This is especially powerful for the 'whole new concept' scenario described in the cushion.",
+        "confidence": 0.82
+      },
+      {
+        "blend_id": "blend-04",
+        "source_card_ids": [
+          "wander-S55f547-001",
+          "wander-P03-001",
+          "wander-Sc58093-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-S55f547-001",
+            "agent_id": "S55f547",
+            "spark": "Mathematics education research on dual-process cognition — the split between fast intuitive recognition and slow deliberate reasoning — maps onto the exact asymmetry your system is already exploiting: users can recognize a resonant connection before they can explain why it resonates.",
+            "bridge": "Your system's scoring skeleton is designed to be read by System 1, not System 2 — a user glancing at a candidate resonance is not being asked to construct an argument, they are being asked whether something lights up. That asymmetry is load-bearing: if you forced users to articulate before they recognized, you would be demanding System 2 output from a System 1 signal, and most genuine connections would be discarded because they cannot yet be explained. The anchor's claim that 'recognition precedes articulation' is not a design preference — it is a description of how cognition actually sequences. This means the skeleton's job is not to be complete or precise; it only needs to be legible enough to trigger the recognition response, after which the user's own System 2 can do the articulation work downstream.",
+            "source_shape": "Dual-process theory divides cognition into two modes: System 1, which is fast, automatic, and pattern-recognizing, and System 2, which is slow, deliberate, and articulable. The key structural fact is that these two systems are not just different speeds — they are different kinds of knowing. System 1 fires before System 2 has assembled the words, which means a person can reliably detect that something fits before they can tell you what it fits or why.",
+            "use": "Consider auditing your card or surface design specifically against the System 1 legibility test: can a user form a gut read within two seconds of seeing the connection, before any deliberate analysis begins? If the presentation requires reading and reasoning before the resonance is felt, the design is asking System 2 to do System 1's job.",
+            "limit": "The source paper is a deficit model — its entire purpose is to correct faulty intuitions in students by using structured intervention to move them from wrong toward right. That goal is structurally opposed to what your system is doing: you treat incompleteness as generative, not as an error to be fixed, and you want divergent surface area, not convergence on a correct answer. Any design patterns the paper offers for 'leveraging' dual-process theory are aimed at overriding unreliable System 1 responses, whereas your system is betting that System 1 recognition is exactly the faculty to trust. The bridge holds for the recognition-precedes-articulation mechanism, but breaks the moment you try to borrow the paper's instructional logic — that logic is built to suppress the very intuitions your system depends on."
+          },
+          {
+            "report_id": "wander-P03-001",
+            "agent_id": "P03",
+            "spark": "Physics education researchers discovered that a student's half-formed, wrong intuition isn't an obstacle to learning — it's the exact lever you pull to produce understanding. The incompleteness is the mechanism, not the problem.",
+            "bridge": "Your system's anchor plays the role the formal principle plays here: it is the fixed reference against which incoming material is evaluated for resonance. The wandering agent's finds are the student's intuitive guesses — raw, partially formed, not yet articulated as insight. The moment of card generation is the collision: the agent's raw structural match is held up against the anchor, and the gap or fit between them is what produces the useful signal. Just as the intervention doesn't need the student to arrive with correct knowledge — only with some knowledge — your system doesn't need the agent to find a perfect match, only a structurally resonant one. The incompleteness of the find is what makes the reflection productive.",
+            "source_shape": "The intervention works by deliberately surfacing the gap between a student's fast, intuitive answer and the formal principle it violates. When a student predicts an outcome using gut reasoning and then sees that Newton's 2nd law produces a different answer, the mismatch creates cognitive friction that forces reflection. The structured sequence doesn't replace the wrong intuition — it uses the collision between intuition and principle as the engine of insight.",
+            "use": "Consider designing the card's 'Limit' field not just as a brake but as an active prompt — the place where the mismatch between source and anchor is named precisely enough that the user's own reasoning is forced to engage, mimicking the cognitive friction the intervention produces in students.",
+            "limit": "The source's intervention is not a wandering system — it follows a carefully designed, linear sequence aimed at one predetermined destination: consistent application of a specific physical law. The 'anchor' there is a full instructional map with known waypoints, not a sparse skeleton used to score unpredictable finds. Nothing in the source addresses stochastic, cross-domain search, and the dual-process evaluation it describes was built for a closed, domain-specific problem. The bridge holds for the incompleteness-as-fuel shape and the recognition-before-articulation asymmetry, but breaks entirely at the question of how to evaluate or generate the unexpected."
+          },
+          {
+            "report_id": "wander-Sc58093-001",
+            "agent_id": "Sc58093",
+            "spark": "Educational researchers built frameworks for scoring competency from partial descriptions — and the insight buried inside is that a skeleton of a target is enough to judge whether something fits it.",
+            "bridge": "Your anchor operates the same way: it is not a complete destination description, it is a skeletal attractor. Just as a construct map doesn't need to enumerate every correct answer to function as a scoring surface, your anchor doesn't need to fully articulate the user's concept to serve as the gravitational center for relevance judgments. When an agent finds a source, it is scoring that source against the anchor's skeleton — asking whether the structure fits, not whether the content matches. The mechanism holds: partial specification is sufficient for evaluation, because what you're detecting is structural resonance, not topical identity.",
+            "source_shape": "Construct maps are structured frameworks that translate vague competency descriptions ('a student understands fractions') into explicit, ordered levels of performance that can be scored consistently. The core move is that researchers define a progression — not a full specification of every possible answer, but a skeletal ordering of what counts as less or more developed. That partial structure then becomes the evaluation surface: you score a student's response against the map's skeleton, not against an exhaustive answer key.",
+            "use": "Consider making the anchor's skeletal incompleteness an explicit design feature rather than a limitation to be filled in — the three-point anchor works precisely because it leaves room for the agent to recognize fit without being told what fit looks like in advance.",
+            "limit": "Construct maps are engineered to eliminate productive incompleteness — the entire methodology is a validation cycle aimed at resolving ambiguity into deterministic, reproducible scores. Your system depends on incompleteness staying generative: the anchor's partial structure is fuel, not a defect. Construct map logic would treat your anchor's openness as a problem to fix, not a mechanism to preserve. The stochastic traversal, the recognition-before-articulation asymmetry, the bounded chaos — none of these have any counterpart in construct map methodology, which is fundamentally about closing down interpretation, not holding it open."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "These cards represent opposing stances on incompleteness: dual-process deficit (correcting intuitions), physics education collision (using intuitions as fuel), and construct maps (eliminating ambiguity). The tension is between treating the user's half-formed state as error or as engine, and the blend proposes a deliberate cognitive friction design that uses both.",
+          "spark": "One paper says override System 1; another says the collision between intuition and principle is the engine. What if the system deliberately surfaced cards that partially resonate and partially clash, forcing the user to resolve the tension?",
+          "motive": "To move the system beyond mirroring and into active concept sharpening, by introducing structured dissonance that forces the user to refine their anchor through cognitive engagement.",
+          "tension": "Card A (wander-S55f547-001) frames dual-process theory as a deficit model where System 1 intuitions must be overridden by System 2 instruction. Card B (wander-P03-001) describes an intervention that deliberately surfaces the gap between intuition and formal principle to produce insight — using the collision as the engine. Card C (wander-Sc58093-001) presents construct maps as tools that resolve incompleteness into deterministic scores, treating ambiguity as a problem to eliminate. The tension is that Constellax currently relies on pure resonance (System 1 recognition) and avoids dissonance, but the cushion's goal of advancing concepts may require challenging the user's current understanding, not just reflecting it.",
+          "discovery_path": "Card A shows that System 1 can be faulty and needs correction. Card B shows that the gap between intuition and principle can be productive if surfaced deliberately. Card C shows that stable evaluation frameworks require eliminating ambiguity. Constellax's design bets on System 1 recognition being trustworthy and generative. But what if the user's anchor is partially off-track? Pure resonance would reinforce the initial, possibly flawed, frame. The question: can we design a card type that includes a built-in counterpoint — a 'resonance-tension card' that says 'this source partially matches your anchor, but here's a way it also challenges it'? This would trigger System 2 engagement, forcing the user to either refine their anchor or reject the challenge, thereby advancing the concept through cognitive friction. The emergent structure is a deliberate pairing of resonance with a structured dissonance probe."
+        },
+        "thesis": "A 'resonance-tension card' design that, for a given retrieved source, presents not only the structural match to the user's anchor but also an explicit counterpoint — a dimension along which the source diverges or challenges the anchor — creating a productive cognitive friction that forces the user to refine their concept by resolving the tension.",
+        "mechanism": "When a wandering agent finds a candidate source with high resonance, the system also computes a 'dissonance vector' — a structural feature where the source departs from the anchor (e.g., different assumptions, opposite mechanism, conflicting implications). The card is then formatted to highlight both the resonance and the dissonance equally, with a prompt like 'This matches your anchor in X, but it challenges it in Y. Does that change how you see your concept?' The user's reaction (accept, reject, or modify anchor) is captured. Over multiple such cards, the anchor is refined implicitly or explicitly. The system can also deliberately seek out sources with moderate resonance but high dissonance to maximize conceptual advancement.",
+        "emergent_structure": "A card design that deliberately pairs a partially resonant find with a structured counterpoint, creating cognitive friction to force the user to refine their concept through System 2 engagement, rather than only mirroring their current intuition.",
+        "advances_cushion": "It transforms the system from a passive resonance detector into a concept-sharpening tool. Users who are stuck or have vague inspirations often need their assumptions challenged, not just confirmed. By surfacing productive tension, the system helps users evolve their concepts beyond the initial anchor, directly serving the goal of advancing work to the next level.",
+        "confidence": 0.88
+      }
+    ],
+    "total_cost_usd": 0.0534,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend",
+        "model": "deepseek/deepseek-v4-pro",
+        "in_tok": 19055,
+        "out_tok": 5804,
+        "cost_usd": 0.0534,
+        "ms": 115249.6,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_card_count": 29,
+    "model": "deepseek/deepseek-v4-pro"
+  },
+  "drift": {
+    "verdicts": [
+      {
+        "blend_id": "blend-01",
+        "on_course": true,
+        "resonance": 0.82,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-02",
+        "on_course": true,
+        "resonance": 0.85,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-03",
+        "on_course": true,
+        "resonance": 0.95,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-04",
+        "on_course": true,
+        "resonance": 0.88,
+        "drift_reason": "",
+        "redirect": ""
+      }
+    ],
+    "on_course_ids": [
+      "blend-01",
+      "blend-02",
+      "blend-03",
+      "blend-04"
+    ],
+    "drifting_ids": [],
+    "total_cost_usd": 0.011,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "drift_check",
+        "model": "anthropic/claude-sonnet-4-6",
+        "in_tok": 2526,
+        "out_tok": 229,
+        "cost_usd": 0.011,
+        "ms": 3021.8,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "model": "anthropic/claude-sonnet-4-6"
+  },
+  "verification": {
+    "known": [],
+    "adjacent": [
+      {
+        "blend_id": "blend-03",
+        "bin": "adjacent",
+        "references": [
+          {
+            "title": "Generative Synthesis of Historical Precedents for Automated Procedural Guidance",
+            "url": "https://www.tdcommons.org/cgi/viewcontent.cgi?article=10407&context=dpubs_series"
+          }
+        ],
+        "resemblance": "The hit generates a synthetic query or synthesis to retrieve historical precedents for procedural guidance, which is a generation-first pipeline for precedent retrieval.",
+        "still_new": "The application to user-driven conceptual advancement, where the generated sketch is a novel articulation the user can iteratively refine and the retrieval spans all published research rather than procedural precedents, remains unprecedented.",
+        "reasoning": "The Technical Disclosure describes generating a synthesis to search for historical precedents—a close cousin of the blend's move; however, the blend's focus on creating a novel concept sketch as an intermediate query for concept advancement is a distinct step not replicated.",
+        "confidence": 0.6
+      }
+    ],
+    "novel": [
+      {
+        "blend_id": "blend-01",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Retrospective Learning from Interactions",
+            "url": "https://aclanthology.org/2025.acl-long.1200.pdf"
+          },
+          {
+            "title": "[1706.02061] An Extended Relevance Model for Session Search",
+            "url": "https://ar5iv.labs.arxiv.org/html/1706.02061"
+          }
+        ],
+        "resemblance": "Implicit feedback and session-scoped learning exist in web search personalization and LLM interaction feedback, but no system builds a subjective resonance model that bootstraps from a user's half-formed concept to filter concept exploration.",
+        "still_new": "",
+        "reasoning": "No hit performs the move of initializing a resonance model from a user's vague concept sketch and updating it online through accept/reject signals to guide concept advancement; existing systems apply implicit feedback to search intent or LLM responses, not to a concept refinement loop.",
+        "confidence": 0.85
+      },
+      {
+        "blend_id": "blend-02",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Nearly Optimal Active Preference Learning and Its Application to LLM Alignment",
+            "url": "https://arxiv.org/pdf/2602.01581"
+          },
+          {
+            "title": "[1702.07694] Bayes-Optimal Entropy Pursuit for Active Choice-Based Preference Learning",
+            "url": "https://ar5iv.labs.arxiv.org/html/1702.07694"
+          }
+        ],
+        "resemblance": "Active preference learning through pairwise comparisons is used for LLM alignment and item ordering, but no system employs it as a resonance probe that tests the structural dimensions of a user's anchor to steer exploratory concept traversal.",
+        "still_new": "",
+        "reasoning": "The evidence shows active preference learning methods in other domains, but none convert a conceptual anchor into forced-choice micro-hypotheses to update a resonance landscape for concept discovery; the specific transfer to concept exploration is absent.",
+        "confidence": 0.8
+      },
+      {
+        "blend_id": "blend-04",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "The Blessing of Reasoning: LLM-Based Contrastive Explanations in Black-Box Recommender Systems",
+            "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5099067"
+          },
+          {
+            "title": "[2208.04222] GREASE: Generate Factual and Counterfactual Explanations for GNN-based Recommendations",
+            "url": "https://ar5iv.labs.arxiv.org/html/2208.04222"
+          }
+        ],
+        "resemblance": "Contrastive and counterfactual explanations in recommender systems highlight divergence from user preferences, but none are designed as a deliberate cognitive friction card that pairs resonance with a structural counterpoint to force the user to refine their own anchor concept.",
+        "still_new": "",
+        "reasoning": "Existing contrastive explanation methods aim to justify recommendations, not to create productive conceptual dissonance for concept advancement; no hit performs the move of using a resonance-tension card to drive refinement of a half-formed idea.",
+        "confidence": 0.8
+      }
+    ],
+    "flawed": [],
+    "evidence": {
+      "per_card": {
+        "blend-01": {
+          "report_id": "blend-01",
+          "queries": [
+            "\"online learning\" \"user feedback\" \"session-scoped\" \"resonance model\" concept search",
+            "implicit relevance feedback embedding update accept dismiss dwell time exploratory search",
+            "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals"
+          ],
+          "hits": [
+            {
+              "query": "\"online learning\" \"user feedback\" \"session-scoped\" \"resonance model\" concept search",
+              "title": "Retrospective Learning from Interactions",
+              "url": "https://aclanthology.org/2025.acl-long.1200.pdf",
+              "snippet": "Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 24580–24606 July 27 - August 1, 2025 ©2025 Association for Computational Linguistics\n\nRetrospective Learning from Interactions\n\nZizhao Chen, Mustafa Omer Gul, Yiwei Chen, Gloria Geng, Anne Wu & Yoav Artzi Department of Computer Science and Cornell Tech, Cornell University {czz,mom…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"online learning\" \"user feedback\" \"session-scoped\" \"resonance model\" concept search",
+              "title": "[1706.02061] An Extended Relevance Model for Session Search",
+              "url": "https://ar5iv.labs.arxiv.org/html/1706.02061",
+              "snippet": "[1706.02061] An Extended Relevance Model for Session Search\n\n# An Extended Relevance Model for Session Search\n\nNir Levine Technion - Israel Institute of TechnologyHaifa, Israel32000 levin.nir1@gmail.com, Haggai Roitman IBM Research - HaifaHaifa, Israel31905 haggai@il.ibm.com and Doron Cohen IBM Research - HaifaHaifa, Israel31905 doronc@il.ibm.com\n\n###### Abstract.\n\nThe session search task aims at …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"online learning\" \"user feedback\" \"session-scoped\" \"resonance model\" concept search",
+              "title": "arxiv.org",
+              "url": "http://arxiv.org/pdf/2009.08206",
+              "snippet": "arXiv:2009.08206v1 [cs.IR] 17 Sep 2020\nLearning to Personalize for Web Search Sessions\nSaad Aloteibi∗\nDepartment of Computer Science\nKing Saud University\nRiyadh, Saudi Arabia\nSaadAloteibi@ksu.edu.sa\nStephen Clark\nSchool of Electronic Engineering and Computer Science\nQueen Mary University of London\nLondon, United Kingdom\nstephen.clark609@gmail.com\nABSTRACT\nThe task of session search focuses on usin…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"online learning\" \"user feedback\" \"session-scoped\" \"resonance model\" concept search",
+              "title": "Paper page - Retrospective Learning from Interactions",
+              "url": "https://huggingface.co/papers/2410.13852",
+              "snippet": "Title: Retrospective Learning from Interactions\n\nURL Source: https://arxiv.org/html/2410.13852\n\nMarkdown Content:\nZizhao Chen, Mustafa Omer Gul, Yiwei Chen, Gloria Geng, Anne Wu & Yoav Artzi\n\nDepartment of Computer Science and Cornell Tech, Cornell University\n\n{czz,momergul,annewu,yoav}@cs.cornell.edu{yc833,gcg46}@cornell.edu\n\n###### Abstract\n\nMulti-turn interactions between large language models …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "implicit relevance feedback embedding update accept dismiss dwell time exploratory search",
+              "title": "An implicit feedback approach for interactive information retrieval - ScienceDirect",
+              "url": "https://www.sciencedirect.com/science/article/abs/pii/S0306457304001001",
+              "snippet": "An implicit feedback approach for interactive information retrieval - ScienceDirect\n\nSkip to main contentSkip to article\n\n## Information Processing & Management\n\nDate: January 2006\n\nPages: 166-190\n\nVolume: Volume 42, Issue 1\n\n## Part of special issue\n\nFormal Methods for Information Retrieval\n\nEdited by S. Dominich\n\n## Published by: Elsevier\n\n### Published by\n\nShow more\n\nResearch article\n\nGet right…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "implicit relevance feedback embedding update accept dismiss dwell time exploratory search",
+              "title": "Implicit feedback collection | Reranking Advanced Course | The Neural Base",
+              "url": "https://theneuralbase.com/reranking/learn/advanced/implicit-feedback-collection/",
+              "snippet": "Implicit feedback collection | Reranking Advanced Course | The Neural Base\n\nCourses\n\nLLM Frameworks\n\nCore AI & RAG\n\nVector Databases\n\nSearch & Retrieval\n\nFine-Tuning\n\nModels & APIs\n\nAudio & Speech\n\nAgents & Tools\n\nObservability & Eval\n\nCloud & Production\n\nML Libraries\n\nComputer Vision\n\nMLOps & Pipelines\n\nText & Data Processing\n\nAI Strategy & Production\n\nSafety & Ethics\n\nAI by Industry\n\nConcept Adv…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "implicit relevance feedback embedding update accept dismiss dwell time exploratory search",
+              "title": "[2204.00718] Implicit Feedback for Dense Passage Retrieval: A Counterfactual Approach",
+              "url": "https://ar5iv.labs.arxiv.org/html/2204.00718",
+              "snippet": "[2204.00718] Implicit Feedback for Dense Passage Retrieval: A Counterfactual Approach\n\n# Implicit Feedback for Dense Passage Retrieval: A Counterfactual Approach\n\nShengyao Zhuang The University of Queensland4072 St LuciaBrisbaneQLDAustralia s.zhuang@uq.edu.au, Hang Li The University of Queensland4072 St LuciaBrisbaneQLDAustralia hang.li@uq.edu.au and Guido Zuccon The University of Queensland4072 S…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "implicit relevance feedback embedding update accept dismiss dwell time exploratory search",
+              "title": "Understanding how people interact with web search results that change in real-time using implicit feedback | Proceedings of the 22nd ACM international conference on Information & Knowledge Management",
+              "url": "https://dl.acm.org/doi/10.1145/2505515.2505663",
+              "snippet": "Understanding how people interact with web search results that change in real-time using implicit feedback | Proceedings of the 22nd ACM international conference on Information & Knowledge Management\n\nskip to main content\n\nContents\n\n## Abstract\n\nThe way a searcher interacts with query results can reveal a lot about what is being sought. Considerable research has gone into using implicit relevance …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals",
+              "title": "A Markovian View of Iterative-Feedback Loops in Image Generative Models: Neural Resonance and Model Collapse",
+              "url": "https://arxiv.org/pdf/2602.19033",
+              "snippet": "A Markovian View of Iterative-Feedback Loops in Image Generative Models: Neural Resonance and Model Collapse\n\n# A Markovian View of Iterative-Feedback Loops in Image Generative Models: Neural Resonance and Model Collapse\n\nVibhas Kumar Vats1, David J. Crandall1, samuel Goree2 1 Luddy School of Informatics, Computing, and Engineering, Indiana University, Bloomington, IN, USA 2 Department of Computer…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals",
+              "title": "Neural Networks",
+              "url": "https://sites.bu.edu/steveg/files/2016/06/ART.pdf",
+              "snippet": "Neural Networks 37 (2013) 1–47\n\nContents lists available at SciVerse ScienceDirect\n\nNeural Networks journal homepage: www.elsevier.com/locate/neunet\n\nAdaptive Resonance Theory: How a brain learns to consciously attend, learn, and recognize a changing world ✩\n\nStephen Grossberg ∗ \nCenter for Adaptive Systems, Graduate Program in Cognitive and Neural Systems, Boston University, 677 Beacon Street, Bo…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals",
+              "title": "The Affective Reservoir: From Transactional Rules to Relational Rhythms",
+              "url": "https://www.mdpi.com/2079-8954/14/4/360",
+              "snippet": "The Affective Reservoir: From Transactional Rules to Relational Rhythms\n\nNext Article in Journal\n\nMulti-Objective Route Planning for Sustainable Multimodal Hazardous Material Transportation: An Improved NSGA-II Approach with Entropy-Weighted TOPSIS Decision Making\n\nPrevious Article in Journal\n\nSpatial Connectivity Analysis of Korea’s Non-Motorized Mobility Network: A GIS-Based Framework for Sustai…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals",
+              "title": "A Knowledge-Resonance (KRES) Model of Category Learning",
+              "url": "https://conferences.inf.ed.ac.uk/cogsci2001/pdf-files/0821.pdf",
+              "snippet": "A Knowledge-Resonance (KRES) Model of Category Learning\n\nBob Rehder (bob.rehder@nyu.edu) Department of Psychology, New York University, 6 Washington Place New York, NY 10003 USA Gregory L. Murphy (gmurphy@s.psych.uiuc.edu) Beckman Institute, University of Illinois, 405 N. Mathews Ave Urbana, IL 61801 USA\n\nAbstract In this article we present a connectionist model of category learning that takes int…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"subjective resonance\" model bootstraps from initial sketch learns from accept reject signals",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2410.13852",
+              "snippet": "Retrospective Learning from Interactions\nZizhao Chen, Mustafa Omer Gul, Yiwei Chen, Gloria Geng, Anne Wu & Yoav Artzi\nDepartment of Computer Science and Cornell Tech, Cornell University\n{czz,momergul,annewu,yoav}@cs.cornell.edu {yc833,gcg46}@cornell.edu\nAbstract\nMulti-turn interactions between large language\nmodels (LLMs) and users naturally include im\u0002plicit feedback signals. If an LLM responds i…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-02": {
+          "report_id": "blend-02",
+          "queries": [
+            "\"forced choice\" comparison \"structural patterns\" \"resonance landscape\" \"online learner\"",
+            "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+            "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental"
+          ],
+          "hits": [
+            {
+              "query": "\"forced choice\" comparison \"structural patterns\" \"resonance landscape\" \"online learner\"",
+              "title": "Phys. Rev. Phys. Educ. Res. 12, 020131 (2016)  -  Using module analysis for multiple choice responses: A new method applied to Force Concept Inventory data",
+              "url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.020131",
+              "snippet": "Phys. Rev. Phys. Educ. Res. 12, 020131 (2016) - Using module analysis for multiple choice responses: A new method applied to Force Concept Inventory data\n## [Physical Review Physics Education Research](https://journals.aps.org/prper/)\n* [Highlights](https://journals.aps.org/prper/highlights)\n* [Recent](https://journals.aps.org/prper/recent)\n* [Accepted](https://journals.aps.org/prper/accepted)\n* […",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"forced choice\" comparison \"structural patterns\" \"resonance landscape\" \"online learner\"",
+              "title": "Comparison of Single-Response Format and Forced-Choice Format Instruments Using Thurstonian Item Response Theory",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6318742/",
+              "snippet": "Comparison of Single-Response Format and Forced-Choice Format Instruments Using Thurstonian Item Response Theory - PMC[Skip to main content](#main-content)\n![](https://pmc.ncbi.nlm.nih.gov/static/img/us_flag.svg)\nAn official website of the United States government\nHere's how you know\nHere's how you know\n![](https://pmc.ncbi.nlm.nih.gov/static/img/icon-dot-gov.svg)\n**Official websites use .gov**\nA*…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"forced choice\" comparison \"structural patterns\" \"resonance landscape\" \"online learner\"",
+              "title": "Researching for better instructional methods using AB experiments in MOOCs: results and challenges | Research and Practice in Technology Enhanced Learning | Springer Nature Link",
+              "url": "https://link.springer.com/article/10.1186/s41039-016-0034-4",
+              "snippet": "Researching for better instructional methods using AB experiments in MOOCs: results and challenges | Research and Practice in Technology Enhanced Learning | Springer Nature Link\n\n# Researching for better instructional methods using AB experiments in MOOCs: results and challenges\n\n- Research\n- Open access\n- Published: 22 April 2016\n\n- Volume 11, article number 9 (2016)\n- Cite this article\n\nYou have…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"forced choice\" comparison \"structural patterns\" \"resonance landscape\" \"online learner\"",
+              "title": "iaiai.org",
+              "url": "https://iaiai.org/letters/index.php/liir/article/download/63/64",
+              "snippet": "IIAI Open Conference Publication Series\nIIAI Letters on Informatics and Interdisciplinary Research\nVol. 003, LIIR063\nDOI: https://doi.org/10.52731/liir.v003.063\nLearning Style Analysis on an Online Course by \nStructural Equation Modeling\nKeisuke Nakagawa *, Koichi Ota *, \nWen Gu *, Shinobu Hasegawa *\nAbstract\nThis study analyzes learning styles for an online course with flipped learning employing …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2602.01581",
+              "snippet": "Nearly Optimal Active Preference Learning and Its Application to LLM Alignment\n\nYao Zhao 1 Kwang-Sung Jun 1\n\nAbstract Aligning large language models (LLMs) depends on high-quality datasets of human preference la bels, which are costly to collect. Although active learning has been studied to improve sample effi ciency relative to passive collection, many exist ing approaches adopt classical experim…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+              "title": "Active preference learning for ordering items in- and out-of-sample",
+              "url": "https://arxiv.org/html/2405.03059v2",
+              "snippet": "Active preference learning for ordering items in- and out-of-sample\n\n# Active preference learning for ordering items in- and out-of-sample\n\nHerman Bergström Chalmers University of Technology and University of Gothenburg hermanb@chalmers.se &Emil Carlsson∗† Sleep Cycle AB Chalmers University of Technology and University of Gothenburg &Devdatt Dubhashi Chalmers University of Technology and Universit…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2302.13507",
+              "snippet": "Active Reward Learning from Online Preferences\nVivek Myers1, Erdem Bıyık2, Dorsa Sadigh1,2\nAbstract— Robot policies need to adapt to human prefer\u0002ences and/or new environments. Human experts may have\nthe domain knowledge required to help robots achieve this\nadaptation. However, existing works often require costly offline\nre-training on human feedback, and those feedback usually\nneed to be frequent…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+              "title": "[1702.07694] Bayes-Optimal Entropy Pursuit for Active Choice-Based Preference Learning",
+              "url": "https://ar5iv.labs.arxiv.org/html/1702.07694",
+              "snippet": "[1702.07694] Bayes-Optimal Entropy Pursuit for Active Choice-Based Preference Learning\n\n# Bayes-Optimal Entropy Pursuit for Active Choice-Based Preference Learning\n\n\\nameStephen N. Pallone \\emailsnp32@cornell.edu \\namePeter I. Frazier \\emailpf98@cornell.edu \\nameShane G. Henderson \\emailsgh9@cornell.edu \\addrSchool of Operations Research and Information Engineering 290 Rhodes Hall, Cornell Univers…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "active learning preference elicitation pairwise comparison concept space exploration Bayesian",
+              "title": "MAPLE: A Framework for Active Preference Learning Guided by Large Language Models",
+              "url": "https://arxiv.org/html/2412.07207",
+              "snippet": "MAPLE: A Framework for Active Preference Learning Guided by Large Language Models\n\n# MAPLE: A Framework for Active Preference Learning Guided by Large Language Models\n\nSaaduddin Mahmud, Mason Nakamura, Shlomo Zilberstein\n\n###### Abstract\n\nThe advent of large language models (LLMs) has sparked significant interest in using natural language for preference learning. However, existing methods often su…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental",
+              "title": "pdfs.semanticscholar.org",
+              "url": "https://pdfs.semanticscholar.org/d5cc/6a61a6c6ab2d140a6d89cc39125409a5e151.pdf",
+              "snippet": "A Preliminary Test of the Resonance Marketing Hypothesis: \nGuidance for Future Research Assessing Multi-Attribute \nPreferences in Horizontal Competition\nEric K. Clemons\nThe Wharton School\nclemons@wharton.upenn.edu\nJosh Wilson\nThe Wharton School\nwilsonsj@wharton.upenn.edu\nAbstract\nThe Resonance Marketing hypothesis suggests \nthat in an era of nearly perfect online information \nconsumers will be abl…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental",
+              "title": "Protocol v2: A Unified Test Program for the Coherence Amplification Thesis — RESOLVE",
+              "url": "https://jaredfoy.com/resolve/doc/134-protocol-v2-coherence-amplification",
+              "snippet": "Protocol v2: A Unified Test Program for the Coherence Amplification Thesis — RESOLVE\n\nMENU TOP\n\n# Protocol v2: A Unified Test Program for the Coherence Amplification Thesis\n\nReader's Introduction\n\nA single positive clinical trial could succeed for many reasons. This document upgrades the earlier trial protocol into a three-study research program designed so that the central claim -- that coherence…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental",
+              "title": "business.columbia.edu",
+              "url": "https://business.columbia.edu/sites/default/files-efs/citation_file_upload/Resonance_MOV_sept2025_ro_um.pdf",
+              "snippet": "Information Resonance\n\nUlrike Malmendier, Ryan Oprea and Laura Veldkamp\n\n*\n\nOctober 27, 2025\n\nAbstract We study information resonance – the extra weight people attach to information from people similar to them – and examine its implication. In a new lab experiment designed to isolate res onance, we show that people follow the advice of strangers who share characteristics with them at a much higher…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental",
+              "title": "A Theory of Resonance",
+              "url": "https://journals.sagepub.com/doi/10.1177/0735275117692837",
+              "snippet": "A Theory of Resonance - Terence E. McDonnell, Christopher A. Bail, Iddo Tavory, 2017\n[Skip to main content](#skipNavigationTo)\nIntended for healthcare professionals\n[![Sage Journals Home](https://journals.sagepub.com/pb-assets/UX3/Images/logo-new-1685528515400.svg%20)](https://journals.sagepub.com/)\n[Search this journal**](#)\n* [Search this journal](#pane-91a67f5d-48d7-493e-912e-2af5faaaceef0)\n* […",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance probe\" mechanism converts anchor into testable hypotheses user reactions pseudo-experimental",
+              "title": "The Pin-Art Form — RESOLVE",
+              "url": "https://jaredfoy.com/resolve/doc/619-pin-art-canonical-formalization",
+              "snippet": "The Pin-Art Form — RESOLVE\n\nMENU TOP\n\n# The Pin-Art Form\n\n## A Primary Formalization of Probe-Impression Boundary Detection, Recovered Into the Corpus's Vocabulary and Applied to Substrate-Side Hedging in Dyadic LLM Interaction and to Constraint-Driven Derivation\n\nPRIMARY ARTICULATION — open invitation to falsify.\n\nTaxonomy per Doc 633: PB-FORM | PRIMARY | W-PI | THREAD-PINART, THREAD-CONFAB | PHA…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-03": {
+          "report_id": "blend-03",
+          "queries": [
+            "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+            "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+            "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation"
+          ],
+          "hits": [
+            {
+              "query": "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+              "title": "GenQuery : Supporting Expressive Visual Search with Generative Models",
+              "url": "https://arxiv.org/html/2310.01287v2",
+              "snippet": "GenQuery: Supporting Expressive Visual Search with Generative Models\n\nHTML conversions sometimes display errors due to content that did not convert correctly from the source. This paper uses the following packages that are not yet supported by the HTML conversion tool. Feedback on these issues are not necessary; they are known and are being worked on.\n\n- failed: arydshln\n- B Editing Keyword Sugges…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+              "title": "[1909.12526] Query by Semantic Sketch",
+              "url": "https://ar5iv.labs.arxiv.org/html/1909.12526",
+              "snippet": "[1909.12526] Query by Semantic Sketch\n\n11institutetext: Department of Mathematics and Computer Science University of Basel, Basel, Switzerland 11email: {firstname.lastname}@unibas.ch 22institutetext: Department of Informatics, University of Zurich, Zurich, Switzerland 22email: rossetto@ifi.uzh.ch\n\n# Query by Semantic Sketch\n\nLuca Rossetto 1122 Ralph Gasser 11 Heiko Schuldt 11\n\n###### Abstract\n\nSke…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+              "title": "www.tdcommons.org",
+              "url": "https://www.tdcommons.org/cgi/viewcontent.cgi?article=10407&context=dpubs_series",
+              "snippet": "Technical Disclosure Commons\n\n| Defensive Publications Series |\n| --- |\n| 08 Jan 2026 Generative Synthesis of Hist e Synthesis of Historical Pr orical Precedents for A ecedents for Automated Procedural Guidance Pooja Agrawal Tanmay Kayande Akash Dambhare Deep Raithatha Mohith P Follow this and additional works at: https://www.tdcommons.org/dpubs_series |\n\nRecommended Citation \nAgrawal, Pooja; Kaya…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+              "title": "Visual Abstraction: A Plug-and-Play Approach for Text-Visual Retrieval",
+              "url": "https://proceedings.mlr.press/v267/ding25b.html",
+              "snippet": "Visual Abstraction: A Plug-and-Play Approach for Text-Visual Retrieval\n\n# Visual Abstraction: A Plug-and-Play Approach for Text-Visual Retrieval\n\nGuofeng Ding, Yiding Lu, Peng Hu, Mouxing Yang, Yijie Lin, Xi Peng\n\nProceedings of the 42nd International Conference on Machine Learning, PMLR 267:13825-13844, 2025.\n\n#### Abstract\n\nText-to-visual retrieval often struggles with semantic redundancy and gr…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generated abstract\" \"retrieval query\" \"concept sketch\" \"novel articulation\" precedent search",
+              "title": "[2009.00261] SketchOpt: Sketch-based Parametric Model Retrieval for Generative Design",
+              "url": "https://ar5iv.labs.arxiv.org/html/2009.00261",
+              "snippet": "[2009.00261] SketchOpt: Sketch-based Parametric Model Retrieval for Generative Design\n\n# SketchOpt: Sketch-based Parametric Model Retrieval for Generative Design\n\nMohammad Keshavarzi 1234-5678-9012 University of California, Berkeley337 Cory HallCAUnited States mkeshavarzi@berkeley.edu, Clayton Hutson Autodesk ResearchSan Francisco, CAUnited States clayton.hutson@autodesk.com, Chin-Yi Cheng Autodes…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+              "title": "Query, Decompose, Compress: Structured Query Expansion for Efficient Multi-Hop Retrieval",
+              "url": "https://www.arxiv.org/pdf/2603.21024",
+              "snippet": "Query, Decompose, Compress: Structured Query Expansion for Efficient Multi-Hop Retrieval\n\n\\setcctype\n\nby-nc-sa\n\n# Query, Decompose, Compress: Structured Query Expansion for Efficient Multi-Hop Retrieval\n\nJungmin Yun 0000-0001-6868-286X Chung-Ang UniversitySeoulRepublic of Korea cocoro357@cau.ac.kr and Youngbin Kim 0000-0002-2114-0120 Chung-Ang UniversitySeoulRepublic of Korea ybkim85@cau.ac.kr\n\n(2…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+              "title": "TCDE: Topic-Centric Dual Expansion of Queries and Documents with Large Language Models for Information Retrieval",
+              "url": "https://arxiv.org/html/2512.17164v1",
+              "snippet": "TCDE: Topic-Centric Dual Expansion of Queries and Documents with Large Language Models for Information Retrieval\n\n# TCDE: Topic-Centric Dual Expansion of Queries and Documents with Large Language Models for Information Retrieval\n\nYu Yang Xi’an Jiaotong UniversityXi’anShaanxiChina yyang@stu.xjtu.edu.cn, Feng Tian* Xi’an Jiaotong UniversityXi’anShaanxiChina fengtian@mail.xjtu.edu.cn and Ping Chen Un…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+              "title": "Doc2Query+⁣+: Topic-Coverage based Document Expansion and its Application to Dense Retrieval via Dual-Index Fusion",
+              "url": "https://arxiv.org/html/2510.09557v1",
+              "snippet": "Doc2Query+⁣+: Topic-Coverage based Document Expansion and its Application to Dense Retrieval via Dual-Index Fusion\n\n# Doc2Query $++$ : Topic-Coverage based Document Expansion and its Application to Dense Retrieval via Dual-Index Fusion\n\nTzu-Lin Kuo r12922050@ntu.edu.tw 1234-5678-9012 National Taiwan UniversityTaipeiTaiwan , Wei-Ning Chiu r12922219@ntu.edu.tw National Taiwan UniversityTaipeiTaiwan …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+              "title": "Query Expansion in the Age of Pre-trained and Large Language Models: A Comprehensive Survey",
+              "url": "https://arxiv.org/pdf/2509.07794",
+              "snippet": "Query Expansion in the Age of Pre-trained and Large Language Models: A Comprehensive Survey\n\n# Query Expansion in the Age of Pre-trained and Large Language Models: A Comprehensive Survey\n\nMinghan Li School of Computer Science and Technology, Soochow UniversitySuzhouJiangsu215031China mhli@suda.edu.cn, Xinxuan Lv School of Computer Science and Technology, Soochow UniversitySuzhouJiangsu215031China …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "query expansion generative model abstract synthesis multi-faceted retrieval component decomposition",
+              "title": "export.arxiv.org",
+              "url": "https://export.arxiv.org/pdf/2305.03653v1.pdf",
+              "snippet": "Query Expansion by Prompting Large Language Models\nRolf Jagerman\nGoogle Research\njagerman@google.com\nHonglei Zhuang\nGoogle Research\nhlz@google.com\nZhen Qin\nGoogle Research\nzhenqin@google.com\nXuanhui Wang\nGoogle Research\nxuanhui@google.com\nMichael Bendersky\nGoogle Research\nbemike@google.com\nABSTRACT\nQuery expansion is a widely used technique to improve the recall\nof search systems. In this paper, w…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation",
+              "title": "SketchGen: Generating Constrained CAD Sketches",
+              "url": "https://openreview.net/pdf?id=Oeb2LbHAfJ4",
+              "snippet": "## SketchGen: Generating Constrained CAD Sketches\n\nWamiq Reyaz Para 1 Shariq Farooq Bhat 1 Paul Guerrero 2 Tom Kelly 3 Niloy Mitra 2,4 Leonidas Guibas 5 Peter Wonka 1\n\n1 KAUST 2 Adobe Research 3 University of Leeds \n4 University College London 5 Stanford University \n\n### Abstract\n\nComputer-aided design (CAD) is the most widely used modeling approach for technical design. The typical starting point…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation",
+              "title": "SYNTHIA: Novel Concept Design with Affordance Composition",
+              "url": "https://aclanthology.org/2025.acl-long.1020.pdf",
+              "snippet": "Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 20939–20958 July 27 - August 1, 2025 ©2025 Association for Computational Linguistics\n\nSYNTHIA: Novel Concept Design with Affordance Composition\n\nHyeonjeong Ha 1*, Xiaomeng Jin 1∗, Jeonghwan Kim 1, Jiateng Liu 1, Zhenhailong Wang 1, Khanh Duy Nguyen 1, Ansel Blume 1, Nanyun Peng 2,…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation",
+              "title": "HyeonjeongHa/SYNTHIA",
+              "url": "https://github.com/HyeonjeongHa/SYNTHIA",
+              "snippet": "# Repository: HyeonjeongHa/SYNTHIA\n\nOfficial Pytorch implementations of \"SYNTHIA: Novel Concept Design with Affordance Composition\"\n\n- Stars: 6\n- Forks: 2\n- Watchers: 6\n- Open issues: 0\n- Primary language: Python\n- Languages: Python\n- Topics: ai4design, artificial-intelligence, diffusion-models, machine-learning, pytorch, t2i\n- Default branch: main\n- Created: 2025-02-20T04:22:23Z\n- Last push: 2025…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation",
+              "title": "Synthia: Novel Concept Design with Affordance Composition",
+              "url": "https://arxiv.org/html/2502.17793v1",
+              "snippet": "Synthia: Novel Concept Design with Affordance Composition\n\n# Synthia: Novel Concept Design with Affordance Composition\n\nXiaomeng Jin1, Hyeonjeong Ha1∗, Jeonghwan Kim1, Jiateng Liu1, Zhenhailong Wang1, Khanh Duy Nguyen1, Ansel Blume1, Nanyun Peng2, Kai-wei Chang2, Heng Ji1 1University of Illinois Urbana-Champaign 2University of California Los Angeles {xjin17, hh38, hengji}@cs.illinois.edu Equal con…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"generation-first pipeline\" synthetic concept sketch intermediary retrieval query novel articulation",
+              "title": "Protosampling: Enabling Free-Form Convergence of Sampling and Prototyping through Canvas-Driven Visual AI Generation",
+              "url": "https://arxiv.org/html/2601.05401v1",
+              "snippet": "Protosampling: Enabling Free-Form Convergence of Sampling and Prototyping through Canvas-Driven Visual AI Generation\n\n# Protosampling: Enabling Free-Form Convergence of Sampling and Prototyping through Canvas-Driven Visual AI Generation\n\nAlicia Guo Autodesk ResearchTorontoONCanada alicia.guo@autodesk.com, David Ledo Autodesk ResearchTorontoONCanada david.ledo@autodesk.com, George Fitzmaurice Autod…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-04": {
+          "report_id": "blend-04",
+          "queries": [
+            "\"dissonance vector\" \"structural counterpoint\" card design \"cognitive friction\" concept refinement",
+            "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+            "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement"
+          ],
+          "hits": [
+            {
+              "query": "\"dissonance vector\" \"structural counterpoint\" card design \"cognitive friction\" concept refinement",
+              "title": "Schematizing The Treatment Of Dissonance In 16Th-Century Counterpoint",
+              "url": "https://www.academia.edu/99008422/Schematizing_The_Treatment_Of_Dissonance_In_16Th_Century_Counterpoint",
+              "snippet": "(PDF) Schematizing The Treatment Of Dissonance In 16Th-Century Counterpoint\n\nOutline\n\nkeyboard_arrow_down\n\nTitle\n\nAbstract\n\nKey Takeaways\n\nIntroduction\n\nMethodology 2.1 Automatic Score Annotation\n\nDiscussion: Exceptions and Induction\n\nReferences\n\nFAQs\n\nAll Topics\n\nPsychology\n\nCognitive Psychology\n\ndownload\n\nDownload Free PDF\n\nDownload Free PDF\n\nEliot Handelman\n\n2015\n\nhttps://doi.org/10.5281/ZENODO…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"dissonance vector\" \"structural counterpoint\" card design \"cognitive friction\" concept refinement",
+              "title": "Checking your browser - reCAPTCHA",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12926423/",
+              "snippet": "Checking your browser - reCAPTCHA\n\nChecking your browser before accessing pmc.ncbi.nlm.nih.gov ...\n\nClick here if you are not automatically redirected after 5 seconds.",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"dissonance vector\" \"structural counterpoint\" card design \"cognitive friction\" concept refinement",
+              "title": "SCHEMATIZING THE TREATMENT OF DISSONANCE IN 16TH-CENTURY COUNTERPOINT",
+              "url": "https://archives.ismir.net/ismir2015/paper/000153.pdf",
+              "snippet": "## SCHEMATIZING THE TREATMENT OF DISSONANCE IN 16TH-CENTURY COUNTERPOINT\n\nAndie Sigler \nSchool of Computer Science, \nMcGill University; \nComputing Music \n\n### Jon Wild Schulich School of Music, McGill University wild@music.mcgill.ca\n\n### Eliot Handelman Computing Music\n\n#### ABSTRACT\n\nWe describe a computational project concerning labeling of dissonance treatments – schematic descriptions of the u…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"dissonance vector\" \"structural counterpoint\" card design \"cognitive friction\" concept refinement",
+              "title": "COUNTERPOINT — Daniel Kison",
+              "url": "http://www.danielkison.com/counterpoint",
+              "snippet": "COUNTERPOINT — Daniel Kison\n\nMenu\n\nView fullsize\n\nView fullsize\n\nView fullsize\n\nView fullsize\n\nView fullsize\n\nView fullsize\n\nCounterpoint is a card-based party game based on logic, creativity, and randomly generated funny situations that I created with a friend for a studio class. It plays like a combination of Apples To Apples, Cards Against Humanity, and Mad Libs, where players must explain the …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2603.03080",
+              "snippet": "Beyond Factual Correctness: Mitigating Preference-Inconsistent\nExplanations in Explainable Recommendation\nChengkai Wang\nNingbo University\nNingbo, China\n2411100294@nbu.edu.cn\nBaisong Liu\nNingbo University\nNingbo, China\nlbs@nbu.edu.cn\nAbstract\nExplainable recommendation systems increasingly employ large\nlanguage models (LLMs) to generate fluent and persuasive natural\u0002language explanations for recomm…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+              "title": "The Blessing of Reasoning: LLM-Based Contrastive Explanations in Black-Box Recommender Systems",
+              "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5099067",
+              "snippet": "The Blessing of Reasoning: LLM-Based Contrastive Explanations in Black-Box Recommender Systems by Yuyan Wang, Pan Li, Minmin Chen :: SSRN\n[Skip to main content](#maincontent)\n**\n**\n[](#)\n[![PDF icon](https://static.ssrn.com/cfincludes/img/icons/icon-adobe-pdf.svg \"PDF icon\")Download This Paper](Delivery.cfm/5099067.pdf?abstractid=5099067&mirid=1)\n[Open PDF in Browser](Delivery.cfm/5099067.pdf?abst…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2507.06044",
+              "snippet": "Hierarchical Interaction Summarization and\nContrastive Prompting for Explainable\nRecommendations\nYibin Liu\n1∗\n, Ang Li\n1∗\n, and Shijian Li()\n1,2\n1College of Computer Science and Technology, Zhejiang University, Hangzhou\n310027, China\n2\nthe State Key Lab of Brain-Machine Intelligence\n{yibinliu, leeyon, shijianli}@zju.edu.cn\nAbstract. Explainable recommendations, which use the information of\nuser an…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+              "title": "openreview.net",
+              "url": "https://openreview.net/pdf?id=mavWQw7DnC",
+              "snippet": "Under review as a conference paper at ICLR 2024\nEXPLAINING RECOMMENDATION SYSTEMS THROUGH\nCONTRAPOSITIVE PERTURBATIONS\nAnonymous authors\nPaper under double-blind review\nABSTRACT\nRecommender systems are widely used to help users discover new items online.\nA popular method for recommendations is factorization models, which predict a\nuser’s preference for an item based on latent factors derived from …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "contrastive explanation recommendation system highlight divergence challenge assumptions user refinement",
+              "title": "[2208.04222] GREASE: Generate Factual and Counterfactual Explanations for GNN-based Recommendations",
+              "url": "https://ar5iv.labs.arxiv.org/html/2208.04222",
+              "snippet": "[2208.04222] GREASE: Generate Factual and Counterfactual Explanations for GNN-based Recommendations\n\n11institutetext: Stony Brook University, Stony Brook, NY 11794, USA 11email: ziheng.chen@stonybrook.edu 22institutetext: Sapienza University of Rome, Rome 00185, Italy 22email: {fabrizio.silvestri,gabriele.tolomei}@uniroma1.it 33institutetext: The Xi’an Jiaotong-Liverpool University, Suzhou 215000,…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement",
+              "title": "Resonator – Workshop Computer",
+              "url": "https://tomwhitwell.github.io/Workshop_Computer/programs/21-resonator/index.html",
+              "snippet": "Resonator – Workshop Computer\n\n# Resonator\n\n## README\n\n---\n\n# Resonator\n\nA sympathetic resonator workshop card inspired by the Mutable Instruments Rings module and the tanpura. It has four resonating Karplus-Strong strings that, when excited, create rich, harmonic textures.\n\n## Description\n\nThe sympathetic resonator simulates the behavior of strings that vibrate in response to external excitation.…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement",
+              "title": "Checking your browser - reCAPTCHA",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7327114/",
+              "snippet": "Checking your browser - reCAPTCHA\n\nChecking your browser before accessing pmc.ncbi.nlm.nih.gov ...\n\nClick here if you are not automatically redirected after 5 seconds.\n\nChecking your browser - reCAPTCHA\nChecking your browser before accessing pmc.ncbi.nlm.nih.gov ...\nClick [here](#) if you are not automatically redirected after 5 seconds.",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement",
+              "title": "MTO 24.1: Schubert, Thomas Campion’s “Chordal Counterpoint” and Tallis’s Famous Forty-Part Motet",
+              "url": "https://mtosmt.org/issues/mto.18.24.1/mto.18.24.1.schubert.html",
+              "snippet": "MTO 24.1: Schubert, Thomas Campion’s “Chordal Counterpoint” and Tallis’s Famous Forty-Part Motet\n\nBy Author By Volume\n\nCurrent Job Listings Submit Job Listing\n\nAll Dissertations New Dissertations List Your Dissertation\n\n# Thomas Campion’s “Chordal Counterpoint” and Tallis’s Famous Forty-Part Motet *\n\n## Peter N. Schubert\n\nKEYWORDS: Thomas Campion, Counterpoint, Chords, Soggetto, Renaissance, Polyp…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement",
+              "title": "Tension and release, part two - by Joni K.",
+              "url": "https://jerktalksmusic.substack.com/p/tension-and-release-part-two",
+              "snippet": "Tension and release, part two - by Joni K.\n\n# Jerk Talks Music\n\nSubscribeSign in\n\n# Tension and release, part two\n\n### JTM014: Harmolodics, suspense & resolution\n\nMar 02, 2026\n\n7\n\n2\n\n1\n\nShare\n\n# Why this took so long\n\nThis piece has proved quite challenging to form. I outlined it last summer, formed the main points from this past January, and only now in February am I finally finding a through lin…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "\"resonance-tension card\" pairs partial match with structured counterpoint forces concept refinement",
+              "title": "Making sure you're not a bot!",
+              "url": "https://hal.science/hal-03165896/file/02_Herremans_tenor2016.pdf",
+              "snippet": "Making sure you're not a bot!\n\nsciences sciences\n\nCalculating...Difficulty: 4, Speed: 0kH/s\n\nYou are seeing this because the administrator of this website has set up Anubis to protect the server against the scourge of AI companies aggressively scraping websites. This can and does cause downtime for the websites, which makes their resources inaccessible for everyone.\n\nAnubis is a compromise. Anubis…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        }
+      },
+      "query_model": "deepseek/deepseek-v4-pro",
+      "total_queries": 12,
+      "total_hits": 56,
+      "extraction_cost_usd": 0.0046,
+      "extraction_ok": true,
+      "search_errors": [],
+      "call_log": [
+        {
+          "phase": "blend_extract_queries",
+          "model": "deepseek/deepseek-v4-pro",
+          "in_tok": 2069,
+          "out_tok": 283,
+          "cost_usd": 0.0046,
+          "ms": 4836.2,
+          "ok": true,
+          "err": ""
+        }
+      ],
+      "elapsed_ms": 6647.6
+    },
+    "total_cost_usd": 0.0444,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend_verdict",
+        "model": "deepseek/deepseek-v4-pro",
+        "in_tok": 12190,
+        "out_tok": 5356,
+        "cost_usd": 0.0398,
+        "ms": 88911.6,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_blend_count": 4,
+    "verify_model": "deepseek/deepseek-v4-pro"
+  },
+  "quarantined_blend_ids": [],
+  "models": {
+    "blender": "deepseek/deepseek-v4-pro",
+    "drift": "anthropic/claude-sonnet-4-6",
+    "query": "deepseek/deepseek-v4-pro",
+    "verify": "deepseek/deepseek-v4-pro"
+  },
+  "stage_costs": {
+    "blend": 0.0534,
+    "drift": 0.011,
+    "verify": 0.0444
+  },
+  "total_cost_usd": 0.1088,
+  "elapsed_ms": 213833.6
+}

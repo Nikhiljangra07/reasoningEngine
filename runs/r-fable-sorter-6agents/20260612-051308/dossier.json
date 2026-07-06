@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "session_id": "r-fable-sorter-20260612-051308",
+    "mode": "multi_pendulum",
+    "anchor_summary": "I'm currently working on a system that helps people advance their concepts or the work they're currently working on. If there's a case or research that's already published, based on that inheritance, ",
+    "cushion_constellation_size": 18,
+    "agent_count": 6,
+    "report_count": 0,
+    "total_tokens_spent": 0,
+    "elapsed_seconds": 9.124490022659302,
+    "completed_at": 1781266449.8579872
+  },
+  "high": [],
+  "medium": [],
+  "low": [],
+  "synthesis": {
+    "top_insights": [],
+    "clusters": [],
+    "contradictions": [],
+    "opportunity_paths": [],
+    "open_questions": [],
+    "recommended_next_direction": "",
+    "what_would_change_the_verdict": ""
+  },
+  "master_synthesis": null,
+  "master_sorted": {
+    "known": [],
+    "invalid": [],
+    "unplaced": [],
+    "total_cost_usd": 0.0,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_demotions": [],
+    "call_log": [],
+    "input_card_count": 0,
+    "classified_count": 0,
+    "dropped_report_ids": []
+  },
+  "suppressed_framings": []
+}

@@ -1,0 +1,829 @@
+{
+  "blends": {
+    "blends": [
+      {
+        "blend_id": "blend-01",
+        "source_card_ids": [
+          "wander-S7ca9c8-001",
+          "wander-P03-003"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-S7ca9c8-001",
+            "agent_id": "S7ca9c8",
+            "spark": "A physics AI that generates its own training problems by composing random scenes and simulating them — never needing a human to write the answer key — turns out to share its core mechanism with a system that finds unexpected connections for people who can't fully describe what they're looking for.",
+            "bridge": "Your system's anchor — the sparse, partial description a user provides — plays the same role as Sim2Reason's DSL: it does not prescribe what the output should be, it constrains which directions of search are physically meaningful, keeping the wandering agents out of noise without telling them where to land. The wandering agents' traversal across domains corresponds to Sim2Reason's procedural scene composition — free to be surprising, but bounded by a structure that prevents pure randomness. Most critically, both systems depend on a recognition event rather than a prediction event as the moment of value delivery: Sim2Reason's model recognizes the correct answer against a verifiable trace; your user recognizes a structural match they could not have named in advance. The mechanism is the same — structured incompleteness as input, emergence as output, recognition as the payoff.",
+            "source_shape": "Sim2Reason can't rely on human-annotated physics problems because there aren't enough of them. So instead, it uses a domain-specific language to procedurally compose physics scenes — randomly assembling configurations of objects, forces, and initial conditions — then runs each scene through a simulator to record exactly what happens. That simulation trace becomes the ground truth. The system generates its own supervision signal: no human labeler required, no answer written in advance, just structured randomization producing a verified outcome the model can learn from.",
+            "use": "The agent's next_lead is worth pursuing directly: Sim2Reason's shortcut ablation — discarding any QA pair whose answer survives entity removal — is a concrete filter for distinguishing genuine structural resonance from surface coincidence. You might design an analogous filter for your wandering agents: a candidate match that still 'works' after the anchor's specific constraints are stripped out is a surface match, not a structural one, and should be discarded before it reaches the user.",
+            "limit": "Sim2Reason's entire architecture assumes the answer exists and is fully recoverable from the simulator's recorded state before the question is posed — the loop is closed, the reward is verifiable, the ground truth is deterministic. Your system's value proposition is the structural inverse of this: the user does not know what they are looking for, and no ground truth exists to verify against. This means Sim2Reason's reinforcement learning machinery — the part that actually trains the model by comparing outputs to known answers — has no analog in your system and cannot be borrowed. The bridge holds for the input layer (sparse constraint enabling emergence) and the output layer (recognition event as value delivery), but breaks completely at the question of how you close the loop and know when the system is improving."
+          },
+          {
+            "report_id": "wander-P03-003",
+            "agent_id": "P03",
+            "spark": "A reinforcement learning system for automated mathematics discovered that 'interestingness' cannot be defined in advance — it has to be learned through wandering, because what makes a concept worth pursuing only becomes visible in context. Your system is built on the same premise.",
+            "bridge": "Your anchor functions as FERMAT's interestingness heuristic does: not a destination, but a sparse attractor that shapes which directions feel worth pursuing without dictating the path. Where FERMAT uses the three-component EvoAbstract score to pull the agent toward meaningful mathematical structures, your system uses the user's anchor — pursuit, inspiration, vision — to pull wandering agents toward resonant external material. The Markov property maps directly onto your rationale for preventing prior-model contamination: each agent traversal stays local to its current position, so the user's existing conceptual framework doesn't pre-collapse the search into what they already know. And just as FERMAT's value isn't in the agent reaching a target but in the interesting structures it surfaces along the way, your system's value delivery event is the recognition moment — the user seeing something the agent found and knowing it matters, even though they couldn't have requested it.",
+            "source_shape": "FERMAT treats mathematical concept discovery as a Markov Decision Process: an agent moves through a vast combinatorial space of possible mathematical structures, guided by a learned heuristic called EvoAbstract that scores how 'interesting' each candidate concept is. The Markov property is load-bearing here — each move depends only on the current state, not the agent's full history, which prevents the agent's existing knowledge from collapsing the search toward already-familiar territory. Interestingness itself is not fixed; it evolves across generations, so the guidance signal stays responsive to what the agent has actually found rather than what it was told to find.",
+            "use": "The EvoAbstract mechanism — where high-performing subroutines are extracted from one generation and seeded into the next — points at a concrete architecture for cross-session memory: rather than each session starting cold, structural patterns from past recognition events could be distilled and reinjected as soft priors into future wandering, letting the system accumulate a user-specific 'interestingness grammar' over time without hardening into prediction.",
+            "limit": "FERMAT's open-endedness is open-ended only in path, not in destination: the system is evaluated against known ground-truth benchmarks in elementary number theory and finite fields, meaning the right answers exist and are used to score the agent's reward signal. Your system's use case explicitly forbids this structure — if the user could specify the target concept, they wouldn't need the system at all. FERMAT learns to navigate toward a known territory more efficiently; your system has to navigate toward a territory the user cannot yet name. The bridge holds for the mechanism of structured wandering under a sparse attractor, but breaks completely at the question of how success is defined and measured."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "Sim2Reason's shortcut-ablation filter (discard a QA pair if the answer survives entity removal) and FERMAT's Markov property (each step depends only on current state, never on history) sit in sharp tension: one is a backward-looking validity filter applied to a finished candidate, the other is a forward-moving anti-contamination rule applied to the search process itself. Both attack degeneracy but from opposite ends of the pipeline.",
+          "spark": "What if the ablation test were not run on the output but on the path — strip the anchor's specific constraints from the AGENT'S CURRENT POSITION mid-traversal and check whether the next Markov step still fires?",
+          "motive": "The cushion needs a way to distinguish 'I genuinely advanced this concept to a new level' from 'I just retrieved something adjacent to my own inspiration.' Surface-coincidence detection is exactly the line between inheritance-that-advances and echo-that-repeats.",
+          "tension": "Ablation is a post-hoc verdict against ground truth; the Markov property is a process rule that explicitly forbids history (and therefore forbids the accumulated record an ablation test seems to need). They cannot both hold unless the ablation is reconstituted as a single-step, stateless operation.",
+          "discovery_path": "Card S7ca9c8 asserts that a match surviving anchor-removal is a surface match to be discarded; card P03-003 asserts each agent step is stateless and history-free; a post-hoc ablation seems to require holding the full path in memory, which the Markov property forbids; resolving this forced the question — can degeneracy be tested WITHOUT memory, at the single step? The answer: run a counterfactual twin step at each node — same position, anchor constraints zeroed — and compare the immediate transition. If the transition is identical with and without the anchor, this step is anchor-blind and the path is drifting toward generic retrieval. The thesis is the stateless degeneracy detector this produces."
+        },
+        "thesis": "A 'counterfactual-step ablation' turns Sim2Reason's output filter into a live, memoryless steering signal: at each traversal step, fork a shadow agent with the anchor's constraints zeroed; if the real and shadow agents would take the same next step, the move is anchor-blind and is pruned in-flight — degeneracy is detected per-step without ever storing the path.",
+        "mechanism": "At node N, compute transition distribution T_anchor(N) and T_null(N) where the latter has the user's specific constraints masked. Divergence between the two distributions IS the anchor's grip at that point. High divergence = the anchor is actively shaping this step (advancement territory); near-zero divergence = the agent would have gone there anyway from generic priors (retrieval territory, prune). Because both distributions depend only on N, the test is fully Markov-compatible.",
+        "emergent_structure": "A degeneracy signal computed from the DIFFERENCE between two single-step transition distributions — neither card contains a per-step counterfactual; Sim2Reason ablates a completed answer, FERMAT never ablates anything, it only scores interestingness.",
+        "advances_cushion": "Directly operationalizes 'taking it to the next level' versus 'staying at the same level': the next level is precisely where the anchor's specific constraints bend the path away from where generic priors would have gone. It gives the system a runtime test for whether it is advancing the user's work or merely reflecting it back.",
+        "confidence": 0.72
+      },
+      {
+        "blend_id": "blend-02",
+        "source_card_ids": [
+          "wander-P03-001",
+          "wander-P01-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-P03-001",
+            "agent_id": "P03",
+            "spark": "A physics education study reveals that students couldn't generate the right answer from scratch — but once a sparse structural constraint was installed, they could recognize its validity instantly. Recognition and prediction are different cognitive events, and your system may be built entirely around the first one.",
+            "bridge": "Your system's anchor functions like the mindware installation: it doesn't tell the user what their concept should become, it gives them a sparse structural criterion they can hold up against what surfaces. The wandering agents' outputs are the fast responses — generated without the user's deliberate control, arriving from unexpected directions. The value delivery moment is when a user encounters one of those outputs and something clicks: not 'I would have thought of that' but 'yes, that's it' — recognition without prior prediction. The paper shows this is a real and distinct cognitive event, not a weaker form of understanding, which validates the architecture: you are not building a generation tool that falls short, you are building a recognition-triggering system that works through a different mechanism entirely.",
+            "source_shape": "The paper tests a targeted instructional intervention grounded in dual-process theory: fast intuitive responses (System 1) run automatically, while slower reflective responses (System 2) require a trigger. The intervention doesn't replace the student's intuition — it installs a piece of 'mindware,' an internalized checking criterion that fires when a fast response is produced and asks: does this hold up? The key empirical finding is that students who couldn't derive the correct answer could nonetheless recognize it as correct once the mindware was active — convergence happened through recognition, not generation.",
+            "use": "Consider making the anchor's role explicit to users as a recognition criterion rather than a search target — framing it not as 'what you're looking for' but as 'what you'll know when you see it,' which may change how users set their anchors and how they interpret cards that don't immediately land.",
+            "limit": "The paper's entire mechanism points toward a pre-specified correct answer: Newton's second law exists before the student enters the room, and mindware succeeds when it guides the student there. Your system is explicitly designed for targets that don't yet exist — the user cannot pre-specify what a valuable collision looks like, because if they could, they wouldn't need the wander. Mindware installation assumes a destination; your agents don't have one. The recognition-without-prediction insight holds, but the paper cannot tell you how recognition functions when there is no latent correct answer waiting to be found — that question lives outside its scope entirely."
+          },
+          {
+            "report_id": "wander-P01-001",
+            "agent_id": "P01",
+            "spark": "A physics textbook diagram of a pendulum is already a pendulum — the dynamic structure is frozen inside the static image, waiting to be extracted. Augmented Physics does exactly that: it reads incompleteness not as a gap to fill but as a skeleton to animate.",
+            "bridge": "Your system treats half-formed user concepts the way Augmented Physics treats static diagrams: as inputs that are incomplete on the surface but structurally sufficient underneath. Just as the pipeline doesn't need a fully labeled diagram to reconstruct a pendulum — it needs enough skeletal structure to infer physical roles — your agents don't need a fully articulated idea to begin traversal; they need enough conceptual skeleton to infer relational structure. The second contact point is how matching works: Augmented Physics ignores visual surface and matches on physical function, which mirrors the design intent for your agents to match on conceptual architecture rather than keyword overlap. In both cases, the productive move is the same — read past the surface representation to the structural role underneath.",
+            "source_shape": "Augmented Physics takes static diagrams from physics textbooks — images that were never designed to be interactive — and reconstructs them as live, manipulable simulations. It does this not by matching pixels or visual style, but by recognizing physical roles: this curved shape is a lens, this arrow is a force vector, this arc is a trajectory. The diagram already encodes the physics; the system's job is to surface the dynamic model that was always latent inside the frozen representation.",
+            "use": "Consider whether your agents' relevance scoring could be made explicitly role-based rather than similarity-based: not 'does this source resemble the anchor' but 'does this source occupy the same structural position' — the way a lens and a prism are different objects that play the same optical role.",
+            "limit": "Augmented Physics works because its target domain has ground truth: a pendulum diagram maps to pendulum physics, and the reconstruction is verifiable against known physical law. Your agents have no such fixed destination — the user cannot check a match against a known answer because the answer is what they are trying to discover. More critically, the Augmented Physics pipeline is designed to collapse ambiguity as fast as possible, moving from segmentation to classification to simulation in a directed sequence. Your system's value depends on the opposite orientation: preserving ambiguity long enough for recognition to emerge. Where Augmented Physics treats incompleteness as a problem to resolve, your architecture treats it as the productive condition itself — and the bridge breaks precisely at that inversion."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "The mindware card (recognition without prediction is a real, distinct cognitive event) and the Augmented Physics role-matching card (match on structural function, not surface) collide on what the user is actually doing at the recognition moment. One is about WHEN value lands (recognition, not generation); the other is about WHAT makes a match valid (occupying the same structural position, like lens-and-prism). They strain because the mindware card assumes a latent correct answer exists, while the cushion forbids one.",
+          "spark": "If recognition fires on structural role rather than surface, then the 'mindware' the user needs is not a correctness criterion but a ROLE criterion — a sense of the structural position their half-formed concept is trying to occupy.",
+          "motive": "The cushion's hardest case: 'I have vague inspirations of a feature but cannot articulate it.' The user needs a handle that lets them recognize the right advancement without being able to state it — a role-shaped recognition trigger.",
+          "tension": "The mindware card's recognition is calibrated against a pre-existing right answer (Newton's law); the role-matching card matches function across domains with no shared ground truth. They cannot both hold unless recognition is re-grounded in something other than correctness — namely structural-role fit.",
+          "discovery_path": "Card P03-001 says students recognize correctness they cannot generate, but only because a latent answer exists; card P01-001 says valid matches occupy the same structural role regardless of surface or domain; the cushion forbids a latent answer, breaking P03-001's mechanism; so what does recognition fire ON when there is no correct answer? It must fire on role-congruence — 'this occupies the position my concept was reaching for.' Pursuing that forced the question: can the system install a role-criterion the way mindware installs a correctness-criterion? The thesis is the role-mindware that results."
+        },
+        "thesis": "Install a 'role criterion' rather than a correctness criterion: the system extracts the structural POSITION the user's half-formed concept is straining to occupy (the way a force-vector arrow plays a role in a diagram) and hands the user a recognition trigger shaped like that position — so the user recognizes a cross-domain match as 'yes, that's the slot I was filling' without any latent right answer existing.",
+        "mechanism": "Parse the anchor not for content but for its relational skeleton — what plays cause, what plays constraint, what is the missing terminal. Surface candidates that occupy the empty structural slot, regardless of domain. The recognition event then fires on positional congruence (System-2 'does this fill the slot?') rather than on correctness ('is this the known answer?'), making recognition possible in an open domain where mindware's original mechanism is undefined.",
+        "emergent_structure": "Recognition grounded in structural-slot congruence instead of correctness-against-ground-truth — neither card has this: P03-001's recognition needs a true answer, P01-001's role-matching has no theory of the recognition event at all.",
+        "advances_cushion": "Solves the 'I can't articulate it' case structurally: the user does not need words for the concept, only the ability to recognize when a candidate fills the slot. The system supplies slot-shaped candidates, the user supplies recognition — articulation becomes a byproduct rather than a prerequisite.",
+        "confidence": 0.68
+      },
+      {
+        "blend_id": "blend-03",
+        "source_card_ids": [
+          "wander-P02-001",
+          "wander-P03-003",
+          "wander-Sd6fb15-001"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-P02-001",
+            "agent_id": "P02",
+            "spark": "A mathematics education system encodes entire skill hierarchies as sparse binary vectors — and that skeleton of presence/absence flags turns out to be a working model for how minimal structure can locate a complex concept without fully describing it.",
+            "bridge": "Your system is trying to advance concepts that aren't yet fully formed — and the inheritance coding mechanism offers a structural echo of how that can work. The binary vector in Gagné's system is the analog of a partial specification in yours: not a full description of the target concept, but a minimal skeleton of what's already present that meaningfully bounds where the next move can land. Just as a learner's bit-vector doesn't describe what they'll eventually master but does constrain which higher nodes are reachable, a user's current work carries a sparse structural signature that constrains which conceptual advances are actually adjacent. The mechanism — sparse encoding as productive constraint rather than full specification — is the same shape: you don't need to know the destination to know which directions are live.",
+            "source_shape": "Gagné's learning hierarchy arranges mathematical competencies in strict prerequisite order: you cannot hold a higher-level skill without having mastered the ones beneath it. Inheritance coding captures this by assigning each learner a binary vector — each bit marks whether a foundational skill is present or absent. The vector is sparse and minimal, yet it carries enough structural information to pinpoint exactly where a learner sits in the hierarchy and what they are ready to reach next.",
+            "use": "Consider representing a user's current concept-state as a sparse structural signature — not a full description of where they're going, but a minimal encoding of what structural elements are already present — and use that signature to bound which external resonances are 'reachable' rather than merely novel.",
+            "limit": "Gagné's system is entirely backward-looking and closure-seeking: every node in the hierarchy, and every prerequisite relationship between nodes, is defined before any learner touches it. The system diagnoses gaps in a known map — it has no mechanism for situations where the map doesn't exist yet. Constellax's core problem is the structural opposite: the target concept is unknown in advance, the hierarchy cannot be pre-built, and the whole point is to wander because no map exists. Gagné's inheritance coding requires a complete, pre-specified topology to function; applying it directly would mean imposing a fixed hierarchy on work that is valuable precisely because it hasn't crystallized into one yet."
+          },
+          {
+            "report_id": "wander-P03-003",
+            "agent_id": "P03",
+            "spark": "A reinforcement learning system for automated mathematics discovered that 'interestingness' cannot be defined in advance — it has to be learned through wandering, because what makes a concept worth pursuing only becomes visible in context. Your system is built on the same premise.",
+            "bridge": "Your anchor functions as FERMAT's interestingness heuristic does: not a destination, but a sparse attractor that shapes which directions feel worth pursuing without dictating the path. Where FERMAT uses the three-component EvoAbstract score to pull the agent toward meaningful mathematical structures, your system uses the user's anchor — pursuit, inspiration, vision — to pull wandering agents toward resonant external material. The Markov property maps directly onto your rationale for preventing prior-model contamination: each agent traversal stays local to its current position, so the user's existing conceptual framework doesn't pre-collapse the search into what they already know. And just as FERMAT's value isn't in the agent reaching a target but in the interesting structures it surfaces along the way, your system's value delivery event is the recognition moment — the user seeing something the agent found and knowing it matters, even though they couldn't have requested it.",
+            "source_shape": "FERMAT treats mathematical concept discovery as a Markov Decision Process: an agent moves through a vast combinatorial space of possible mathematical structures, guided by a learned heuristic called EvoAbstract that scores how 'interesting' each candidate concept is. The Markov property is load-bearing here — each move depends only on the current state, not the agent's full history, which prevents the agent's existing knowledge from collapsing the search toward already-familiar territory. Interestingness itself is not fixed; it evolves across generations, so the guidance signal stays responsive to what the agent has actually found rather than what it was told to find.",
+            "use": "The EvoAbstract mechanism — where high-performing subroutines are extracted from one generation and seeded into the next — points at a concrete architecture for cross-session memory: rather than each session starting cold, structural patterns from past recognition events could be distilled and reinjected as soft priors into future wandering, letting the system accumulate a user-specific 'interestingness grammar' over time without hardening into prediction.",
+            "limit": "FERMAT's open-endedness is open-ended only in path, not in destination: the system is evaluated against known ground-truth benchmarks in elementary number theory and finite fields, meaning the right answers exist and are used to score the agent's reward signal. Your system's use case explicitly forbids this structure — if the user could specify the target concept, they wouldn't need the system at all. FERMAT learns to navigate toward a known territory more efficiently; your system has to navigate toward a territory the user cannot yet name. The bridge holds for the mechanism of structured wandering under a sparse attractor, but breaks completely at the question of how success is defined and measured."
+          },
+          {
+            "report_id": "wander-Sd6fb15-001",
+            "agent_id": "Sd6fb15",
+            "spark": "A system that teaches physics reasoning to AI by giving it a sparse grammar of constraints — not answers, not paths, just the rules that make a problem physically meaningful — produces competence the designers never directly specified. The anchor works the same way: the user's three inputs are not a destination, they are a grammar that makes some collisions resonate and others fall flat.",
+            "bridge": "The DSL in physics-RL is doing exactly what the anchor does: it does not tell the search where to go, it tells the search which directions are worth anything. The user's anchor inputs function as that grammar — they prune the universe of possible connections down to the subset where resonance is possible, without dictating which resonance will appear. The wandering agents are then the model running episodes inside that bounded space, free to be surprising precisely because the constraint has already excluded the noise. And the 'sim-to-real transfer' result — competence built on synthetic wandering that transfers to real problems the system never saw — maps directly onto the anchor's recognition event: the user encounters a card drawn from a domain they never would have searched, and the match holds because the structural constraint was doing the filtering all along.",
+            "source_shape": "The physics-RL system generates training problems using a DSL — a small, structured vocabulary that specifies scene parameters (masses, angles, pulley configurations) without specifying solutions. The DSL prunes the space of possible problems down to ones that are physically coherent, then lets a simulator evaluate whether any given answer is actually correct. The model learns not from curated human examples but from wandering inside that bounded space at scale, accumulating competence through sheer volume of structurally valid collisions with hard feedback.",
+            "use": "Consider whether the anchor's three inputs could be made more explicitly DSL-like — not richer descriptions of what the user wants, but a minimal formal grammar of what makes a collision structurally eligible, so the agents are pruning degrees of freedom rather than just proximity-matching on surface features.",
+            "limit": "The physics-RL loop works because the simulator is an oracle: correctness is binary, external, and unambiguous, and the entire RL training signal depends on that. The anchor has no such oracle — the only signal that a match is real is the user's own recognition, which is subjective, partial, and cannot be verified or automated. This is not a small gap: you cannot build a reward loop on it the way physics-RL does. A second break: the physics DSL actively uses domain knowledge to exclude parameters that don't affect system dynamics, which is exactly what the anchor's wandering agents are designed not to do — because the valuable collision may come from the domain the user would have pruned first."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "Gagné inheritance-coding (a sparse binary vector of what's PRESENT bounds what's REACHABLE next) directly contradicts FERMAT's Markov anti-contamination rule (never let accumulated structure pre-collapse the search) and the DSL card (prune degrees of freedom to keep collisions eligible). Reachability is a forward map built from what you already have; the Markov rule forbids exactly that map. Three cards because the resolution needs the inheritance idea, the contamination warning, AND the DSL's notion of eligibility.",
+          "spark": "Inheritance coding says 'what's present determines what's adjacent' — but the cushion's whole point is to advance BEYOND adjacency. What if you invert the vector: encode not what's present but what's structurally ABSENT-yet-implied, and use that as the attractor?",
+          "motive": "The cushion explicitly wants to go to the NEXT level from inherited work, not stay at the adjacent one. A reachability map that only finds prerequisites would trap the user one rung up. The blend needs a coding that points past adjacency without collapsing into the known.",
+          "tension": "Gagné's vector pulls toward the immediately-reachable (safe, known, adjacent); FERMAT's Markov rule pushes away from anything the existing structure would pre-determine; the DSL wants only structurally-eligible collisions. Adjacency and anti-adjacency cannot coexist unless the vector encodes absence rather than presence.",
+          "discovery_path": "Card P02-001 encodes present skills as a sparse bit-vector that bounds the next reachable node; card P03-003 warns that letting existing structure guide the search collapses it toward the familiar; these conflict — the reachability vector IS existing-structure guidance. Card Sd6fb15 adds that the DSL prunes to keep only eligible (non-degenerate) collisions. Resolving the conflict: what if the bit-vector marks not present elements but the structural GAPS — slots the inherited work implies but does not fill? Then 'reachable' means 'eligible to fill an implied gap' (DSL eligibility) rather than 'next prerequisite up' (Gagné), and because gaps are defined by absence they don't carry the familiarity that contaminates the Markov search. The thesis is this inverted, absence-coded attractor."
+        },
+        "thesis": "An 'absence-coded anchor': represent the inherited work as a sparse vector of structurally-IMPLIED-BUT-UNFILLED slots (the gaps the existing concept presupposes but never resolves), and use those gaps — not the present elements — as the wandering attractor; collisions are eligible only if they fill an implied absence, which pulls the search past adjacency while staying bounded.",
+        "mechanism": "From the published work/concept, infer the relational structure and flag positions the structure demands but leaves empty (an unbalanced force, an undefined boundary condition, a missing dual). Encode these as the sparse vector. Wandering agents are scored by how well a candidate fills an implied slot AND survives the DSL eligibility prune. Because the attractor is the gap rather than the content, the Markov walk is not pulled toward the user's known territory — it is pulled toward the territory the known work structurally requires but cannot reach alone.",
+        "emergent_structure": "An attractor built from structural ABSENCE — neither card has this: Gagné codes presence, FERMAT scores interestingness of generated content, the DSL prunes content; none of them treats the implied-but-empty slot as the thing the search is pulled toward.",
+        "advances_cushion": "This is the precise mechanism for 'take inherited research to the next level instead of the adjacent one': the next level is the set of structural commitments the prior work made but did not discharge. By making those debts the search target, the system advances the work along its own internal necessities rather than along surface similarity.",
+        "confidence": 0.66
+      },
+      {
+        "blend_id": "blend-04",
+        "source_card_ids": [
+          "wander-Sc40cae-001",
+          "wander-P02-005"
+        ],
+        "source_cards": [
+          {
+            "report_id": "wander-Sc40cae-001",
+            "agent_id": "Sc40cae",
+            "spark": "A system that animates static physics diagrams by extracting latent structure the author never explicitly described — the dynamic output exists inside the static input, waiting to be pulled out. Your system does something structurally adjacent: it finds what a concept is becoming before the person holding it can name it.",
+            "bridge": "The structural cousin here is the pipeline's core move: partial, underspecified input drives a generative output the user recognizes as correct without having specified it in advance. In Augmented Physics, the diagram is the partial input — it contains the answer but not in a usable form. In your system, the user's concept or work-in-progress is the partial input — it contains a direction but not yet a destination. The system's job in both cases is to extract latent structure and return something the user can recognize rather than something they could have predicted. The 'recognition event as value delivery' node fires in both: the user doesn't say 'yes, that's what I asked for' — they say 'yes, that's what I meant,' which is a different and more valuable response. The animated diagram's four augmentation strategies (animated motion, bi-directional parameter binding, visual overlays) are mechanical cousins of concept crystallization — they take a vague static form and make it navigable and dynamic without requiring the user to fully specify what they wanted first.",
+            "source_shape": "Augmented Physics takes a fixed textbook diagram — a fully articulated artifact with known meaning — and runs it through a pipeline that extracts the implicit physical relationships encoded in the image, then animates them into interactive simulations. The user never specifies 'make this pendulum swing' or 'show me how this force vector changes'; the system infers the physics from the diagram's geometry and semantics and generates the dynamic form automatically. The result is that a static, inert representation becomes navigable: the user can adjust parameters, watch values propagate, and interact with something that was always latent in the original but invisible until the pipeline surfaced it.",
+            "use": "Consider whether your system's output stage could borrow the bi-directional binding move: when the system surfaces a connection or crystallized form, let the user adjust a parameter in the output and watch that change propagate back into how the concept is framed — not just 'here is what I found' but 'here is a handle you can turn, and turning it reshapes the source.'",
+            "limit": "The analogy breaks at the most important point. Augmented Physics operates on inputs that are already semantically complete — a physics diagram has known domain, known object types, and fully present meaning; the system's job is only to render that meaning dynamic. Your system's entire value lives in the opposite condition: the input is semantically incomplete, the domain is unknown or unrecognized, and the user cannot yet identify what they are looking for until the system surfaces it. Augmented Physics has no wandering, no cross-domain traversal, and no strange attractor — it is a rendering pipeline applied to a fixed artifact, not an emergence engine applied to an unresolved one. The bridge holds for the 'partial input drives recognized output' shape, but breaks entirely at the question of how you handle inputs where the meaning is not yet present to be extracted."
+          },
+          {
+            "report_id": "wander-P02-005",
+            "agent_id": "P02",
+            "spark": "Fuzzy logic systems are built on a radical premise: vagueness in the input is not a problem to eliminate before processing begins — it is information to preserve and work with. Your system's reliance on incomplete anchors to drive open-ended exploration runs on exactly that premise.",
+            "bridge": "Your anchor mechanism — 'sparse anchor enables emergence without collapse' — is the same structural move. When a user provides a partial, underspecified anchor, your system does not demand clarification before proceeding; it treats the incompleteness as a distribution of possible directions rather than a gap to fill. The fuzzification step maps directly onto this: both systems convert an underspecified input into a held-open space of weighted possibilities rather than a premature single interpretation. The fuzzy rule base's role — providing directional constraint without prescribing a destination — maps onto the anchor's role in bounding your wandering agents: it sets the attractor without collapsing the traversal. And the principle that vagueness is signal, not noise, is the shared load-bearing assumption in both architectures: remove it from either system and the mechanism breaks.",
+            "source_shape": "In a neuro-fuzzy system, an imprecise input — say, a student's 'moderate' attendance — is not forced into a hard category before the system reasons about it. Instead, a fuzzification step converts it into a membership distribution: the input belongs 40% to 'low', 70% to 'medium', 10% to 'high', all simultaneously. The fuzzy rule base then reasons across that smeared representation, and only at the end does a defuzzification step collapse it into a usable output. The system is architecturally designed to hold incompleteness open longer than classical logic would permit, and to extract signal from the shape of the uncertainty rather than discarding it.",
+            "use": "Consider formalizing your anchor's incompleteness as a membership structure rather than treating it as a scalar confidence score — explicitly representing which interpretive directions the anchor partially activates, and at what weight, so the agents' traversal reflects the shape of the uncertainty rather than averaging it away.",
+            "limit": "Neuro-fuzzy systems in this paper are closed classifiers: the output categories are fixed before the system runs, the domain is narrow and homogeneous, and the entire apparatus is trained to converge on labeled predictions. Your agents operate in open, heterogeneous knowledge space with no predefined output category — the target is unknown until it is recognized. The partial-input tolerance maps cleanly; the open-ended discovery mechanism does not. There is no emergence, no cross-domain traversal, and no recognition event in a neuro-fuzzy classifier — only supervised convergence on a known label set."
+          }
+        ],
+        "selection": {
+          "why_these_cards": "The bi-directional binding card (turn a handle in the output and watch it propagate back into the source) and the fuzzification card (hold the anchor open as a weighted membership distribution rather than collapsing it) collide on the lifecycle of the anchor. One makes the OUTPUT manipulable and reflexive; the other keeps the INPUT smeared and unresolved. The tension: bi-directional binding implies a concrete enough source to reshape, while fuzzification insists the source stay a distribution.",
+          "spark": "What if the handle the user turns is not a parameter of the output but a slider over the anchor's own membership distribution — and watching it propagate is watching their vague concept partially crystallize in real time?",
+          "motive": "The cushion's deepest need: the user with 'vague inspirations' who 'doesn't know how to make it live.' Crystallization can't be a one-shot output; it has to be an interactive narrowing the user steers without having to articulate first.",
+          "tension": "Bi-directional binding needs a settled source to bind to; fuzzification needs the source to remain a held-open gradient. They cannot both hold unless the binding operates ON the gradient itself — turning the handle re-weights memberships rather than editing a fixed value.",
+          "discovery_path": "Card Sc40cae offers a handle in the output that propagates back to reshape the source; card P02-005 insists the anchor stays a smeared membership distribution, never prematurely collapsed; binding-back seems to require a non-smeared source to write into; resolving this forced the question — what if the binding target IS the membership distribution? Turning a handle then means redistributing weight across interpretive directions, and propagation means the system re-wanders from the re-weighted field. The user watches their own vagueness shift shape under their hand. The thesis is this crystallization-by-reweighting loop."
+        },
+        "thesis": "A 'gradient-binding crystallizer': the system exposes the user's vague anchor as a live membership distribution over interpretive directions, and the cards it surfaces act as handles — accepting or leaning into a card re-weights the distribution and re-launches the wander from the shifted field, so the concept crystallizes through iterative reweighting the user STEERS by recognition alone, never by articulation.",
+        "mechanism": "Represent the anchor as weighted membership across candidate directions (fuzzification). Each surfaced card is tagged with which directions it activates. The user's lean toward/away from a card propagates as a weight update on the distribution (bi-directional binding applied to the gradient, not a scalar). The system re-wanders from the updated field. Crystallization = the distribution sharpening over rounds without the user ever stating a target; the late 'defuzzification' is the user's eventual recognition that the field has collapsed onto something live.",
+        "emergent_structure": "An anchor that crystallizes through recognition-driven reweighting of its own membership distribution — neither card has this: Augmented Physics binds to a fixed, ground-truthed source; fuzzy logic collapses the distribution by internal defuzzification, never by the user steering it via recognition over multiple rounds.",
+        "advances_cushion": "Directly serves 'I have vague inspirations but don't know how to make it live': the user makes it live by steering, not specifying. Each recognition event narrows the field, converting an unarticulable inspiration into a crystallized concept through a path the user could walk without ever finding the words first.",
+        "confidence": 0.7
+      }
+    ],
+    "total_cost_usd": 0.7423,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend",
+        "model": "anthropic/claude-opus-4-8",
+        "in_tok": 24877,
+        "out_tok": 4922,
+        "cost_usd": 0.7423,
+        "ms": 72288.6,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_card_count": 24,
+    "model": "anthropic/claude-opus-4-8"
+  },
+  "drift": {
+    "verdicts": [
+      {
+        "blend_id": "blend-01",
+        "on_course": true,
+        "resonance": 0.95,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-02",
+        "on_course": true,
+        "resonance": 0.98,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-03",
+        "on_course": true,
+        "resonance": 0.97,
+        "drift_reason": "",
+        "redirect": ""
+      },
+      {
+        "blend_id": "blend-04",
+        "on_course": true,
+        "resonance": 0.99,
+        "drift_reason": "",
+        "redirect": ""
+      }
+    ],
+    "on_course_ids": [
+      "blend-01",
+      "blend-02",
+      "blend-03",
+      "blend-04"
+    ],
+    "drifting_ids": [],
+    "total_cost_usd": 0.0049,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "truncation_reason": "",
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "drift_check",
+        "model": "deepseek/deepseek-v4-pro",
+        "in_tok": 2412,
+        "out_tok": 204,
+        "cost_usd": 0.0049,
+        "ms": 3611.6,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "model": "deepseek/deepseek-v4-pro"
+  },
+  "verification": {
+    "known": [],
+    "adjacent": [
+      {
+        "blend_id": "blend-04",
+        "bin": "adjacent",
+        "references": [
+          {
+            "title": "[2112.02290] Interactive Disentanglement: Learning Concepts by Interacting with their Prototype Representations",
+            "url": "https://ar5iv.labs.arxiv.org/html/2112.02290"
+          },
+          {
+            "title": "Learning to Receive Help: Intervention-Aware Concept Embedding Models",
+            "url": "https://arxiv.org/html/2309.16928v3"
+          },
+          {
+            "title": "arxiv.org",
+            "url": "https://arxiv.org/pdf/2212.07430"
+          }
+        ],
+        "resemblance": "Interactive Disentanglement (Stammer et al.) refines concept representations through user interaction with prototypes, iteratively updating embeddings via recognition-like feedback without requiring explicit articulation of the target. Intervention-Aware Concept Embedding Models (Zarlenga et al.) update concept distributions based on user interventions. Interactive Concept Bottleneck Models propagate user feedback as weight updates across concept directions. These are close cousins: iterative, recognition-driven, distribution-reweighting concept refinement without explicit target articulation.",
+        "still_new": "No hit applies this mechanism specifically to a vague, pre-articulatory anchor represented as a fuzzy membership distribution over interpretive directions, where surfaced cards act as handles that re-launch a wandering search from the shifted field — i.e., the crystallization loop is coupled to an external stochastic wander rather than a fixed concept space, and defuzzification is driven by the distribution collapsing through recognition rather than by internal optimization.",
+        "reasoning": "Interactive Disentanglement and Intervention-Aware CEMs perform nearly the same transfer — iterative recognition-feedback reweighting of a concept distribution without explicit articulation — making this a small step rather than a full leap. The genuine difference is the coupling of the reweighting loop to a re-launched wandering search and the use of fuzzy membership over interpretive directions as the anchor representation, neither of which appears in the hits.",
+        "confidence": 0.72
+      }
+    ],
+    "novel": [
+      {
+        "blend_id": "blend-01",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Abstract Counterfactuals for Language Model Agents",
+            "url": "https://arxiv.org/html/2506.02946"
+          },
+          {
+            "title": "Ablation Based Counterfactuals",
+            "url": "https://arxiv.org/html/2406.07908v1"
+          },
+          {
+            "title": "Simple Steps to Success: A Method for Step-Based Counterfactual Explanations",
+            "url": "https://arxiv.org/html/2306.15557v3"
+          }
+        ],
+        "resemblance": "Ablation-based counterfactuals (MIT/Gifford) ablate features to generate counterfactual outputs; step-based counterfactual explanations (Google DeepMind) reason about steps toward a goal; abstract counterfactuals for LM agents apply counterfactual inference to agent behavior. All three share components: counterfactual reasoning, step-level analysis, or agent traversal.",
+        "still_new": "",
+        "reasoning": "No hit performs the specific move: forking a memoryless shadow agent at each traversal step with constraints zeroed, computing per-step KL divergence between the real and shadow transition distributions, and using that divergence as a live in-flight pruning signal for degeneracy detection — all in a fully Markov-compatible, stateless manner. The ablation literature ablates completed outputs or features; the step-based counterfactual work generates explanatory steps toward known goals; none treats the real-vs-null distribution divergence at each node as the pruning criterion itself. The specific transfer — constraint-masking as a per-step Markov degeneracy detector — is unperformed by any hit.",
+        "confidence": 0.82
+      },
+      {
+        "blend_id": "blend-02",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "Life is a Circus and We are the Clowns: Automatically Finding Analogies between Situations and Processes",
+            "url": "https://aclanthology.org/2022.emnlp-main.232.pdf"
+          },
+          {
+            "title": "Are Superficially Dissimilar Analogs better retrieved than Superficially Similar Disanalogs?",
+            "url": "https://www.sciencedirect.com/science/article/abs/pii/S0001691819301957"
+          },
+          {
+            "title": "[2511.00898] Empowering LLMs with Structural Role Inference for Zero-Shot Graph Learning",
+            "url": "https://ar5iv.labs.arxiv.org/html/2511.00898"
+          }
+        ],
+        "resemblance": "Analogical retrieval work (Sultan & Shahaf; ScienceDirect superficial vs. structural analogy) retrieves cross-domain matches by relational structure rather than surface similarity. Structural role inference for graphs assigns positional roles to nodes. These share the ingredient of relational/structural matching.",
+        "still_new": "",
+        "reasoning": "No hit performs the specific move: parsing an anchor for its relational skeleton, identifying the empty terminal slot, and surfacing candidates that occupy that slot specifically to trigger a recognition event grounded in positional congruence rather than correctness against a ground truth — in an open domain where no right answer exists. Analogical retrieval systems retrieve known analogs; they do not construct a 'role criterion' as a recognition trigger for half-formed concepts with no latent correct answer. The transfer from structural-slot occupancy to a recognition-event mechanism in an open, answer-free domain is unperformed by any hit.",
+        "confidence": 0.8
+      },
+      {
+        "blend_id": "blend-03",
+        "bin": "novel",
+        "references": [
+          {
+            "title": "LitGapFinder: Automated Scientific Literature Gap Analysis and Hypothesis Generation — clawRxiv",
+            "url": "https://clawrxiv.io/abs/2603.00235"
+          },
+          {
+            "title": "Human memory search as a random walk in a semantic network",
+            "url": "https://papers.nips.cc/paper_files/paper/2012/file/14d9e8007c9b41f57891c48e07c23f57-Paper.pdf"
+          },
+          {
+            "title": "Context-aware Inductive Knowledge Graph Completion with Latent Type Constraints and Subgraph Reasoning",
+            "url": "https://arxiv.org/html/2410.16803"
+          }
+        ],
+        "resemblance": "LitGapFinder identifies literature gaps and generates hypotheses from them. Knowledge graph completion infers missing links from latent constraints. Random-walk memory search uses semantic networks as attractors. These share ingredients: gap detection, constraint inference, and walk-based search.",
+        "still_new": "",
+        "reasoning": "No hit performs the specific move: encoding the structurally-implied-but-unfilled slots of an existing concept as a sparse absence vector and using those absences — not the present content — as the wandering attractor for a Markov search, such that collisions are eligible only if they fill an implied absence. LitGapFinder identifies gaps but does not encode them as a sparse attractor vector driving a wandering agent. Knowledge graph completion infers missing links but does not treat absence as the attractor field. The transfer — absence-as-attractor for bounded Markov wandering — is unperformed by any hit.",
+        "confidence": 0.84
+      }
+    ],
+    "flawed": [],
+    "evidence": {
+      "per_card": {
+        "blend-01": {
+          "report_id": "blend-01",
+          "queries": [
+            "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+            "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+            "single-step counterfactual distribution comparison constraint masking online path pruning"
+          ],
+          "hits": [
+            {
+              "query": "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+              "title": "Abstract Counterfactuals for Language Model Agents",
+              "url": "https://arxiv.org/html/2506.02946",
+              "snippet": "Abstract Counterfactuals for Language Model Agents\n\n# Abstract Counterfactuals for Language Model Agents\n\nEdoardo Pona King’s College in London edoardo.1.pona@kcl.ac.uk &Milad Kazemi King’s College in London milad.kazemi@kcl.ac.uk Yali Du King’s College in London yali.du@kcl.ac.uk &David Watson King’s College in London david.watson@kcl.ac.uk &Nicola Paoletti King’s College in London nicola.paolett…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+              "title": "Ablation Based Counterfactuals",
+              "url": "https://arxiv.org/html/2406.07908v1",
+              "snippet": "Ablation Based Counterfactuals\n\n11institutetext: Computer Science and Artificial Intelligence Laboratory, Massachusetts Institute of Technology, Cambridge MA 02139, USA 11email: {zhengdai,gifford}@mit.edu\n\n# Ablation Based Counterfactuals\n\nZheng Dai(✉) 11 0000-0002-8828-1075 David K Gifford(✉) 11 0000-0003-1709-4034\n\n###### Abstract\n\nDiffusion models are a class of generative models that generate …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+              "title": "CoDy: Counterfactual Explainers for Dynamic Graphs",
+              "url": "https://openreview.net/pdf?id=FE9QN8d536",
+              "snippet": "### CoDy: Counterfactual Explainers for Dynamic Graphs\n\nZhan Qu * 1 2 3 Daniel Gomm * 4 5 Michael Farber ¨ 1 2\n\n##### Abstract\n\nTemporal Graph Neural Networks (TGNNs) are widely used to model dynamic systems where relationships and features evolve over time. Al though TGNNs demonstrate strong predictive capabilities in these domains, their complex ar chitectures pose significant challenges for ex …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+              "title": "Graph Diffusion Counterfactual Explanation",
+              "url": "https://arxiv.org/pdf/2511.16287",
+              "snippet": "Graph Diffusion Counterfactual Explanation\n\n# Graph Diffusion Counterfactual Explanation\n\nDavid Bechtoldt and Sidney Bender Machine Learning Group This work was supported by BASLEARN-TU Berlin/BASF Joint Laboratory, co-financed by TU Berlin and BASF SE. TU Berlin 10587 Berlin Germany\n\n###### Abstract\n\nMachine learning models that operate on graph-structured data, such as molecular graphs or social…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "counterfactual ablation per-step transition distribution divergence graph traversal pruning",
+              "title": "Abstract Counterfactuals for Language Model Agents",
+              "url": "https://openreview.net/attachment?id=3AhNmbr2X0&name=supplementary_material",
+              "snippet": "### Abstract Counterfactuals for Language Model Agents\n\nEdoardo Pona King’s College in London edoardo.1.pona@kcl.ac.uk\n\nMilad Kazemi King’s College in London milad.kazemi@kcl.ac.uk\n\nYali Du King’s College in London yali.du@kcl.ac.uk\n\nDavid Watson King’s College in London david.watson@kcl.ac.uk\n\nNicola Paoletti King’s College in London nicola.paoletti@kcl.ac.uk\n\n##### Abstract\n\nCounterfactual infer…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+              "title": "StepPO: Step-Aligned Policy Optimization for Agentic Reinforcement Learning",
+              "url": "https://arxiv.org/pdf/2604.18401",
+              "snippet": "StepPO: Step-Aligned Policy Optimization for Agentic Reinforcement Learning\n\n\\correspondence\n\n# StepPO: Step-Aligned Policy Optimization for Agentic Reinforcement Learning\n\nDaoyu Wang\\frontsup1, Qingchuan Li\\frontsup1, Mingyue Cheng\\frontsup1\\corrauthor, Jie Ouyang\\frontsup1, Shuo Yu\\frontsup1, Qi Liu\\frontsup1, Enhong Chen\\frontsup1 \\affilsup 1State Key Laboratory of Cognitive Intelligence, Unive…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+              "title": "Revisiting Policy Gradients for Restricted Policy Classes: Escaping Myopic Local Optima with 𝑘-step Policy Gradients",
+              "url": "https://arxiv.org/html/2605.10909v1",
+              "snippet": "Revisiting Policy Gradients for Restricted Policy Classes: Escaping Myopic Local Optima with 𝑘-step Policy Gradients\n\n# Revisiting Policy Gradients for Restricted Policy Classes: Escaping Myopic Local Optima with $k$ -step Policy Gradients\n\nAlex DeWeese Guannan Qu Department of Electrical and Computer Engineering Carnegie Mellon University Pittsburgh, PA 15213-3890, USA {mdeweese, gqu}@andrew.cmu.…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2603.09090",
+              "snippet": "Cover Page\nOvercoming Valid Action Suppression in Unmasked\nPolicy Gradient Algorithms\nRenos Zabounidis1, Roy Siegelmann2, Mohamad Qadri1, Woojun Kim1,\nSimon Stepputtis3, Katia P. Sycara1\nKeywords: Action masking, policy gradient, valid action suppression, feasibility classification\nSummary\nAction masking constrains policies to valid actions in discrete-action reinforcement learning.\nExisting theor…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+              "title": "[2505.17508] On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning",
+              "url": "https://arxiv.org/pdf/2505.17508",
+              "snippet": "[2505.17508] On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning\n\n# On the Design of KL-Regularized Policy Gradient Algorithms for LLM Reasoning\n\nYifan Zhang 1 Yifeng Liu11footnotemark: 1 $~~{}^{1}$ Huizhuo Yuan1 Yang Yuan2,3 Quanquan Gu1† Andrew C Yao2,3† 1University of California, Los Angeles 2IIIS, Tsinghua University 3Shanghai Qi Zhi Institute Equal contribution; $\\dag…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "shadow policy KL divergence step-level degeneracy detection Markov decision process",
+              "title": "ajinkya-awari/adaptive-ai-monitoring",
+              "url": "https://github.com/ajinkya-awari/adaptive-ai-monitoring",
+              "snippet": "# Repository: ajinkya-awari/adaptive-ai-monitoring\n\nRL training monitor — detects reward hacking, entropy spikes, and behavioral drift via KL divergence. PID hardware loop included.\n\n- Stars: 0\n- Forks: 0\n- Watchers: 0\n- Open issues: 0\n- Primary language: Python\n- Languages: Python\n- License: MIT License (MIT)\n- Topics: ai-safety, anomaly-detection, behavioral-monitoring, pid-control, pytorch, rei…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "single-step counterfactual distribution comparison constraint masking online path pruning",
+              "title": "Flow-Based Single-Step Completion for Efficient and Expressive Policy Learning",
+              "url": "https://arxiv.org/html/2506.21427v1",
+              "snippet": "Flow-Based Single-Step Completion for Efficient and Expressive Policy Learning\n\n# Flow-Based Single-Step Completion for Efficient and Expressive Policy Learning\n\nPrajwal Koirala University prajwal@iastate.edu &Cody Fleming Iowa State University flemingc@iastate.edu\n\n###### Abstract\n\nGenerative models such as diffusion and flow-matching offer expressive policies for offline reinforcement learning (…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "single-step counterfactual distribution comparison constraint masking online path pruning",
+              "title": "Simple Steps to Success: A Method for Step-Based \n Counterfactual Explanations",
+              "url": "https://arxiv.org/html/2306.15557v3",
+              "snippet": "Simple Steps to Success: A Method for Step-Based Counterfactual Explanations\n# Simple Steps to Success: A Method for Step-Based\nCounterfactual Explanations\nJenny Hamerhamer@google.com\nGoogle DeepMind, New YorkNicholas Perello11footnotemark:1nperello@umass.edu\nUniversity of Massachusetts, AmherstJason Valladaresjason.valladares3@gmail.com\nGoogleVignesh Viswanathan11footnotemark:1vviswanathan@umass.…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "single-step counterfactual distribution comparison constraint masking online path pruning",
+              "title": "[2503.06652] Adding Additional Control to One-Step Diffusion with Joint Distribution Matching",
+              "url": "https://ar5iv.labs.arxiv.org/html/2503.06652",
+              "snippet": "[2503.06652] Adding Additional Control to One-Step Diffusion with Joint Distribution Matching\n\n# Adding Additional Control to One-Step Diffusion with Joint Distribution Matching\n\nYihong Luo 1* Tianyang Hu 2 Yifan Song 3 Jiacheng Sun 2 Zhenguo Li 2 Jing Tang 3,1† 1 HKUST 2 Huawei Noah’s Ark Lab 3 HKUST (GZ)\n\n###### Abstract\n\nWhile diffusion distillation has enabled one-step generation through metho…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "single-step counterfactual distribution comparison constraint masking online path pruning",
+              "title": "StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning",
+              "url": "https://arxiv.org/html/2605.27140v1",
+              "snippet": "StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning\n\n# StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning\n\nYanfei Zhang1, Xu Lin2, Chenglin Wu3 1Independent Researcher 2Tencent 3DeepWisdom\n\n###### Abstract\n\nReinforcement learning for multi-turn agents suffers from a credit-assignment mismatch: rewards are sparse and trajectory-leve…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-02": {
+          "report_id": "blend-02",
+          "queries": [
+            "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+            "analogical retrieval structural position congruence recognition trigger cross-domain schema",
+            "relational structure slot occupancy recognition event positional congruence no correct answer"
+          ],
+          "hits": [
+            {
+              "query": "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+              "title": "openreview.net",
+              "url": "https://openreview.net/pdf?id=c8yYcKuM7P",
+              "snippet": "Zero-Shot Open-Schema Entity Structure Discovery\nAnonymous ACL submission\nAbstract\n001 Entity structure extraction, which aims to\n002 extract entities and their associated at\u0002003 tribute–value structures from text, is an essen\u0002004 tial task for text understanding and knowledge\n005 graph construction. Existing methods based on\n006 large language models (LLMs) typically rely\n007 heavily on predefine…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+              "title": "Zero-Shot Open-Schema Entity Structure Discovery",
+              "url": "https://aclanthology.org/2026.eacl-long.354.pdf",
+              "snippet": "Proceedings of the 19th Conference of the European Chapter of the Association for Computational Linguistics Volume 1: Long Papers, pages 7547–7561 March 24-29, 2026 ©2026 Association for Computational Linguistics\n\n## Zero-Shot Open-Schema Entity Structure Discovery\n\nXueqiang Xu 1, Jinfeng Xiao 2*, James Barry 4, Mohab Elkaref 4, Jiaru Zou 1, Pengcheng Jiang 1, Yunyi Zhang 1, Max Giammona 3, Geeth …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+              "title": "Zero-Shot Open-Schema Entity Structure Discovery",
+              "url": "https://arxiv.org/html/2506.04458",
+              "snippet": "Zero-Shot Open-Schema Entity Structure Discovery\n\n# Zero-Shot Open-Schema Entity Structure Discovery\n\nXueqiang Xu1, Jinfeng Xiao2, James Barry4, Mohab Elkaref4, Jiaru Zou1, Pengcheng Jiang1, Yunyi Zhang1, Max Giammona3, Geeth de Mel4, Jiawei Han1 1University of Illinois at Urbana-Champaign 2Amazon 3IBM Research 4IBM Research Europe {xx19, hanj}@illinois.edu Prior to the co-author’s role at Amazon\n…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+              "title": "[2511.00898] Empowering LLMs with Structural Role Inference for Zero-Shot Graph Learning",
+              "url": "https://ar5iv.labs.arxiv.org/html/2511.00898",
+              "snippet": "[2511.00898] Empowering LLMs with Structural Role Inference for Zero-Shot Graph Learning\n\n# Empowering LLMs with Structural Role Inference for Zero-Shot Graph Learning\n\nHeng Zhang Jing Liu Jiajun Wu Haochen You Lubin Gan Yuling Shi Xiaodong Gu Zijian Zhang Shuai Chen Wenjun Huang Jin Huang*\n\n###### Abstract\n\nLarge Language Models have emerged as a promising approach for graph learning due to their…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "structural role matching open-domain recognition without ground truth relational skeleton slot filling",
+              "title": "[2306.04954] RE-Matching: A Fine-Grained Semantic Matching Method for Zero-Shot Relation Extraction",
+              "url": "https://ar5iv.labs.arxiv.org/html/2306.04954",
+              "snippet": "[2306.04954] RE-Matching: A Fine-Grained Semantic Matching Method for Zero-Shot Relation Extraction\n\n# RE-Matching: A Fine-Grained Semantic Matching Method for Zero-Shot Relation Extraction\n\nJun Zhao1111Equal Contributions., Wenyu Zhan1111Equal Contributions., Xin Zhao1, Qi Zhang1222Corresponding authors., Tao Gui2222Corresponding authors., Zhongyu Wei3, Junzhe Wang1, Minlong Peng4, Mingming Sun4 …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "analogical retrieval structural position congruence recognition trigger cross-domain schema",
+              "title": "Are Superficially Dissimilar Analogs better retrieved than Superficially Similar Disanalogs? - ScienceDirect",
+              "url": "https://www.sciencedirect.com/science/article/abs/pii/S0001691819301957",
+              "snippet": "Are Superficially Dissimilar Analogs better retrieved than Superficially Similar Disanalogs? - ScienceDirect\n\nSkip to main contentSkip to article\n\n## Acta Psychologica\n\nDate: February 2020\n\nArticle: 102989\n\n## Published by: Elsevier\n\n### Published by\n\nShow more\n\nResearch article\n\nGet rights and content\n\n# Are Superficially Dissimilar Analogs better retrieved than Superficially Similar Disanalogs?\n…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "analogical retrieval structural position congruence recognition trigger cross-domain schema",
+              "title": "Life is a Circus and We are the Clowns: Automatically Finding Analogies between Situations and Processes",
+              "url": "https://aclanthology.org/2022.emnlp-main.232.pdf",
+              "snippet": "Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, pages 3547–3562 December 7-11, 2022 ©2022 Association for Computational Linguistics\n\nLife is a Circus and We are the Clowns: Automatically Finding Analogies between Situations and Processes\n\nOren Sultan The Hebrew University of Jerusalem oren.sultan@mail.huji.ac.il\n\nDafna Shahaf The Hebrew University of Jerusal…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "analogical retrieval structural position congruence recognition trigger cross-domain schema",
+              "title": "STORYANALOGY: Deriving Story-level Analogies from Large Language Models to Unlock Analogical Understanding",
+              "url": "https://aclanthology.org/2023.emnlp-main.706.pdf",
+              "snippet": "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pages 11518–11537 December 6-10, 2023 ©2023 Association for Computational Linguistics\n\nSTORYANALOGY: Deriving Story-level Analogies from Large Language Models to Unlock Analogical Understanding Cheng Jiayang\n\n♠♢\n\nLin Qiu\n\n♢\n\nTsz Ho Chan\n\n♠\n\nTianqing Fang\n\n♠\n\nWeiqi Wang\n\n♠\n\nChunkit Chan\n\n♠\n\nDongyu Ru\n\n♢\n\nQipeng …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "relational structure slot occupancy recognition event positional congruence no correct answer",
+              "title": "A Neuro-Symbolic Approach to Structured Event Recognition",
+              "url": "http://sml.disi.unitn.it/papers/time2021.pdf",
+              "snippet": "A Neuro-Symbolic Approach to Structured Event \nRecognition \nGianluca Apriceno \nUniversity of Trento, Italy \nFondazione Bruno Kessler, Italy \n\nAndrea Passerini University of Trento, Italy\n\n| University | of Trento, Italy | |\n| --- | --- | --- |\n| Luciano | Serafini | |\n| Fondazione | Bruno Kessler, Italy | |\n\n#### Abstract\n\nEvents are structured entities with multiple components: the event type, th…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "relational structure slot occupancy recognition event positional congruence no correct answer",
+              "title": "[2210.11394] Solving Reasoning Tasks with a Slot Transformer",
+              "url": "https://ar5iv.labs.arxiv.org/html/2210.11394",
+              "snippet": "[2210.11394] Solving Reasoning Tasks with a Slot Transformer\n\n# Solving Reasoning Tasks with a Slot Transformer\n\nRyan Faulkner Deepmind rfaulk@google.com &Daniel Zoran Deepmind danielzoran@deepmind.com\n\n###### Abstract\n\nThe ability to carve the world into useful abstractions in order to reason about time and space is a crucial component of intelligence. In order to successfully perceive and act ef…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "relational structure slot occupancy recognition event positional congruence no correct answer",
+              "title": "Slot Machines: How LLMs Keep Track of Multiple Entities",
+              "url": "https://arxiv.org/html/2604.21139",
+              "snippet": "Slot Machines: How LLMs Keep Track of Multiple Entities\n\n# Slot Machines: How LLMs Keep Track of Multiple Entities\n\nPaul C. Bogdan Anthropic Fellows Program Jack Lindsey Anthropic Correspondence: paulcbogdan@gmail.com.\n\n###### Abstract\n\nLanguage models must bind entities to the attributes they possess and maintain several such binding relationships within a context. We study how multiple entities …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "relational structure slot occupancy recognition event positional congruence no correct answer",
+              "title": "Electrophysiological hallmarks for event relations and event roles in working memory",
+              "url": "https://slangscience.github.io/slang/papers/2024Electrophysiological%20hallmarks%20for%20event%20relations%20and%20event%20roles%20in%20working%20memory.pdf",
+              "snippet": "fnins-17-1282869 January 19, 2024 Time: 16:28 # 1\n\nTYPE Original Research PUBLISHED 24 January 2024 DOI 10.3389/fnins.2023.1282869\n\nOPEN ACCESS\n\nEDITED BY\n\nBenjamin Thompson, University of Waterloo, Canada\n\nREVIEWED BY\n\nEva Wittenberg, \nCentral European University, Hungary \nAlexis Wellwood, \nUniversity of Southern California, \nUnited States \n\n*CORRESPONDENCE\n\nXinchi Yu xcyu@umd.edu\n\nRECEIVED 25 Au…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "relational structure slot occupancy recognition event positional congruence no correct answer",
+              "title": "A framework of mining semantic-based probabilistic event relations for complex activity recognition",
+              "url": "https://www.sciencedirect.com/science/article/abs/pii/S0020025516313457",
+              "snippet": "A framework of mining semantic-based probabilistic event relations for complex activity recognition - ScienceDirect\n[Skip to main content](#screen-reader-main-content)[Skip to article](#screen-reader-main-title)\n[![Elsevier logo](https://sdfestaticassets-us-east-1.sciencedirectassets.com/shared-assets/24/images/elsevier-non-solus-new-grey.svg)ScienceDirect](https://www.sciencedirect.com/)\n[My acco…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-03": {
+          "report_id": "blend-03",
+          "queries": [
+            "sparse attractor vector implied structural gaps absence-coded search wandering agent",
+            "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+            "constraint inference missing boundary condition implied slot encoding knowledge graph exploration"
+          ],
+          "hits": [
+            {
+              "query": "sparse attractor vector implied structural gaps absence-coded search wandering agent",
+              "title": "Beyond Dense States: Elevating Sparse Transcoders to Active Operators for Latent Reasoning",
+              "url": "https://arxiv.org/html/2602.01695v1",
+              "snippet": "Beyond Dense States: Elevating Sparse Transcoders to Active Operators for Latent Reasoning\n\n# Beyond Dense States: Elevating Sparse Transcoders to Active Operators for Latent Reasoning\n\nYadong Wang Haodong Chen Yu Tian Chuanxing Geng Dong Liang Xiang Chen\n\n###### Abstract\n\nLatent reasoning compresses the chain-of-thought (CoT) into continuous hidden states, yet existing methods rely on dense laten…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "sparse attractor vector implied structural gaps absence-coded search wandering agent",
+              "title": "[2603.09787] What is Missing? Explaining Neurons Activated by Absent Concepts",
+              "url": "https://ar5iv.labs.arxiv.org/html/2603.09787",
+              "snippet": "[2603.09787] What is Missing? Explaining Neurons Activated by Absent Concepts\n\n# What is Missing? Explaining Neurons Activated by Absent Concepts\n\nRobin Hesse Simone Schaub-Meyer Janina Hesse Bernt Schiele Stefan Roth\n\n###### Abstract\n\nExplainable artificial intelligence (XAI) aims to provide human-interpretable insights into the behavior of deep neural networks (DNNs), typically by estimating a s…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "sparse attractor vector implied structural gaps absence-coded search wandering agent",
+              "title": "1 Introduction",
+              "url": "https://arxiv.org/html/2410.19750v2",
+              "snippet": "1 Introduction\n\n###### Abstract\n\nSparse autoencoders have recently produced dictionaries of high-dimensional vectors corresponding to the universe of concepts represented by large language models. We find that this concept universe has interesting structure at three levels: (1) The “atomic” small-scale structure contains “crystals” whose faces are parallelograms or trapezoids, generalizing well-kn…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "sparse attractor vector implied structural gaps absence-coded search wandering agent",
+              "title": "A sparse null code emerges in deep neural networks",
+              "url": "https://proceedings.mlr.press/v243/robinson24a/robinson24a.pdf",
+              "snippet": "A sparse null code emerges in deep neural networks\n\nBrian S. Robinson 1, Nathan Drenkow 1, Colin Conwell 2, and Michael F. Bonner 2\n\n1 Research and Exploratory Development Department, Johns Hopkins University Applied Physics Laboratory, Laurel, MD 2 Department of Cognitive Science , Johns Hopkins University, Baltimore, MD 1{ brian.robinson, nathan.drenkow } @jhuapl.edu 2{ colinconwell, mfbonner } …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+              "title": "LitGapFinder: Automated Scientific Literature Gap Analysis and Hypothesis Generation — clawRxiv",
+              "url": "https://clawrxiv.io/abs/2603.00235",
+              "snippet": "LitGapFinder: Automated Scientific Literature Gap Analysis and Hypothesis Generation — clawRxiv\n\n← Back to archive\n\n# LitGapFinder: Automated Scientific Literature Gap Analysis and Hypothesis Generation\n\nclawrxiv:2603.00235· litgapfinder-agent·with BaoLin Kan·Mar 22, 2026\n\n▲ 1 ▼\n\nCite\n\nWe present LitGapFinder, an AI-agent-executable skill that automates scientific literature gap analysis and hypot…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+              "title": "The Missing Parts | June Kim",
+              "url": "https://www.june.kim/the-missing-parts",
+              "snippet": "The Missing Parts | June Kim\n\n# The Missing Parts\n\nPart of the cognition series. Builds on The Parts Bin.\n\n### The 3×3 problem\n\nThe Parts Bin ended with two grids, Filter and Attend, where every cell filled with a known algorithm. That validates the axes: selection semantics × error guarantee partitions Filter cleanly, output form × redundancy control partitions Attend cleanly. No misplacements, n…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+              "title": "proceedings.neurips.cc",
+              "url": "https://proceedings.neurips.cc/paper/2021/file/0d7363894acdee742caf7fe4e97c4d49-Paper.pdf",
+              "snippet": "KS-GNN: Keywords Search over Incomplete Graphs\nvia Graph Neural Network\nYu Hao\nUniversity of New South Wales\nNSW, Australia\nyu.hao@unsw.edu.au\nXin Cao∗\nUniversity of New South Wales\nNSW, Australia\nxin.cao@unsw.edu.au\nYufan Sheng\nUniversity of New South Wales\nNSW, Australia\nyufan.sheng@unsw.edu.au\nYixiang Fang\nChinese University of Hong\nKong, Shenzhen, China\nfangyixiang@cuhk.edu.cn\nWei Wang\nThe Hon…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+              "title": "Causal Interventions Reveal Shared Structure Across English Filler–Gap Constructions",
+              "url": "https://arxiv.org/html/2505.16002",
+              "snippet": "Causal Interventions Reveal Shared Structure Across English Filler–Gap Constructions\n\n# Causal Interventions Reveal Shared Structure Across English Filler–Gap Constructions\n\nSasha Boguraev1 Christopher Potts2 Kyle Mahowald1 1The University of Texas at Austin 2Stanford University {sasha.boguraev,kyle}@utexas.edu cgpotts@stanford.edu\n\n###### Abstract\n\nLanguage Models (LMs) have emerged as powerful s…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "gap-driven search presupposed unfilled relational slots Markov walk attractor structural absence",
+              "title": "Human memory search as a random walk in a semantic network",
+              "url": "https://papers.nips.cc/paper_files/paper/2012/file/14d9e8007c9b41f57891c48e07c23f57-Paper.pdf",
+              "snippet": "Human memory search as a random walk in a semantic network\n\nJoshua T. Abbott Department of Psychology University of California, Berkeley Berkeley, CA 94720 joshua.abbott@berkeley.edu\n\nJoseph L. Austerweil Department of Psychology University of California, Berkeley Berkeley, CA 94720 joseph.austerweil@gmail.com\n\nThomas L. Griffiths Department of Psychology University of California, Berkeley Berkele…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "constraint inference missing boundary condition implied slot encoding knowledge graph exploration",
+              "title": "[2308.04712] Slot Induction via Pre-trained Language Model Probing and Multi-level Contrastive Learning",
+              "url": "https://ar5iv.labs.arxiv.org/html/2308.04712",
+              "snippet": "[2308.04712] Slot Induction via Pre-trained Language Model Probing and Multi-level Contrastive Learning\n\n# Slot Induction via Pre-trained Language Model Probing and Multi-level Contrastive Learning\n\nHoang H. Nguyen1, Chenwei Zhang2, Ye Liu3, Philip S. Yu1 1 Department of Computer Science, University of Illinois at Chicago, Chicago, IL, USA 2 Amazon, Seattle, WA, USA 3 Salesforce Research, Palo Alt…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "constraint inference missing boundary condition implied slot encoding knowledge graph exploration",
+              "title": "Prediction of Implicit Relationships Using Uncertain Knowledge Graph Embedding and Bayesian Networks | Neural Processing Letters | Springer Nature Link",
+              "url": "https://link.springer.com/article/10.1007/s11063-025-11794-2",
+              "snippet": "Prediction of Implicit Relationships Using Uncertain Knowledge Graph Embedding and Bayesian Networks | Neural Processing Letters | Springer Nature Link\n\n# Prediction of Implicit Relationships Using Uncertain Knowledge Graph Embedding and Bayesian Networks\n\n- Published: 29 July 2025\n- Open access\n\n- Cite this article\n- Volume 57, article number 72, (2025)\n\nYou have full access to this open access a…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "constraint inference missing boundary condition implied slot encoding knowledge graph exploration",
+              "title": "amazon-science/nlu-slot-constraints",
+              "url": "https://github.com/amazon-science/nlu-slot-constraints",
+              "snippet": "# Repository: amazon-science/nlu-slot-constraints (from template [amazon-archives/__template_Apache-2.0](https://github.com/amazon-archives/__template_Apache-2.0))\n\n- Stars: 4\n- Forks: 1\n- Watchers: 4\n- Open issues: 1\n- Primary language: Python\n- Languages: Python (93.9%), Shell (6.1%)\n- License: Apache License 2.0 (Apache-2.0)\n- Default branch: main\n- Created: 2021-04-15T16:44:50Z\n- Last push: 20…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "constraint inference missing boundary condition implied slot encoding knowledge graph exploration",
+              "title": "Context-aware Inductive Knowledge Graph Completion with Latent Type Constraints and Subgraph Reasoning",
+              "url": "https://arxiv.org/html/2410.16803",
+              "snippet": "Context-aware Inductive Knowledge Graph Completion with Latent Type Constraints and Subgraph Reasoning\n\n# Context-aware Inductive Knowledge Graph Completion with Latent Type Constraints and Subgraph Reasoning\n\nMuzhi Li1,2, Cehao Yang3,211footnotemark: 1, Chengjin Xu211footnotemark: 1, Zixing Song4, Xuhui Jiang2, Jian Guo2, Ho-fung Leung, Irwin King122footnotemark: 2 Equal contribution.Corrsponding…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "constraint inference missing boundary condition implied slot encoding knowledge graph exploration",
+              "title": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling",
+              "url": "https://ar5iv.labs.arxiv.org/html/2108.13934",
+              "snippet": "[2108.13934] Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\n# Robust Retrieval Augmented Generation for Zero-shot Slot Filling\n\nMichael Glass, Gaetano Rossiello, Md Faisal Mahbub Chowdhury, Alfio Gliozzo IBM Research AI Thomas J. Watson Research Center, NY\n\n###### Abstract\n\nAutomatically inducing high quality knowledge graphs from a given collection of documents still remains a …",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        },
+        "blend-04": {
+          "report_id": "blend-04",
+          "queries": [
+            "fuzzy membership distribution anchor reweighting iterative recognition-driven concept crystallization",
+            "interactive concept refinement recognition feedback weight update without explicit articulation",
+            "bi-directional binding membership gradient update vague concept sharpening user steering recognition"
+          ],
+          "hits": [
+            {
+              "query": "fuzzy membership distribution anchor reweighting iterative recognition-driven concept crystallization",
+              "title": "Concept learning based on improved FCM- BiLSTM for fuzzy data classification and fusion | Scientific Reports",
+              "url": "https://www.nature.com/articles/s41598-025-14821-3",
+              "snippet": "Concept learning based on improved FCM- BiLSTM for fuzzy data classification and fusion | Scientific Reports\n\n### Subjects\n\n- Computer science\n- Information technology\n\n## Abstract\n\nConcept-Cognitive Learning (CCL) is an effective concept learning approach that simulates human cognitive processes to facilitate knowledge discovery. However, existing CCL methods face two significant challenges. One …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "fuzzy membership distribution anchor reweighting iterative recognition-driven concept crystallization",
+              "title": "Adaptive Granular-Ball Concept-Cognitive Learning for Efficient and Robust Fuzzy Knowledge Representation in Classification Tasks",
+              "url": "http://weihuaxu.com/papers/2026/2026-TFS-Guo-Xu.pdf",
+              "snippet": "IEEE TRANSACTIONS ON FUZZY SYSTEMS, VOL. 34, NO. 5, MAY 2026 1523\n\n## Adaptive Granular-Ball Concept-Cognitive Learning for Efficient and Robust Fuzzy Knowledge\n\n## Representation in Classification Tasks\n\nDoudou Guo , Weihua Xu , Shuyin Xia , Senior Member, IEEE, Weiping Ding , Senior Member, IEEE, Yuhua Qian , Member, IEEE, and Kehua Yuan\n\nAbstract—In many real-world scenarios, data unreliability…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "fuzzy membership distribution anchor reweighting iterative recognition-driven concept crystallization",
+              "title": "Two-Way Concept-Cognitive Learning Method: A Fuzzy-Based Progressive Learning | IEEE Transactions on Fuzzy Systems",
+              "url": "https://dl.acm.org/doi/10.1109/TFUZZ.2022.3216110",
+              "snippet": "Two-Way Concept-Cognitive Learning Method: A Fuzzy-Based Progressive Learning | IEEE Transactions on Fuzzy Systems\n\nskip to main content\n\nContents\n\n## Abstract\n\nGranular computing (GrC) and two-way concept learning (TCL) are influential studies of knowledge processing and cognitive learning. A central notion of two-way concept learning is learning concepts from an arbitrary information granule. Al…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "interactive concept refinement recognition feedback weight update without explicit articulation",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2212.07430",
+              "snippet": "Interactive Concept Bottleneck Models\nKushal Chauhan, Rishabh Tiwari, Jan Freyberg, Pradeep Shenoy, Krishnamurthy Dvijotham*\nGoogle Research\n{kushalchauhan, rishabhtiwari,janfreyberg,shenoypradeep,dvij}@google.com\nAbstract\nConcept bottleneck models (CBMs) are interpretable neural\nnetworks that first predict labels for human-interpretable con\u0002cepts relevant to the prediction task, and then predict …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "interactive concept refinement recognition feedback weight update without explicit articulation",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2505.09925",
+              "snippet": "arXiv:2505.09925v1 [cs.LG] 15 May 2025\nReinforced Interactive Continual Learning via\nReal-time Noisy Human Feedback\nYutao Yang1, Jie Zhou1∗, Junsong Li1, Qianjun Pan1, Bihao Zhan1,\nQin Chen1, Xipeng Qiu 2,3, Liang He1\n1School of Computer Science and Technology, East China Normal University\n2Shanghai Innovation Institute 3School of Computer Science, Fudan University.\nAbstract\nThis paper introduces …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "interactive concept refinement recognition feedback weight update without explicit articulation",
+              "title": "Retrospective Learning from Interactions",
+              "url": "https://aclanthology.org/2025.acl-long.1200.pdf",
+              "snippet": "Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 24580–24606 July 27 - August 1, 2025 ©2025 Association for Computational Linguistics\n\nRetrospective Learning from Interactions\n\nZizhao Chen, Mustafa Omer Gul, Yiwei Chen, Gloria Geng, Anne Wu & Yoav Artzi Department of Computer Science and Cornell Tech, Cornell University {czz,mom…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "interactive concept refinement recognition feedback weight update without explicit articulation",
+              "title": "[2112.02290] Interactive Disentanglement: Learning Concepts by Interacting with their Prototype Representations",
+              "url": "https://ar5iv.labs.arxiv.org/html/2112.02290",
+              "snippet": "[2112.02290] Interactive Disentanglement: Learning Concepts by Interacting with their Prototype Representations\n\n# Interactive Disentanglement: Learning Concepts by Interacting with their Prototype Representations\n\nWolfgang Stammer1,3 Marius Memmel1 Patrick Schramowski1,3 Kristian Kersting1,2,3 1Computer Science Department, TU Darmstadt; 2Centre for Cognitive Science, TU Darmstadt 3Hessian Center …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "interactive concept refinement recognition feedback weight update without explicit articulation",
+              "title": "Learning to Receive Help: Intervention-Aware Concept Embedding Models",
+              "url": "https://arxiv.org/html/2309.16928v3",
+              "snippet": "Learning to Receive Help: Intervention-Aware Concept Embedding Models\n\n# Learning to Receive Help: Intervention-Aware Concept Embedding Models\n\nMateo Espinosa Zarlenga University of Cambridge me466@cam.ac.uk &Katherine M. Collins University of Cambridge kmc61@cam.ac.uk &Krishnamurthy (Dj) Dvijotham Google DeepMind dvij@google.com &Adrian Weller University of Cambridge Alan Turing Institute aw665@c…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "bi-directional binding membership gradient update vague concept sharpening user steering recognition",
+              "title": "arxiv.org",
+              "url": "https://arxiv.org/pdf/2205.14865",
+              "snippet": "Prompt-aligned Gradient for Prompt Tuning\nBeier Zhu1 Yulei Niu2 Yucheng Han1 Yue Wu3 Hanwang Zhang1*\n1Nanyang Technological University 2Columbia University 3Damo Academy, Alibaba Group\nbeier002@e.ntu.edu.sg, yn.yuleiniu@gmail.com yucheng002@e.ntu.edu.sg\nmatthew.wy@alibaba-inc.com hanwangzhang@ntu.edu.sg\nAbstract\nThanks to the large pre-trained vision-language mod\u0002els (VLMs) like CLIP [37], we can …",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "bi-directional binding membership gradient update vague concept sharpening user steering recognition",
+              "title": "Dynamic Steering With Episodic Memory For Large Language Models",
+              "url": "https://aclanthology.org/2025.findings-acl.706.pdf",
+              "snippet": "Findings of the Association for Computational Linguistics: ACL 2025, pages 13731–13749 July 27 - August 1, 2025 ©2025 Association for Computational Linguistics\n\nDynamic Steering With Episodic Memory For Large Language Models\n\nVan Dai Do 1, Quan Hung Tran 2, Svetha Venkatesh 1, Hung Le 1 1Applied AI Initiative, Deakin University, Australia 2Meta {v.do,thai.le}@deakin.edu.au\n\nAbstract Large Language…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "bi-directional binding membership gradient update vague concept sharpening user steering recognition",
+              "title": "Bridging Mechanistic Interpretability and Prompt Engineering with Gradient Ascent for Interpretable Persona Control",
+              "url": "https://arxiv.org/html/2601.02896",
+              "snippet": "Bridging Mechanistic Interpretability and Prompt Engineering with Gradient Ascent for Interpretable Persona Control\n\n# Bridging Mechanistic Interpretability and Prompt Engineering with Gradient Ascent for Interpretable Persona Control\n\nHarshvardhan Saini hs1062005@gmail.com Department of Computer Science Indian Institute of Technology (ISM), Dhanbad Yiming Tang yiming@nus.edu.sg National Universit…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "bi-directional binding membership gradient update vague concept sharpening user steering recognition",
+              "title": "ODESTEER",
+              "url": "https://odesteer.github.io/",
+              "snippet": "ODESTEER\n\n# ODESteer\n\nA Unified ODE-Based Steering Framework for\n\nLLM Alignment\n\nInterpreting Activation Steering as ODE Dynamics Guided by Barrier Functions to Steer Directions Adaptively\n\nICLR 2026\n\nComparison between ODESteer and existing activation addition methods.\n\n* Equal Contribution † Equal Advising\n\n1 University of Illinois Urbana-Champaign 2 Northwestern University 3 William & Mary &nbs…",
+              "provider": "exa-neural"
+            },
+            {
+              "query": "bi-directional binding membership gradient update vague concept sharpening user steering recognition",
+              "title": "ODESteer: A Unified ODE-Based Steering Framework for LLM Alignment",
+              "url": "https://arxiv.org/html/2602.17560v1",
+              "snippet": "ODESteer: A Unified ODE-Based Steering Framework for LLM Alignment\n\n# ODESteer: A Unified ODE-Based Steering Framework for LLM Alignment\n\nHongjue Zhao1 Haosen Sun211footnotemark: 1 Jiangtao Kong3 Xiaochang Li3 Qineng Wang2 Liwei Jiang4 Qi Zhu2 Tarek Abdelzaher1 Yejin Choi5 Manling Li2 Huajie Shao322footnotemark: 2 1University of Illinois Urbana-Champaign, 2Northwestern University, 3William & Mary,…",
+              "provider": "exa-neural"
+            }
+          ],
+          "searched": true,
+          "found_anything": true,
+          "note": ""
+        }
+      },
+      "query_model": "anthropic/claude-sonnet-4-6",
+      "total_queries": 12,
+      "total_hits": 54,
+      "extraction_cost_usd": 0.0101,
+      "extraction_ok": true,
+      "search_errors": [],
+      "call_log": [
+        {
+          "phase": "blend_extract_queries",
+          "model": "anthropic/claude-sonnet-4-6",
+          "in_tok": 2176,
+          "out_tok": 236,
+          "cost_usd": 0.0101,
+          "ms": 7137.8,
+          "ok": true,
+          "err": ""
+        }
+      ],
+      "elapsed_ms": 8696.9
+    },
+    "total_cost_usd": 0.0818,
+    "cost_ceiling_usd": 8.0,
+    "truncated_by_budget": false,
+    "parser_notes": [],
+    "call_log": [
+      {
+        "phase": "blend_verdict",
+        "model": "anthropic/claude-sonnet-4-6",
+        "in_tok": 14324,
+        "out_tok": 1916,
+        "cost_usd": 0.0717,
+        "ms": 40504.8,
+        "ok": true,
+        "err": ""
+      }
+    ],
+    "input_blend_count": 4,
+    "verify_model": "anthropic/claude-sonnet-4-6"
+  },
+  "quarantined_blend_ids": [],
+  "models": {
+    "blender": "anthropic/claude-opus-4-8",
+    "drift": "deepseek/deepseek-v4-pro",
+    "query": "anthropic/claude-sonnet-4-6",
+    "verify": "anthropic/claude-sonnet-4-6"
+  },
+  "stage_costs": {
+    "blend": 0.7423,
+    "drift": 0.0049,
+    "verify": 0.0818
+  },
+  "total_cost_usd": 0.829,
+  "elapsed_ms": 125104.1
+}

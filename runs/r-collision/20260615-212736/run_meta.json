@@ -1,0 +1,67 @@
+{
+  "timestamp": "20260615-212736",
+  "git_sha": "0a915f0ca130b8c7b38fc9a6b40c0458da1abc4c",
+  "git_branch": "chaos-amp",
+  "control_room": {
+    "WANDER_DOMAINS": [],
+    "WANDER_MODE": "absolute_chaos",
+    "WANDER_AGENTS": 6,
+    "WANDER_MODEL": "deepseek/deepseek-v4-pro",
+    "SORTER_MODEL": "anthropic/claude-sonnet-4-6",
+    "BLENDER_MODEL": "anthropic/claude-opus-4-8",
+    "DRIFT_CHECKER_MODEL": "anthropic/claude-sonnet-4-6",
+    "AUDITOR_MODEL": "anthropic/claude-sonnet-4-6",
+    "RANKER_MODEL": "anthropic/claude-sonnet-4-6",
+    "R1_FORMALIZE_MODEL": "deepseek/deepseek-r1",
+    "CONTRIBUTION_BOARD": true
+  },
+  "durations_seconds": {
+    "cushion": 48.25,
+    "wander": 1646.29,
+    "dossier_sort": 878.89,
+    "collision": 133.43
+  },
+  "sort": {
+    "known": 22,
+    "invalid": 0,
+    "unplaced": 15
+  },
+  "collision": {
+    "blends": 4,
+    "quarantined": 0,
+    "bins": {
+      "known": 0,
+      "adjacent": 1,
+      "novel": 3,
+      "flawed": 0
+    },
+    "stage_costs": {
+      "blend": 0.984,
+      "drift": 0.012,
+      "verify": 0.0873
+    },
+    "collision_cost_usd": 1.0833
+  },
+  "halo": {
+    "model": "anthropic/claude-sonnet-4-6",
+    "blind_spots": {
+      "cushion": 5,
+      "cards": 5,
+      "blends": 5
+    },
+    "ok": {
+      "cushion": true,
+      "cards": true,
+      "blends": true
+    },
+    "total_cost_usd": 0.0694,
+    "report_md": "/Users/nikhil/Downloads/constellax_collision_20260615-212736.md"
+  },
+  "quality": {
+    "model": "anthropic/claude-sonnet-4-6",
+    "ranked": 4,
+    "top_blend": "blend-04",
+    "total_cost_usd": 0.0246
+  },
+  "output_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-collision/20260615-212736"
+}

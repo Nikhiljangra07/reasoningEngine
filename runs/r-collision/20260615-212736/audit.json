@@ -1,0 +1,133 @@
+{
+  "cushion_audit": {
+    "layer": "cushion",
+    "blind_spots": [
+      {
+        "layer": "cushion",
+        "blind_spot": "The question asks how the pipeline decides when to STOP and when to keep going, but never specifies what 'done' looks like — there is no definition of a termination criterion or a convergence signal. Without that, any literature on stopping rules is unanchored: stop relative to what target, what threshold, what oracle?",
+        "why_it_matters": "Every existing framework for autonomous pipeline termination (RLHF reward thresholds, critic-score plateaus, coverage metrics) is parameterized against a goal signal. If the question cannot name what 'enough structure' means for Stage 2's skeleton, the audit of stopping mechanisms retrieves mechanisms with no way to evaluate their fit.",
+        "severity": "high",
+        "suggested_angle": "Define a concrete termination signal for Stage 2 — e.g., semantic coverage of Stage 1 output above threshold X, or no new structural slot added after N cycles — then audit stopping literature against that signal."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The question conflates two distinct governance problems — WHEN to re-route versus WHAT angle to twist toward — as if they are one mechanism. Existing literature separates trigger detection (anomaly, stagnation, contradiction) from reframing strategy (adversarial prompt injection, perspective rotation, constraint relaxation). The question asks for both but treats them as a single slot.",
+        "why_it_matters": "Retrieving literature on 'reframing triggers' will return papers on either detection or strategy, rarely both in one place. The question will produce a blended answer that is shallow on each half, missing the handoff logic between the two — which is precisely where autonomous governance lives.",
+        "severity": "high",
+        "suggested_angle": "Split the question into two sub-questions: (1) what signal causes the orchestrator to flag a re-route, and (2) given a flag, what mechanism selects the new angle — then find literature that addresses the handoff between them."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The question asks how the pipeline 'temporarily twists its own framing or cushion' but silently assumes the cushion is a mutable object the orchestrator can write to. This is an architectural assumption — not all multi-agent frameworks allow the orchestrator to modify the task specification mid-run; many treat it as immutable and instead mutate agent context or tool access. The question does not distinguish between cushion mutation and context mutation.",
+        "why_it_matters": "If the literature retrieved describes context mutation (e.g., chain-of-thought steering, prompt injection into agent memory) but the system actually needs cushion-level rewriting, the findings will appear relevant but will not transfer. The gap between the two is where the design breaks.",
+        "severity": "high",
+        "suggested_angle": "Explicitly decide whether Stage 2's orchestrator rewrites the shared task specification or only modifies per-agent context, then audit literature specifically for that architectural choice."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The question asks how the pipeline dynamically spawns or drops agents, but never asks what the COST MODEL is for spawning — latency, token budget, coherence degradation from too many divergent views. Existing literature on dynamic agent allocation (e.g., mixture-of-agents, speculative decoding ensembles) always operates against a resource constraint. Without naming the constraint, 'how many and when' has no answer — only a list of heuristics with no selection criterion.",
+        "why_it_matters": "A later commander retrieving allocation strategies will find a menu of options (spawn on divergence, drop on redundancy, cap at N) with no basis for choosing among them for this specific pipeline. The question will produce a catalog, not a decision.",
+        "severity": "medium",
+        "suggested_angle": "Name the binding constraint on agent spawning — latency ceiling, token budget, or coherence threshold — and audit allocation literature against that constraint specifically."
+      },
+      {
+        "layer": "cushion",
+        "blind_spot": "The question presupposes that the orchestrator layer is a single, identifiable component that 'governs' the pipeline. It does not consider the possibility — well-documented in multi-agent literature — that governance is emergent and distributed: no single orchestrator exists; stopping, re-routing, and allocation arise from local agent interactions and shared state. The question may be hunting for a centralized controller that the best-performing systems do not have.",
+        "why_it_matters": "If the most relevant existing knowledge describes decentralized governance (stigmergy, market-based allocation, consensus protocols) but the question frames the search around a central orchestrator, the most applicable literature will be systematically missed or misread as irrelevant.",
+        "severity": "medium",
+        "suggested_angle": "Audit literature on both centralized orchestrator architectures and emergent/decentralized governance, and surface which class of system the Stage 2 design is actually committing to — before retrieving mechanisms."
+      }
+    ],
+    "cost_usd": 0.0219,
+    "ok": true,
+    "note": ""
+  },
+  "cards_audit": {
+    "layer": "cards",
+    "blind_spots": [
+      {
+        "layer": "cards",
+        "blind_spot": "No card addresses the specific trigger logic for re-routing: what internal signal — not just 'diminishing returns' in the abstract — causes the orchestrator to abandon a current assembly angle and spawn agents toward a different framing. The cards gesture at convergence metrics (gossip disagreement vector, deep search diminishing signal) but none names the concrete discriminant between 'keep accumulating on this angle' vs. 'this angle is structurally exhausted and a new one must be opened.'",
+        "why_it_matters": "The QUESTION asks explicitly what TRIGGERS a re-route or a new feature. Without a named trigger discriminant, Stage 2 has no actionable stop/pivot logic — it can only wait for a global convergence signal that may never fire cleanly.",
+        "severity": "high",
+        "suggested_angle": "Hunt for work on adaptive search or beam search pruning that names the per-branch signal (e.g., entropy of new fragments, rate of novel node creation, inter-fragment contradiction density) used to kill a branch and reallocate budget to a new one."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card covers how the orchestrator temporarily distorts its own framing — the cushion-twisting mechanism the QUESTION names explicitly. All cards treat the problem frame as stable while agents explore within it. None addresses the meta-move of the system deliberately adopting a rival or inverted framing to stress-test the current skeleton, then snapping back.",
+        "why_it_matters": "The QUESTION asks specifically how the pipeline 'temporarily twists its own framing or cushion, and toward which angle.' This is a distinct capability from spawning agents on sub-questions; it requires the orchestrator to hold two frames simultaneously and know when to collapse back. No card touches this.",
+        "severity": "high",
+        "suggested_angle": "Look at adversarial collaboration architectures, red-team/blue-team LLM setups, or counterfactual prompting pipelines where a second orchestrator is instantiated with an inverted prior — and specifically how the system decides which frame survives the collision."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card addresses agent DROP logic — the cards cover spawning (AgenticNetOS graph synthesis, Nomad breadth-first expansion) but none covers the decision to terminate a live agent mid-run: what signal justifies killing a divergent thread before it returns, rather than waiting for its output.",
+        "why_it_matters": "The QUESTION asks how the system 'spawns OR DROPS agents.' Asymmetric coverage here means Stage 2 has a spawn model but no pruning model — which in a live pipeline means runaway resource consumption and no principled way to concentrate effort on the most fertile angle.",
+        "severity": "high",
+        "suggested_angle": "Search for work on speculative execution cancellation in parallel LLM inference, or on bandit-style early stopping for parallel search arms — specifically the kill condition that fires before a thread completes."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "The cards are almost entirely drawn from single-domain analogies (gossip algorithms, consciousness theory, map-drawing inference) with no card from the multi-agent systems literature that directly studies orchestrator-evaluator architectures (e.g., AutoGen, CrewAI, LangGraph, or the CAMEL paper). The wander clustered on lateral analogies and missed the primary literature on the exact structure the QUESTION describes.",
+        "why_it_matters": "The QUESTION asks for 'the most relevant existing knowledge about autonomous multi-agent pipelines that include a collaborator/auditor/evaluator layer.' The most relevant existing knowledge is in that primary literature, and it is entirely absent from the card set — meaning the audit is built on analogies rather than direct evidence.",
+        "severity": "high",
+        "suggested_angle": "Direct a wanderer explicitly at AutoGen's conversation patterns, LangGraph's conditional edge logic, and the CAMEL role-playing paper — specifically extracting how each handles orchestrator stop conditions and dynamic agent allocation."
+      },
+      {
+        "layer": "cards",
+        "blind_spot": "No card addresses the skeleton's own representation format — what data structure Stage 2 actually builds as it assembles fragments into a concept. The cards treat 'skeleton' as a metaphor but never ask: is it a graph, a slot-filler schema, a ranked list of claims, a tensor? The choice of representation determines what 'assembly' and 'convergence' even mean operationally.",
+        "why_it_matters": "Every mechanism the QUESTION asks about — stop conditions, re-routes, framing twists, agent allocation — depends on what the orchestrator is reading when it makes those decisions. If the skeleton's representation is undefined, all governance logic floats without an anchor.",
+        "severity": "medium",
+        "suggested_angle": "Look at knowledge graph construction pipelines and structured generation work (e.g., DSPy, Outlines, or ontology-building agents) that make the intermediate representation explicit — and extract what properties of that representation make it legible to an evaluator layer."
+      }
+    ],
+    "cost_usd": 0.0259,
+    "ok": true,
+    "note": ""
+  },
+  "blends_audit": {
+    "layer": "blends",
+    "blind_spots": [
+      {
+        "layer": "blends",
+        "blind_spot": "No blend specifies the trigger mechanism that converts a fertility or divergence-collapse reading into an actual agent-spawn or agent-drop decision — the blends describe what to measure but never name the decision rule that crosses from measurement to allocation action.",
+        "why_it_matters": "The QUESTION asks explicitly how the pipeline dynamically allocates — spawns or drops — agents and when. Without a named decision rule (threshold, gradient sign-change, ratio, etc.) the allocation question is unanswered regardless of how well fertility or divergence is measured.",
+        "severity": "high",
+        "suggested_angle": "Define the allocation decision as a function of fertility second-derivative sign and divergence-collapse disambiguation result: positive second-derivative + shape-absent → spawn; negative second-derivative + shape-present → drop. Make the rule explicit and testable."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "The blends never address how the pipeline temporarily twists its own framing or cushion — blend-03 mentions angle weights but only as something that cannot be pre-compiled, not as something that gets dynamically rewritten mid-run. The mechanism by which the active problem-frame is mutated toward a specific angle is entirely absent.",
+        "why_it_matters": "The QUESTION asks specifically how the pipeline twists its own framing and toward which angle while continuing to generate. None of the four blends supply a reframing operator or name what selects the twist direction. This is a complete slot left unfilled.",
+        "severity": "high",
+        "suggested_angle": "Treat the cushion as a mutable register with a versioned stack. A twist is a push onto that stack with an expiry condition; the redirector in blend-02 is the natural agent to issue the push. The angle is selected by whichever divergent agent cluster is currently showing the highest fertility formation rate."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-02's register-stratified evaluator assumes the redirector can read live connection-density gradients from inside the fragment flux, but no blend names what data structure or signal the redirector actually reads — 'connection-density gradient' is asserted, not defined. The internal sensing mechanism is hand-wavy.",
+        "why_it_matters": "The QUESTION asks what triggers a re-route. If the redirector's input signal is undefined, the re-route trigger is undefined. The blend names the role but leaves the sensing substrate empty, which means the stop/continue and re-route questions cannot be answered from this material.",
+        "severity": "high",
+        "suggested_angle": "Specify the redirector's input as a rolling adjacency matrix over active fragment pairs, sampled at fixed intervals. The gradient is then the delta of off-diagonal mass between samples. This makes the trigger computable rather than metaphorical."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-04 introduces the disambiguating condition C (structural shape present/absent) but never defines what counts as structural shape or how it is detected — the entire disambiguation logic rests on an unproven operationalization of 'shape'.",
+        "why_it_matters": "The QUESTION asks how the pipeline decides when to stop. Blend-04 is the only blend that addresses the stop signal directly, but its stop condition is 'divergence collapse + shape present,' and shape is undefined. If shape cannot be detected, the stop criterion collapses to divergence collapse alone, which blend-04 itself says is insufficient.",
+        "severity": "high",
+        "suggested_angle": "Define structural shape as a minimum spanning tree depth exceeding a threshold over the fragment graph — shallow trees indicate hub-and-spoke (no shape), deep trees indicate hierarchical articulation (shape present). This gives blend-04's C condition a computable form."
+      },
+      {
+        "layer": "blends",
+        "blind_spot": "Blend-03's exemplar bank assumes past fertile trajectories are retrievable and comparable to the current run, but no blend addresses how trajectory similarity is computed across runs whose fragment vocabularies and domains differ — the amortization claim rests on an unstated similarity function.",
+        "why_it_matters": "The QUESTION asks how the pipeline governs itself. Blend-03 is the only blend that addresses self-governance through accumulated experience. If the similarity function is absent, the exemplar bank cannot be queried reliably, and the governance mechanism degrades to a lookup table with no retrieval guarantee — the self-governance claim is unsubstantiated.",
+        "severity": "medium",
+        "suggested_angle": "Represent trajectories as sequences of fertility-derivative sign patterns rather than content — this makes them domain-agnostic and comparable across runs with different fragment vocabularies. Similarity is then edit-distance over sign-pattern sequences."
+      }
+    ],
+    "cost_usd": 0.0215,
+    "ok": true,
+    "note": ""
+  },
+  "model": "anthropic/claude-sonnet-4-6",
+  "total_cost_usd": 0.0694
+}

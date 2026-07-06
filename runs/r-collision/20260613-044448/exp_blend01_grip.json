@@ -1,0 +1,192 @@
+{
+  "run_dir": "/Users/nikhil/Desktop/reasoningEngine/runs/r-collision/20260613-044448",
+  "cards": 24,
+  "read_model": "anthropic/claude-sonnet-4-6",
+  "elapsed_s": 59.0,
+  "cost_usd": 0.1604,
+  "grip_overall_mean": 0.2822,
+  "P1_overlap_vs_rare": {
+    "overlap_n": 18,
+    "overlap_mean_grip": 0.2841,
+    "rare_n": 6,
+    "rare_mean_grip": 0.2766,
+    "prediction_holds": false
+  },
+  "P2_novelfeeders_vs_rest": {
+    "feeders_n": 6,
+    "feeders_mean_grip": 0.2698,
+    "rest_n": 18,
+    "rest_mean_grip": 0.2863,
+    "prediction_holds": false
+  },
+  "cards_sorted_by_grip": [
+    {
+      "report_id": "wander-P02-001",
+      "grip": 0.2045,
+      "overlap": false,
+      "fed_novel": true,
+      "prior_work": "Inheritance Coding with Gagné-Based Learning "
+    },
+    {
+      "report_id": "wander-Saf4db2-001",
+      "grip": 0.209,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "FERMAT: Learning Interestingness in Automated"
+    },
+    {
+      "report_id": "wander-P04-001",
+      "grip": 0.2207,
+      "overlap": false,
+      "fed_novel": false,
+      "prior_work": "MaD Physics: Evaluating Information-Seeking U"
+    },
+    {
+      "report_id": "wander-P05-003",
+      "grip": 0.2289,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-P03-003",
+      "grip": 0.23,
+      "overlap": true,
+      "fed_novel": true,
+      "prior_work": "FERMAT: Learning Interestingness in Automated"
+    },
+    {
+      "report_id": "wander-P06-001",
+      "grip": 0.232,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Sim2Reason: Solving Physics Olympiad via Rein"
+    },
+    {
+      "report_id": "wander-P02-002",
+      "grip": 0.2343,
+      "overlap": false,
+      "fed_novel": false,
+      "prior_work": "Fuzzy logic and Gagné learning hierarchy for "
+    },
+    {
+      "report_id": "wander-P01-002",
+      "grip": 0.2402,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Fuzzy logic"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "grip": 0.2623,
+      "overlap": true,
+      "fed_novel": true,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-Sd6fb15-001",
+      "grip": 0.2635,
+      "overlap": true,
+      "fed_novel": true,
+      "prior_work": "Sim2Reason: Solving Physics Olympiad via Rein"
+    },
+    {
+      "report_id": "wander-Saf4db2-002",
+      "grip": 0.2795,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "FERMAT: Learning Interestingness in Automated"
+    },
+    {
+      "report_id": "wander-P05-001",
+      "grip": 0.2843,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-Sc40cae-002",
+      "grip": 0.2943,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-P03-002",
+      "grip": 0.2949,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "FERMAT: Learning Interestingness in Automated"
+    },
+    {
+      "report_id": "wander-Sc40cae-001",
+      "grip": 0.2962,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-P02-005",
+      "grip": 0.3003,
+      "overlap": false,
+      "fed_novel": false,
+      "prior_work": "Neuro-fuzzy (architecture overview)"
+    },
+    {
+      "report_id": "wander-P05-002",
+      "grip": 0.3075,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Augmented Physics: Creating Interactive and E"
+    },
+    {
+      "report_id": "wander-P03-001",
+      "grip": 0.3096,
+      "overlap": false,
+      "fed_novel": true,
+      "prior_work": "Designing research-based instructional materi"
+    },
+    {
+      "report_id": "wander-P02-003",
+      "grip": 0.3257,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Fuzzy Logic (Stanford Encyclopedia of Philoso"
+    },
+    {
+      "report_id": "wander-P01-003",
+      "grip": 0.3268,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Fuzzy Logic (Stanford Encyclopedia of Philoso"
+    },
+    {
+      "report_id": "wander-P02-004",
+      "grip": 0.3288,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Fuzzy logic"
+    },
+    {
+      "report_id": "wander-S7ca9c8-001",
+      "grip": 0.3492,
+      "overlap": true,
+      "fed_novel": true,
+      "prior_work": "Sim2Reason: Solving Physics Olympiad via Rein"
+    },
+    {
+      "report_id": "wander-P04-002",
+      "grip": 0.36,
+      "overlap": true,
+      "fed_novel": false,
+      "prior_work": "Sim2Reason: Solving Physics Olympiad via Rein"
+    },
+    {
+      "report_id": "wander-Saa68b0-001",
+      "grip": 0.3899,
+      "overlap": false,
+      "fed_novel": false,
+      "prior_work": "A Neuro-Fuzzy Approach in the Classification "
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "known": [],
+  "invalid": [],
+  "unplaced": [],
+  "total_cost_usd": 0.0,
+  "cost_ceiling_usd": 8.0,
+  "truncated_by_budget": false,
+  "truncation_reason": "",
+  "parser_demotions": [],
+  "call_log": [],
+  "input_card_count": 0,
+  "classified_count": 0,
+  "dropped_report_ids": []
+}
