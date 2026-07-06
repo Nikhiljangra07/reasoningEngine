@@ -1,0 +1,212 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": false,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 44,
+  "edges_found": 26,
+  "probes_used": 126,
+  "confirm_probes": 49,
+  "bidirectional": true,
+  "emergence_rate_series": [
+    1,
+    4,
+    9,
+    0,
+    1,
+    5,
+    1,
+    3,
+    1
+  ],
+  "decisions": [
+    {
+      "round": 1,
+      "r_series": [
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 1,
+      "findings": 5,
+      "probes_used": 9,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1781795096.760274
+    },
+    {
+      "round": 2,
+      "r_series": [
+        1,
+        4
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 5,
+      "findings": 9,
+      "probes_used": 21,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781795237.522109
+    },
+    {
+      "round": 3,
+      "r_series": [
+        1,
+        4,
+        9
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 14,
+      "findings": 13,
+      "probes_used": 33,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781795348.804096
+    },
+    {
+      "round": 4,
+      "r_series": [
+        1,
+        4,
+        9,
+        0
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 14,
+      "findings": 18,
+      "probes_used": 48,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781795434.928682
+    },
+    {
+      "round": 5,
+      "r_series": [
+        1,
+        4,
+        9,
+        0,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 15,
+      "findings": 23,
+      "probes_used": 63,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781795576.875803
+    },
+    {
+      "round": 6,
+      "r_series": [
+        1,
+        4,
+        9,
+        0,
+        1,
+        5
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 20,
+      "findings": 27,
+      "probes_used": 75,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781795667.354199
+    },
+    {
+      "round": 7,
+      "r_series": [
+        1,
+        4,
+        9,
+        0,
+        1,
+        5,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 21,
+      "findings": 33,
+      "probes_used": 93,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1781795781.0272079
+    },
+    {
+      "round": 8,
+      "r_series": [
+        1,
+        4,
+        9,
+        0,
+        1,
+        5,
+        1,
+        3
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 24,
+      "findings": 37,
+      "probes_used": 105,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1781795931.572872
+    },
+    {
+      "round": 9,
+      "r_series": [
+        1,
+        4,
+        9,
+        0,
+        1,
+        5,
+        1,
+        3,
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 25,
+      "findings": 41,
+      "probes_used": 117,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1781796101.2977762
+    }
+  ],
+  "final_action": "HOLD",
+  "skeleton_gaps": {
+    "isolated_findings": [
+      "[architecture] This source tackles a concrete regulatory problem\u2014Article 14 oversight for multi-agent systems\u2014that structurally mirrors the anchor's abstract identifiability problem. Both face an external overseer w | principle: The source ",
+      "[parenting] This source captures the zeitgeist concern about multi-agent systems producing harmful collective outcomes, but the threats it discusses\u2014scams, prompt injections, cyberattacks\u2014are overt and detectable | principle: The article va",
+      "[theater] The paper resonates strongly with the anchor's problem of distinguishing genuine coordination from common-cause correlation in multi-agent AI, as both adopt a behavioral lens and use causal models to  | principle: The source's cau",
+      "[patents] The source\u2014a news article on DeepMind's $10M funding for multi-agent safety research\u2014resonates with the anchor's core problem: when many autonomous agents interact in a shared environment, an external | principle: This resonance s",
+      "[textile_arts] This source, a pop-science warning about malicious multi-agent cascades, resonates weakly with the anchor's concern about behavioral indistinguishability of coordination regimes. Both address the idea | principle: The source ",
+      "[economics] The DeepMind funding call targets emergent collective behaviors, mechanism design, and mitigation frameworks for multi-agent systems\u2014perfectly aligned with your anchor's concern of distinguishing coor | principle: Your anchor's ",
+      "[anthropology] The source, a blog post about Google DeepMind's $10M multi-agent safety investment, highlights real-world concerns about emergent behaviors, coordination failures, and goal misalignment in interacting | principle: The source ",
+      "[history] The EU AI Act article on human oversight shares a structural tension with the anchor's problem: both grapple with distinguishing different causal origins (compliance vs. mere output, coordination vs.  | principle: The resonance li",
+      "[dark_humor] This satirical article about a $10M fund to study multi-agent interactions mirrors the anchor's core concern\u2014that emergent behaviors from independent agents can be observationally indistinguishable fr | principle: The source un",
+      "[mathematics] This source articulates the same surface-level concern that when many AI agents interact, collective outcomes can be unpredictable and indistinguishable from mere correlation without deeper analysis.  | principle: This resonat",
+      "[memes] The article describes a real-world funding initiative to study emergent behaviors in multi-agent AI systems, where collective outcomes can't be predicted from individual agents. This mirrors the ancho | principle: The source reinfor",
+      "[mythology] The source paper provides a formal causal framework for exactly the identifiability problem described in the anchor: it uses causal games and causal abstraction to define when a group's joint behavior | principle: This resonates"
+    ],
+    "isolated_count": 24,
+    "component_count": 25
+  }
+}

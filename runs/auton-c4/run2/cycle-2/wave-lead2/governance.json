@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": false,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 3,
+  "edges_found": 0,
+  "probes_used": 3,
+  "emergence_rate_series": [],
+  "decisions": [],
+  "final_action": "HOLD"
+}

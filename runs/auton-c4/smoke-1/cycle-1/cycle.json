@@ -1,0 +1,109 @@
+{
+  "cycle": 1,
+  "waves": [
+    {
+      "tag": "main",
+      "label": "cycle-1: 1 agent per laundered sub-question",
+      "agents": 2,
+      "reports": 4,
+      "cost_usd": 0.202,
+      "tokens": 92396,
+      "cost_by_model": {
+        "deepseek/deepseek-v4-pro": 0.202
+      },
+      "governor": {}
+    }
+  ],
+  "cards_new": 4,
+  "cards_total": 4,
+  "card_bridges": [
+    {
+      "report_id": "wander-P01-003",
+      "source_shape": "claude-deep-research runs a fixed sequence of phases, each emitting structured artifacts \u2014 a plan, sources, findings, an adversarial critique. The adversarial pass is the most interesting part: it challenges conclusions, flags weaknesses, and produces a signal that looks like it should steer something. But nothing steers. Each phase consumes its inputs and hands off to the next in a predetermined order, so the adversarial output lands and disappears \u2014 it never re-enters the system as an allocation signal. The result is a pipeline that is disciplined and parallelized but fundamentally open-loop: effort is distributed by design at the start, not redistributed by evidence as it accumulates.",
+      "bridge": "Your anchor's mechanism layer says 'composition is signal routing, not module linking' \u2014 and claude-deep-research is a precise, working counterexample of what happens when you build the modules but skip the routing. The adversarial pass is the organ that most nearly emits a governable signal: it identifies where the research is weak. That is exactly the kind of output your allocation layer would n"
+    },
+    {
+      "report_id": "wander-P01-001",
+      "source_shape": "deepresearch decomposes a research goal into 100+ tasks upfront, spawns parallel subagents to execute them, and runs an adversarial verification pass on every output. When the adversary rejects a result, that rejection signal flows back as corrective instructions to the producing agent \u2014 the system hardens its own research behavior in response to failure. The trust-score dashboard accumulates a crude running record of which agents produced reliable outputs, functioning as a primitive attempt-yield ledger.",
+      "bridge": "Your anchor requires that organs emit governable signals \u2014 not raw results, but outputs structured so a downstream composition layer can route, weight, and act on them. deepresearch's adversary-to-instruction feedback loop is that pattern in working code: the adversarial verdict is a typed signal, not just a pass/fail, and the system routes it forward to change behavior rather than discard it. The"
+    },
+    {
+      "report_id": "wander-P02-001",
+      "source_shape": "The source pipeline decomposes a query across eight specialized agents \u2014 decomposer, searcher, assessor, reflector, debater, synthesizer, and others \u2014 each of which emits a quantifiable uncertainty score rather than a bare result. Those scores are routed between agents as control signals: if uncertainty stays above a threshold, the loop continues; once it drops below, the pipeline terminates. The key move is that termination is not a fixed iteration count \u2014 it is a signal the system itself produces when the agents collectively decide the question is exhausted.",
+      "bridge": "Your anchor identifies a specific mechanism need: organs must emit governable signals, not just results. This source is a working instantiation of exactly that requirement \u2014 every agent in the pipeline produces a scalar that the system uses to decide what happens next, not just a content payload for a downstream consumer. The correspondence holds at the composition level too: the source routes sig"
+    },
+    {
+      "report_id": "wander-P01-002",
+      "source_shape": "A static proxy sits between a caller and a set of backends. When a request arrives, the proxy consults a routing table \u2014 a fixed map of 'if the request looks like X, send it to backend Y' \u2014 and forwards accordingly. The proxy adds no intelligence to the request and learns nothing from the response; it simply ensures that signals reach the right destination based on pre-specified rules. The value of the proxy is entirely in the correctness of its routing table, not in the act of forwarding.",
+      "bridge": "Your loop's organs currently produce results but not steerable signals \u2014 the equivalent of a proxy that forwards traffic but never exposes its routing table to inspection or update. The mechanism insight the source sharpens is this: what makes composition work is not that modules are connected, but that each module emits signals in a form the next stage can route on. In your loop, that means each "
+    }
+  ],
+  "halo_blind_spots": [
+    {
+      "blind_spot": "No card addresses how the coverage checkpoint itself is validated \u2014 what confirms the scorer's judgment that a gap is 'filled' versus merely 'touched'? The checkpoint is the loop's only termination signal, yet zero cards examine whether its scoring function is calibrated or gameable.",
+      "severity": "high",
+      "suggested_angle": "Hunt for work on coverage-metric calibration in autonomous research loops \u2014 specifically cases where a scorer was fooled by lexical overlap rather than semantic depth, and how those systems detected or corrected the failure."
+    },
+    {
+      "blind_spot": "All four cards cluster on signal-routing and adversarial-verification patterns. No card touches the 'genuinely unfillable gap' distinction the vision names explicitly \u2014 the mechanism by which the loop decides a gap cannot be closed versus merely under-attempted.",
+      "severity": "high",
+      "suggested_angle": "Search for systems that model epistemic exhaustion \u2014 diminishing-returns detection, dead-end classification, or information-horizon estimation \u2014 distinct from simple iteration caps."
+    },
+    {
+      "blind_spot": "No card examines the goal-free lead-laundering step \u2014 the mechanism that strips the goal from an open gap before dispatching a fresh wave. All cards assume the routing layer receives well-formed signals; none interrogates what happens when goal contamination survives the laundering gate and biases the next wave.",
+      "severity": "high",
+      "suggested_angle": "Look for research on prompt-injection or goal-leakage in multi-agent pipelines \u2014 cases where upstream framing survived sanitization steps and corrupted downstream agent behavior."
+    },
+    {
+      "blind_spot": "The two-batch triangulation method \u2014 separating replication from noise \u2014 has no corresponding card. The wander covered adversarial verification (P01-001, P01-003) but adversarial rejection is not the same as cross-batch replication testing. The specific statistical or structural logic of triangulation is absent.",
+      "severity": "medium",
+      "suggested_angle": "Search for multi-run consistency methods in LLM research pipelines \u2014 specifically techniques that treat agreement across independent runs as a reliability signal rather than a consensus signal."
+    },
+    {
+      "blind_spot": "No card addresses the marginal-value wave-sizer \u2014 the organ that decides how much force to dispatch at each gap. The cards cover termination logic and signal routing but none examines how a system estimates the expected yield of a new wave before committing resources to it.",
+      "severity": "medium",
+      "suggested_angle": "Look for bandit-style or value-of-information frameworks applied to research task allocation \u2014 systems that estimate expected information gain before dispatching effort rather than after."
+    }
+  ],
+  "coverage": {
+    "d_t": 0.0,
+    "per_angle": [
+      {
+        "idx": 1,
+        "angle": "how to fuse two independent gap-detectors \u2014 a goal-blind structural piece-finder and a goal-aware auditor \u2014 into one dispatch priority, with corroboration rather than concatenation",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 2,
+        "angle": "how to size each dispatch wave from the gap's expected yield rather than a fixed count, and when to stop adding agents to a single gap",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 3,
+        "angle": "how to distinguish an UNFILLABLE gap (terminate) from an UNDER-ATTEMPTED one (re-route deeper) from observable signals, including the record of what was already sent at it",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 4,
+        "angle": "how to bias re-exploration toward identified gaps WITHOUT collapsing the diversity that made the first pass productive, and how to measure depth of coverage rather than mere presence; and",
+        "coverage": "uncovered",
+        "by": ""
+      },
+      {
+        "idx": 5,
+        "angle": "what governs the overall STOP decision \u2014 coverage-complete versus diminishing-returns versus a hard cap \u2014 when the coverage signal itself may be shallow and no quality judge is in the loop?",
+        "coverage": "uncovered",
+        "by": ""
+      }
+    ]
+  },
+  "signals": {
+    "novelty": 0,
+    "change": 0.0
+  },
+  "cost_usd": 0.202,
+  "halt": "cycle cap 1 reached (open: [1, 2, 3, 4, 5])"
+}

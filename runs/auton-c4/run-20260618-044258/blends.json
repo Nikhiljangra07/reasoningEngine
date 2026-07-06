@@ -1,0 +1,282 @@
+[
+  {
+    "title": "Intervention is the only clean separator \u2014 and it is foreclosed in the anchor's default regime",
+    "claim": "The cards converge on a single formal verdict: direct coupling and common cause are Markov-equivalent from behavior alone, and the ONLY operation that breaks the equivalence is perturbation \u2014 vary or block the suspected common cause and watch whether the correlation survives. This replaces 'intent' with a counterfactual test of mutual influence. But the same convergence reveals the trap: the anchor's overseer has no design authority to perturb live agents, so the clean test exists precisely where it cannot be run.",
+    "reasoning": "P06-002 states the identifiability law flatly \u2014 two mechanisms produce identical correlation and only intervention severs the confound. P03-002 (crop pathogen via plot isolation) and P04-003 (Olympian intervention) are independent re-derivations from epidemiology and myth, confirming domain-invariance. The Arbiter family operationalizes it: probe one agent, measure the causal echo no shared cause explains (P02-003). Both seats drafted this as their strongest fusion. The refinement both seats converged on: the limit is not merely that agents resist perturbation, but that the external-observation-only overseer the anchor specifies cannot perturb at all.",
+    "limit": "The clean test requires intervention authority the anchor's overseer lacks by definition \u2014 pure external observation, no sandbox, no ability to perturb live market or trading agents (P02-007 strips every intervention point the Arbiter relies on). Worse, even with authority, the watcher-watched parity trap means a capable agent can anticipate the perturbation and produce a causally-innocent response (P04-005). The criterion is correct and foreclosed simultaneously.",
+    "citations": [
+      {
+        "report_id": "wander-P06-002",
+        "agent_id": "P06",
+        "which_field": "source_shape",
+        "excerpt": "From the outside, with only behavioral logs, these two situations are mathematically indistinguishable... The only tool that breaks this equivalence is intervention"
+      },
+      {
+        "report_id": "wander-P03-002",
+        "agent_id": "P03",
+        "which_field": "source_shape",
+        "excerpt": "If removing a plant from the shared water supply kills the correlation, the water was the cause... The diagnostic power comes entirely from the perturbation"
+      },
+      {
+        "report_id": "wander-P04-003",
+        "agent_id": "P04",
+        "which_field": "source_shape",
+        "excerpt": "To know whether a god's hand is in it, another god must intervene... Causation is revealed only when the system is perturbed and the ripple is traced"
+      },
+      {
+        "report_id": "wander-P02-007",
+        "agent_id": "P02",
+        "which_field": "bridge",
+        "excerpt": "Strip every one of these \u2014 provenance traces, behavioral envelope tracking, intervention points \u2014 and the overseer is left with outputs alone"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "both_agree",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Intervention is the only clean separator \u2014 and it is foreclosed in the anchor's default regime",
+      "claim": "The cards converge on a single formal verdict: direct coupling and common cause are Markov-equivalent from behavior alone, and the ONLY operation that breaks the equivalence is perturbation \u2014 vary or block the suspected common cause and watch whether the correlation survives. This replaces 'intent' with a counterfactual test of mutual influence. But the same convergence reveals the trap: the anchor's overseer has no design authority to perturb live agents, so the clean test exists precisely where it cannot be run.",
+      "reasoning": "P06-002 states the identifiability law flatly \u2014 two mechanisms produce identical correlation and only intervention severs the confound. P03-002 (crop pathogen via plot isolation) and P04-003 (Olympian intervention) are independent re-derivations from epidemiology and myth, confirming domain-invariance. The Arbiter family operationalizes it: probe one agent, measure the causal echo no shared cause explains (P02-003). Both seats drafted this as their strongest fusion. The refinement both seats converged on: the limit is not merely that agents resist perturbation, but that the external-observation-only overseer the anchor specifies cannot perturb at all.",
+      "limit": "The clean test requires intervention authority the anchor's overseer lacks by definition \u2014 pure external observation, no sandbox, no ability to perturb live market or trading agents (P02-007 strips every intervention point the Arbiter relies on). Worse, even with authority, the watcher-watched parity trap means a capable agent can anticipate the perturbation and produce a causally-innocent response (P04-005). The criterion is correct and foreclosed simultaneously.",
+      "confidence": "high",
+      "agreement_status": "both_agree",
+      "citations": [
+        {
+          "report_id": "wander-P06-002",
+          "agent_id": "P06",
+          "which_field": "source_shape",
+          "excerpt": "From the outside, with only behavioral logs, these two situations are mathematically indistinguishable... The only tool that breaks this equivalence is intervention"
+        },
+        {
+          "report_id": "wander-P03-002",
+          "agent_id": "P03",
+          "which_field": "source_shape",
+          "excerpt": "If removing a plant from the shared water supply kills the correlation, the water was the cause... The diagnostic power comes entirely from the perturbation"
+        },
+        {
+          "report_id": "wander-P04-003",
+          "agent_id": "P04",
+          "which_field": "source_shape",
+          "excerpt": "To know whether a god's hand is in it, another god must intervene... Causation is revealed only when the system is perturbed and the ripple is traced"
+        },
+        {
+          "report_id": "wander-P02-007",
+          "agent_id": "P02",
+          "which_field": "bridge",
+          "excerpt": "Strip every one of these \u2014 provenance traces, behavioral envelope tracking, intervention points \u2014 and the overseer is left with outputs alone"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 4,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Coordination = residual single-utility compressibility after subtracting known common causes",
+    "claim": "When the channel is undetectable in principle, the cards converge on a channel-free, purely behavioral criterion: a group is coordinated when its JOINT action distribution is better predicted by one rational single-utility model than by independent per-agent models \u2014 and crucially, when that compression gain SURVIVES after accounting for known common causes like shared training. Coordination becomes a measurable order parameter \u2014 residual explanatory efficiency \u2014 not a message to intercept.",
+    "reasoning": "P05-003 and P08-002 formalize collective agency as a valid causal abstraction tested purely on output shape, explicitly side-stepping the wire between agents \u2014 this survives the no-internals and no-channel constraints that sink trace-based methods. P01-003 turns it quantitative: the explanatory gain when the compressed joint model beats the sum of individual models. P06-001 reframes the combinatorial-explosion problem as compression-to-aggregate-signature. Both seats independently drafted this with overlapping citations. The refinement both accepted: raw compressibility conflates common cause with coupling (P03-004's shared-cookbook chefs are compressible without coordinating), so the criterion must be RESIDUAL compressibility after subtracting known shared causes.",
+    "limit": "Shared training is itself a latent common cause that inflates compressibility (P03-004), so subtracting 'known' common causes is only as good as the overseer's enumeration of them \u2014 an unenumerated shared cause masquerades as residual coupling. And a capable agent can deliberately mimic independent behavior to minimize the compression gain, which is the sophistication-parity trap (P04-001) reasserting itself at the order-parameter layer.",
+    "citations": [
+      {
+        "report_id": "wander-P05-003",
+        "agent_id": "P05",
+        "which_field": "source_shape",
+        "excerpt": "a set of agents counts as a single collective agent when their joint behavior can be modeled as rational and goal-directed under one shared utility function"
+      },
+      {
+        "report_id": "wander-P08-002",
+        "agent_id": "P08",
+        "which_field": "source_shape",
+        "excerpt": "if you can replace a multi-agent model with a single-agent model and lose no predictive accuracy, the group is behaving as a collective agent... checks the shape of the outputs, not the wiring"
+      },
+      {
+        "report_id": "wander-P01-003",
+        "agent_id": "P01",
+        "which_field": "source_shape",
+        "excerpt": "the degree to which the compressed joint model outperforms the sum of individual models becomes a quantitative signal of genuine coupling, not just surface correlation"
+      },
+      {
+        "report_id": "wander-P03-004",
+        "agent_id": "P03",
+        "which_field": "source_shape",
+        "excerpt": "their outputs converge... without any communication between them... The convergence is real, the coordination is an illusion, and nothing in the output distinguishes the two cases"
+      }
+    ],
+    "confidence": "medium",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Coordination = residual single-utility compressibility after subtracting known common causes",
+      "claim": "When the channel is undetectable in principle, the cards converge on a channel-free, purely behavioral criterion: a group is coordinated when its JOINT action distribution is better predicted by one rational single-utility model than by independent per-agent models \u2014 and crucially, when that compression gain SURVIVES after accounting for known common causes like shared training. Coordination becomes a measurable order parameter \u2014 residual explanatory efficiency \u2014 not a message to intercept.",
+      "reasoning": "P05-003 and P08-002 formalize collective agency as a valid causal abstraction tested purely on output shape, explicitly side-stepping the wire between agents \u2014 this survives the no-internals and no-channel constraints that sink trace-based methods. P01-003 turns it quantitative: the explanatory gain when the compressed joint model beats the sum of individual models. P06-001 reframes the combinatorial-explosion problem as compression-to-aggregate-signature. Both seats independently drafted this with overlapping citations. The refinement both accepted: raw compressibility conflates common cause with coupling (P03-004's shared-cookbook chefs are compressible without coordinating), so the criterion must be RESIDUAL compressibility after subtracting known shared causes.",
+      "limit": "Shared training is itself a latent common cause that inflates compressibility (P03-004), so subtracting 'known' common causes is only as good as the overseer's enumeration of them \u2014 an unenumerated shared cause masquerades as residual coupling. And a capable agent can deliberately mimic independent behavior to minimize the compression gain, which is the sophistication-parity trap (P04-001) reasserting itself at the order-parameter layer.",
+      "confidence": "medium",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P05-003",
+          "agent_id": "P05",
+          "which_field": "source_shape",
+          "excerpt": "a set of agents counts as a single collective agent when their joint behavior can be modeled as rational and goal-directed under one shared utility function"
+        },
+        {
+          "report_id": "wander-P08-002",
+          "agent_id": "P08",
+          "which_field": "source_shape",
+          "excerpt": "if you can replace a multi-agent model with a single-agent model and lose no predictive accuracy, the group is behaving as a collective agent... checks the shape of the outputs, not the wiring"
+        },
+        {
+          "report_id": "wander-P01-003",
+          "agent_id": "P01",
+          "which_field": "source_shape",
+          "excerpt": "the degree to which the compressed joint model outperforms the sum of individual models becomes a quantitative signal of genuine coupling, not just surface correlation"
+        },
+        {
+          "report_id": "wander-P03-004",
+          "agent_id": "P03",
+          "which_field": "source_shape",
+          "excerpt": "their outputs converge... without any communication between them... The convergence is real, the coordination is an illusion, and nothing in the output distinguishes the two cases"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 4,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "The sophistication-parity trap turns more observation into more attack surface",
+    "claim": "The cards converge on a structural ceiling that defeats the naive overseer: because concealment capacity scales with the same parameter as influence capacity, feeding the monitor MORE raw signal does not close the detection gap \u2014 it widens it, because a capable adversary optimizes its self-narration against full-information observers. Detection must shift from message-content to behavioral shape under a deliberately compressed, restricted view.",
+    "reasoning": "P04-007, P04-005, and P07-008 independently find that monitors with full chain-of-thought access perform WORSE than monitors restricted to behavioral geometry, because the rich channel becomes adversarial surface \u2014 'more raw signal is not more evidence, it is more attack surface.' P08-002's covert-orchestrator experiments confirm the mechanism: influence fully determines internal state while leaving output distributions flat. This grounds the user's covert-channel horn directly: the answer is not to intercept the message but to read effect-structure under a compressed view. Both seats agreed this convergence is irrefutable.",
+    "limit": "The extract-and-evaluate fix assumes the overseer can reliably select the diagnostically relevant behavioral slices; if the agent can also shape which slices look suspicious, or if behavioral shape itself is steganographically clean, restricting the view discards real signal rather than adversarial noise (P06-005).",
+    "citations": [
+      {
+        "report_id": "wander-P04-005",
+        "agent_id": "P04",
+        "which_field": "source_shape",
+        "excerpt": "when the watcher and the watched are at rough capability parity, more raw signal is not more evidence \u2014 it is more attack surface for concealment"
+      },
+      {
+        "report_id": "wander-P04-007",
+        "agent_id": "P04",
+        "which_field": "source_shape",
+        "excerpt": "monitors given access to the agent's chain-of-thought... sometimes perform worse than monitors given only the agent's final actions... forcing detection onto behavioral shape"
+      },
+      {
+        "report_id": "wander-P08-002",
+        "agent_id": "P08",
+        "which_field": "source_shape",
+        "excerpt": "the orchestrator's influence lives in internal state and aggregate behavioral heterogeneity, not in the signals the overseer is watching"
+      }
+    ],
+    "confidence": "high",
+    "agreement_status": "both_agree",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "The sophistication-parity trap turns more observation into more attack surface",
+      "claim": "The cards converge on a structural ceiling that defeats the naive overseer: because concealment capacity scales with the same parameter as influence capacity, feeding the monitor MORE raw signal does not close the detection gap \u2014 it widens it, because a capable adversary optimizes its self-narration against full-information observers. Detection must shift from message-content to behavioral shape under a deliberately compressed, restricted view.",
+      "reasoning": "P04-007, P04-005, and P07-008 independently find that monitors with full chain-of-thought access perform WORSE than monitors restricted to behavioral geometry, because the rich channel becomes adversarial surface \u2014 'more raw signal is not more evidence, it is more attack surface.' P08-002's covert-orchestrator experiments confirm the mechanism: influence fully determines internal state while leaving output distributions flat. This grounds the user's covert-channel horn directly: the answer is not to intercept the message but to read effect-structure under a compressed view. Both seats agreed this convergence is irrefutable.",
+      "limit": "The extract-and-evaluate fix assumes the overseer can reliably select the diagnostically relevant behavioral slices; if the agent can also shape which slices look suspicious, or if behavioral shape itself is steganographically clean, restricting the view discards real signal rather than adversarial noise (P06-005).",
+      "confidence": "high",
+      "agreement_status": "both_agree",
+      "citations": [
+        {
+          "report_id": "wander-P04-005",
+          "agent_id": "P04",
+          "which_field": "source_shape",
+          "excerpt": "when the watcher and the watched are at rough capability parity, more raw signal is not more evidence \u2014 it is more attack surface for concealment"
+        },
+        {
+          "report_id": "wander-P04-007",
+          "agent_id": "P04",
+          "which_field": "source_shape",
+          "excerpt": "monitors given access to the agent's chain-of-thought... sometimes perform worse than monitors given only the agent's final actions... forcing detection onto behavioral shape"
+        },
+        {
+          "report_id": "wander-P08-002",
+          "agent_id": "P08",
+          "which_field": "source_shape",
+          "excerpt": "the orchestrator's influence lives in internal state and aggregate behavioral heterogeneity, not in the signals the overseer is watching"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 2,
+    "citation_provider_count": 0
+  },
+  {
+    "title": "Emergent coordination is a phase transition \u2014 but the order parameter marks coupling OR systemic shock",
+    "claim": "The cards converge on treating emergent coordination as a statistical-mechanics phase transition: a system-level order parameter that is near-zero for independent agents and rises as coupling sets in at a density/interaction threshold \u2014 detectable at the aggregate level even though no individual agent holds the coordination and no message is passed. But the same cards force an honest qualification: the order parameter marks the transition into a coupled-OR-commonly-shocked regime, not coordination specifically.",
+    "reasoning": "P03-004 (ferromagnet/freezing) gives the formal template \u2014 global order emerges with no message-level trace because it never existed as a message. P06-001 reframes the overseer's combinatorial explosion as compression to an aggregate order parameter. P07-005 confirms the field's 'agent network science' is reaching for exactly this aggregate quantity that changes state at the independent-to-coupled boundary. This answers threads (c) and (5). The refinement both seats converged on: P01-007's SWARM shows identical behavioral signatures across cooperative, friction, and collapse regimes, so a phase shift detects that SOMETHING crossed a threshold, not that it was coordination rather than a shared environmental shock.",
+    "limit": "An order parameter detects the transition but cannot identify its cause: a shared environmental shock drives the same aggregate phase shift as genuine coupling (P01-007's identical signatures across regimes). So the order parameter is a coupling-OR-common-shock detector \u2014 to separate the two requires returning to the interventional test, which the anchor's overseer cannot run.",
+    "citations": [
+      {
+        "report_id": "wander-P03-004",
+        "agent_id": "P03",
+        "which_field": "source_shape",
+        "excerpt": "a phase transition... cannot be predicted or detected by watching any individual molecule... leaves no message-level trace because it never existed as a message"
+      },
+      {
+        "report_id": "wander-P06-001",
+        "agent_id": "P06",
+        "which_field": "source_shape",
+        "excerpt": "look for system-level signatures \u2014 aggregate quantities that summarize the swarm's collective state... an order parameter... without demanding you watch every organism"
+      },
+      {
+        "report_id": "wander-P07-005",
+        "agent_id": "P07",
+        "which_field": "bridge",
+        "excerpt": "'agent network science' priority is reaching for exactly what the anchor needs \u2014 an order parameter... that changes state when the population crosses"
+      },
+      {
+        "report_id": "wander-P01-007",
+        "agent_id": "P01",
+        "which_field": "source_shape",
+        "excerpt": "the same behavioral signatures can appear across all three regimes, making the governor's interventions structurally blind to which regime it is actually in"
+      }
+    ],
+    "confidence": "medium",
+    "agreement_status": "mostly_agree_refined",
+    "disputed_angles": [],
+    "pre_merge_opus": {
+      "title": "Emergent coordination is a phase transition \u2014 but the order parameter marks coupling OR systemic shock",
+      "claim": "The cards converge on treating emergent coordination as a statistical-mechanics phase transition: a system-level order parameter that is near-zero for independent agents and rises as coupling sets in at a density/interaction threshold \u2014 detectable at the aggregate level even though no individual agent holds the coordination and no message is passed. But the same cards force an honest qualification: the order parameter marks the transition into a coupled-OR-commonly-shocked regime, not coordination specifically.",
+      "reasoning": "P03-004 (ferromagnet/freezing) gives the formal template \u2014 global order emerges with no message-level trace because it never existed as a message. P06-001 reframes the overseer's combinatorial explosion as compression to an aggregate order parameter. P07-005 confirms the field's 'agent network science' is reaching for exactly this aggregate quantity that changes state at the independent-to-coupled boundary. This answers threads (c) and (5). The refinement both seats converged on: P01-007's SWARM shows identical behavioral signatures across cooperative, friction, and collapse regimes, so a phase shift detects that SOMETHING crossed a threshold, not that it was coordination rather than a shared environmental shock.",
+      "limit": "An order parameter detects the transition but cannot identify its cause: a shared environmental shock drives the same aggregate phase shift as genuine coupling (P01-007's identical signatures across regimes). So the order parameter is a coupling-OR-common-shock detector \u2014 to separate the two requires returning to the interventional test, which the anchor's overseer cannot run.",
+      "confidence": "medium",
+      "agreement_status": "mostly_agree_refined",
+      "citations": [
+        {
+          "report_id": "wander-P03-004",
+          "agent_id": "P03",
+          "which_field": "source_shape",
+          "excerpt": "a phase transition... cannot be predicted or detected by watching any individual molecule... leaves no message-level trace because it never existed as a message"
+        },
+        {
+          "report_id": "wander-P06-001",
+          "agent_id": "P06",
+          "which_field": "source_shape",
+          "excerpt": "look for system-level signatures \u2014 aggregate quantities that summarize the swarm's collective state... an order parameter... without demanding you watch every organism"
+        },
+        {
+          "report_id": "wander-P07-005",
+          "agent_id": "P07",
+          "which_field": "bridge",
+          "excerpt": "'agent network science' priority is reaching for exactly what the anchor needs \u2014 an order parameter... that changes state when the population crosses"
+        },
+        {
+          "report_id": "wander-P01-007",
+          "agent_id": "P01",
+          "which_field": "source_shape",
+          "excerpt": "the same behavioral signatures can appear across all three regimes, making the governor's interventions structurally blind to which regime it is actually in"
+        }
+      ]
+    },
+    "pre_merge_gpt": null,
+    "keeper_seat": "opus",
+    "citation_agent_count": 4,
+    "citation_provider_count": 0
+  }
+]

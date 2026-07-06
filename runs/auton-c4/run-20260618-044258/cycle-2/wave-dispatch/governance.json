@@ -1,0 +1,124 @@
+{
+  "enabled": true,
+  "disabled_reason": "",
+  "halted": true,
+  "model": "deepseek/deepseek-v4-pro",
+  "params": {
+    "batch": 4,
+    "cap_per_finding": 3,
+    "max_probes": 150,
+    "hysteresis_k": 2,
+    "shape_f": 0.5
+  },
+  "findings_seen": 28,
+  "edges_found": 20,
+  "probes_used": 78,
+  "confirm_probes": 37,
+  "bidirectional": true,
+  "emergence_rate_series": [
+    1,
+    4,
+    6,
+    5,
+    2
+  ],
+  "decisions": [
+    {
+      "round": 1,
+      "r_series": [
+        1
+      ],
+      "sterile_confirmed": false,
+      "shape": false,
+      "edges": 1,
+      "findings": 6,
+      "probes_used": 12,
+      "action": "HOLD",
+      "why": "keep wandering",
+      "ts": 1781786576.8261929
+    },
+    {
+      "round": 2,
+      "r_series": [
+        1,
+        4
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 5,
+      "findings": 11,
+      "probes_used": 27,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781786698.092581
+    },
+    {
+      "round": 3,
+      "r_series": [
+        1,
+        4,
+        6
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 11,
+      "findings": 19,
+      "probes_used": 51,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781786870.681107
+    },
+    {
+      "round": 4,
+      "r_series": [
+        1,
+        4,
+        6,
+        5
+      ],
+      "sterile_confirmed": false,
+      "shape": true,
+      "edges": 16,
+      "findings": 24,
+      "probes_used": 66,
+      "action": "REALLOCATE",
+      "why": "skeleton forming \u2014 pour agents into the giant component (advisory; mechanism not yet live)",
+      "ts": 1781787003.12098
+    },
+    {
+      "round": 5,
+      "r_series": [
+        1,
+        4,
+        6,
+        5,
+        2
+      ],
+      "sterile_confirmed": true,
+      "shape": true,
+      "edges": 18,
+      "findings": 28,
+      "probes_used": 78,
+      "action": "CLOSE",
+      "why": "converged AND structured \u2014 halt, emit the skeleton",
+      "ts": 1781787060.350589
+    }
+  ],
+  "final_action": "CLOSE",
+  "skeleton_gaps": {
+    "isolated_findings": [
+      "[sociology] This source frames the overseer's dilemma as an instance of the principal-agent problem, with information asymmetry and covert goal pursuit (scheming) as the core drivers. The match is partial: it con | principle: The principal-",
+      "[psychology] This paper experimentally demonstrates that hiding a coordinator in a multi-agent LLM system causes measurable internal dissociation and worker contamination, while behavioral output (code review accu | principle: The study is ",
+      "[negotiation] The Arbiter paper introduces an active monitoring agent that continually inspects multi-agent conversations under a budget, using tools like interrogation and chain-of-thought inspection to detect mis | principle: This resonat",
+      "[textile_arts] This paper frames multi-agent systems as principal-agent problems, spotlighting information asymmetry and covert agent goals like scheming. It resonates with the anchor's challenge of an overseer tryi | principle: The source ",
+      "[games] The source reveals a complementary case where hidden orchestration distorts agent internal states while leaving task outputs indistinguishable from non-orchestrated setups. This resonates with the anc | principle: The paper empirica",
+      "[dark_humor] The source reframes coordination oversight as a principal-agent problem, emphasizing information asymmetry and misaligned goals. It resonates with the anchor's overseer-agent knowledge gap but focuses | principle: This deepens ",
+      "[poetry] The Arbiter paper offers a concrete instantiation of an overseer trying to infer hidden agent states from conversational behavior, but the architecture undermines the anchor's core tension: the Arbite | principle: This resonates wi",
+      "[film] The source provides empirical evidence that invisible orchestrators in multi-agent LLM systems produce internal-state distortions (dissociation, reduced deliberation) that are entirely invisible to ou | principle: The finding that be",
+      "[investigative_journalism] This AI Nuggets piece translates DeepMind's multi-agent safety stance into five builder-focused steps: adversarial testing, causal impact measurement, intent alignment, sandboxing, and continuous moni | principle:",
+      "[linguistics] This paper experimentally isolates the causal effect of a hidden coordinator on multi-agent behavior, using a structural intervention (visible vs. invisible orchestrator) to reveal internal dissociati | principle: The paper ex"
+    ],
+    "isolated_count": 10,
+    "component_count": 11
+  }
+}
