@@ -1,0 +1,2 @@
+# False positive: dummy test fixture in supabase auth tests (not a real credential)
+866937d7a5ef5fea0d6718ddb5e5f7c370cc4511:tests/test_supabase_auth.py:generic-api-key:68
