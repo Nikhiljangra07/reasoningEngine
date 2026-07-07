@@ -43,6 +43,14 @@ def _findings_text(run_dir: Path) -> str:
 
 
 async def main() -> None:
+    # The frozen r-collision fixtures were pruned from the public repo (they
+    # bundled scraped third-party contact info from web-search results). The
+    # cited case study lives under runs/auton-c4. Restore the fixtures from the
+    # local pre-prune bundle to re-run this organ check.
+    if not (REPO_ROOT / BATCHES["batch-1"][0]).exists():
+        print("Coverage-scorer fixtures (runs/r-collision/*) are not present; "
+              "skipping. See git history / local bundle to restore.")
+        return
     # required angles from the (identical) cushion question
     q = json.loads((REPO_ROOT / BATCHES["batch-1"][0] / "cushion_input.json").read_text())["question"]
     angles = parse_required_angles(q)

@@ -24,3 +24,7 @@ build/
 
 # Finder/VS Code save-as duplicates
 * [0-9].*
+
+# Exploratory run logs (bundled scraped third-party web-search data; not the cited case study)
+runs/r-collision/
+runs/r-fable-sorter-6agents/
