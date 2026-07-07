@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main, chaos-amp]
+  pull_request:
+
+jobs:
+  test:
+    name: Compile + core test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Syntax check
+        run: python -m compileall -q src
+      - name: Core test suite (plain-python runners, no external services)
+        run: |
+          # The test files are direct-run scripts, not pytest (see tests/README.md).
+          # This is the curated set that runs with no API keys / services — each
+          # prints "N passed, M failed"; the job fails if any reports a failure.
+          set -e
+          FILES="test_angular_discipline test_bridge test_budget test_capabilities
+                 test_checklist test_context7_client test_conversation_store
+                 test_dispatch_preview test_dispatcher test_filesystem_handler
+                 test_identity_integration test_identity_singular_path test_identity_tier3
+                 test_mcp_router test_playwright_client test_project_identity
+                 test_server_mcp_wiring test_similarity test_supabase_auth
+                 test_thread_ownership test_triage test_voice_and_fallback
+                 test_wandering_credits test_wandering_cushion test_wandering_engine
+                 test_wandering_jobs test_wandering_map_adapter test_wandering_retrieval
+                 test_wandering_v2"
+          fail=0
+          for f in $FILES; do
+            out=$(PYTHONPATH=. python "tests/$f.py" 2>&1)
+            if echo "$out" | grep -qE "[1-9][0-9]* failed|Traceback"; then
+              echo "::error::$f FAILED"; echo "$out" | tail -5; fail=1
+            else
+              echo "  ok  $f"
+            fi
+          done
+          exit $fail

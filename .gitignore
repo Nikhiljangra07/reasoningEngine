@@ -21,3 +21,6 @@ build/
 .mypy_cache/
 .vscode/
 .idea/
+
+# Finder/VS Code save-as duplicates
+* [0-9].*
