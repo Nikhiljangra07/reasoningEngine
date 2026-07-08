@@ -11,14 +11,19 @@ name: Keep Supabase awake
 # The anon key is public by design (RLS limits it to reading this one row),
 # but keeping it in a secret keeps the workflow clean.
 #
-# Note: GitHub disables scheduled workflows in public repos after 60 days
-# without repository activity — it emails a warning first. Any commit resets
-# the clock, or re-enable from the Actions tab.
+# GitHub disables scheduled workflows in public repos after 60 days without
+# repository activity. The last step below resets that timer on every run by
+# calling the workflow re-enable API on itself (a no-op enable), so the cron
+# stays alive indefinitely with no commits and no human reminders. If a run
+# ever fails, GitHub emails the repo owner automatically.
 
 on:
   schedule:
     - cron: "41 7 */3 * *" # every 3 days at 07:41 UTC — well inside the 7-day window
   workflow_dispatch: {} # allow manual runs from the Actions tab
+
+permissions:
+  actions: write # needed by the self re-enable step below
 
 jobs:
   ping:
@@ -42,3 +47,17 @@ jobs:
             exit 1
           fi
           echo "Supabase project is awake."
+
+      - name: Reset GitHub's 60-day scheduled-workflow disable timer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" -X PUT \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/keep-alive.yml/enable")
+          if [ "$code" = "204" ]; then
+            echo "Disable timer reset — cron stays alive without repo activity."
+          else
+            echo "::warning::Self re-enable returned HTTP $code — check Actions settings."
+          fi
