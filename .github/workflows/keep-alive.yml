@@ -1,0 +1,44 @@
+name: Keep Supabase awake
+
+# Supabase's free tier pauses a project after ~7 days of DATABASE inactivity.
+# Constellax uses its Supabase project only for the optional auth layer, so
+# normal work never touches the database — which is exactly how the project
+# auto-paused in July 2026. This pings a heartbeat table (public.keep_alive)
+# on a schedule: a real DB read that counts as activity and keeps it awake.
+#
+# Setup (one time): add a repository secret SUPABASE_ANON_KEY with the
+# project's anon/public key (Settings → Secrets and variables → Actions).
+# The anon key is public by design (RLS limits it to reading this one row),
+# but keeping it in a secret keeps the workflow clean.
+#
+# Note: GitHub disables scheduled workflows in public repos after 60 days
+# without repository activity — it emails a warning first. Any commit resets
+# the clock, or re-enable from the Actions tab.
+
+on:
+  schedule:
+    - cron: "41 7 */3 * *" # every 3 days at 07:41 UTC — well inside the 7-day window
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase heartbeat table
+        env:
+          SUPABASE_URL: https://hpqffrtyedyfidcxcqwu.supabase.co
+          ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$ANON_KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is not set — keep-alive cannot run."
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/keep_alive?select=id,last_ping" \
+            -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY")
+          echo "HTTP $code"; cat /tmp/resp.json
+          if [ "$code" != "200" ]; then
+            echo "::error::Supabase keep-alive ping failed (HTTP $code) — project may be paused."
+            exit 1
+          fi
+          echo "Supabase project is awake."
