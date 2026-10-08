@@ -13,7 +13,7 @@ then fuses what they find — across model families — into grounded, testable 
 > - ⭐ [`RESEARCH_CASE_STUDY.md`](RESEARCH_CASE_STUDY.md) — the complete end-to-end run record
 > - ⭐ [`PIPELINE_ASSESSMENT.md`](PIPELINE_ASSESSMENT.md) — a deliberately balanced strengths *and*
 >   weaknesses audit
-> - [`CLAUDE.md`](CLAUDE.md) — the dated decision log (every architecture call and why)
+> - A dated decision log (every architecture call and why) is kept privately and available on request
 
 ## The Wandering Room (the part that works)
 
