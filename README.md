@@ -22,8 +22,8 @@ the question into sub-angles, and runs an autonomous multi-cycle loop:
 
 ```
 cushion ──► goal-BLIND wandering agents          (search distant domains for structural analogies;
-               │                                  a three-tier "chaos law" leak-gate strips any goal
-               │                                  signal — fails closed, enforced in code)
+               │                                  regex + n-gram gates filter detected goal
+               │                                  leakage; semantic isolation is not guaranteed)
                ▼
         governor · shepherd · halo               (flow control, drift detection, blind-spot audit —
                │                                  goal-AWARE judges steering up to 4 cycles)
@@ -34,17 +34,18 @@ cushion ──► goal-BLIND wandering agents          (search distant domains f
         grounding stage                          (proposals → explicit math → falsifiable toy model)
 ```
 
-The load-bearing original idea: **generators never see the goal; judges do.** Convergence-by-prompt is
-the failure mode this architecture exists to prevent, and the blindness is mechanically enforced
-(regex + n-gram leak gates that drop unlaunderable leads), not aspirational.
+The design separates generator and judge context: **the direct goal is withheld from generator
+prompts and supplied to judges.** Regex and n-gram gates reject detected goal leakage in leads, but
+these heuristics do not guarantee semantic independence or prevent every indirect clue.
 
 ### What happened when we pointed it at a real open problem
 
 Target: the coordination-vs-correlation detection gap in *Multi-Agent Risks from Advanced AI*
 (Hammond et al., Cooperative AI Foundation, 2025). Four cycles, 218 cards, coverage 0 → 0.8, $24.35,
-4h14m. The pipeline **did not hallucinate**, converged on an interventionist separation criterion,
-grounded it in do-calculus, and **validated it in a self-checking toy model** (separates coordination
-from common-cause correlation, 0.345 vs 0.0001).
+4h14m. The run produced an interventionist separation criterion, expressed it in do-calculus,
+and **checked it in a self-checking toy model** (separates coordination from common-cause
+correlation, 0.345 vs 0.0001). This validates that toy calculation, not every intermediate claim
+or the criterion's applicability to arbitrary multi-agent systems.
 
 **And the honest headline:** the result was *correct but not novel* — a single frontier-model prompt
 matched it in ~30 seconds for ~2¢. The full account of why, what that means, and where the wander
@@ -69,8 +70,8 @@ the part of this project I'd defend hardest.
 - The full product around the engine — memory consolidation, credits, multi-user routing — is
   scaffolded, not finished.
 - The wander's divergence is weaker than designed: it clusters on topic more than it should.
-- No demonstrated *novel* result yet. The engine's edge can only appear on problems whose answer is not
-  already latent in a frontier model's weights — finding and testing such a problem is the open front.
+- No demonstrated *novel* result yet. Broader comparisons are needed to identify whether the
+  multi-stage exploration adds useful results relative to simpler, cost-matched baselines.
 
 ## Provenance
 
